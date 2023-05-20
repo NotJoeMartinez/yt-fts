@@ -1,6 +1,9 @@
 import click, re, sqlite3 
 import os, tempfile, subprocess, requests 
+
 from tabulate import tabulate
+from progress.bar import Bar
+
 from bs4 import BeautifulSoup
 import json
 
@@ -73,6 +76,7 @@ def download_channel(channel_id):
             channel_url
         ])
         add_channel_info(channel_id, channel_name, channel_url)
+        print("Adding VTT data to db")
         vtt_to_db(channel_id, tmp_dir)
 
 def vtt_to_db(channel_id, dir_path):
@@ -85,6 +89,11 @@ def vtt_to_db(channel_id, dir_path):
         if os.path.isfile(item_path):
             file_paths.append(item_path)    
 
+    con = sqlite3.connect('subtitles.db')  
+    cur = con.cursor()
+
+    bar = Bar('Processing', max=len(file_paths))
+
     for vtt in file_paths:
         base_name = os.path.basename(vtt)
         vid_id = re.match(r'^([^.]*)', base_name).group(1)
@@ -93,10 +102,17 @@ def vtt_to_db(channel_id, dir_path):
         add_video(channel_id, vid_id, vid_title, vid_url)
 
         vtt_json = parse_vtt(vtt)
+
         for sub in vtt_json:
             start_time = sub['start_time']
             text = sub['text']
-            add_subtitle(vid_id, start_time, text)
+            cur.execute(f"INSERT INTO Subtitles (video_id, timestamp, text) VALUES (?, ?, ?)", (vid_id, start_time, text))
+
+        con.commit()
+        bar.next()
+
+    bar.finish() 
+    con.close()
         
 
 def parse_vtt(file_path):
@@ -187,7 +203,7 @@ def get_quotes(channel_id, text):
             time = time_to_secs(time_stamp) 
 
             if vid_title not in shown_titles:
-                print(f"\nMatches found in: \"{vid_title}\"")
+                print(f"\nVideo title\"{vid_title}\"")
                 shown_titles.append(vid_title)
 
 
