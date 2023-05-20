@@ -1,11 +1,11 @@
 import click, re, sqlite3
-import os, tempfile 
-import requests
+import os, tempfile, subprocess
+import requests 
 
 
 @click.group()
 def cli():
-    pass
+    make_db()
 
 @click.command(help="Lists channels")
 def list():
@@ -38,17 +38,32 @@ cli.add_command(search)
 
 def download_channel(channel_id):
     print("Downloading channel")
-    import subprocess
-    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
-    subprocess.run([
-        "yt-dlp",
-        "-o", "%(id)s.%(ext)s",  
-        "--write-auto-sub",  
-        "--convert-subs", "vtt",  
-        "--skip-download",  
-        channel_url
-    ])
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        print('Saving vtt files to', tmp_dir)
 
+        channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+        subprocess.run([
+            "yt-dlp",
+            "-o", f"{tmp_dir}/%(id)s.%(ext)s",  
+            "--write-auto-sub",  
+            "--convert-subs", "vtt",  
+            "--skip-download",  
+            channel_url
+        ])
+        vtt_to_db(channel_id, tmp_dir)
+
+def vtt_to_db(channel_id, dir_path):
+    items = os.listdir(dir_path)
+
+    file_paths = []
+
+    for item in items:
+        item_path = os.path.join(dir_path, item)
+        if os.path.isfile(item_path):
+            file_paths.append(item_path)    
+
+    for i in file_paths:
+        print(i)
 
 def get_channel_id(url):
     res = requests.get(url)
@@ -111,6 +126,42 @@ def time_to_secs(time_str):
     total_secs =  hours + mins + secs
     return total_secs - 3
 
+
+
+def make_db():
+    con = sqlite3.connect('subtitles.db')  
+    cur = con.cursor()  
+
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS Channels (
+            channel_id TEXT PRIMARY KEY,
+            channel_name TEXT NOT NULL,
+            channel_url TEXT NOT NULL
+        );
+    ''')
+
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS Videos (
+            video_id TEXT PRIMARY KEY,
+            video_title TEXT NOT NULL,
+            video_url TEXT NOT NULL,
+            channel_id TEXT,
+            FOREIGN KEY(channel_id) REFERENCES Channels(channel_id)
+        );
+    ''')
+
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS Subtitles (
+            subtitle_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            video_id TEXT,
+            timestamp TEXT NOT NULL,
+            text TEXT NOT NULL,
+            FOREIGN KEY(video_id) REFERENCES Videos(video_id)
+        );
+    ''')
+
+    con.commit()
+    con.close()
 
 
 if __name__ == '__main__':
