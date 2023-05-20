@@ -4,18 +4,18 @@ import click, re, sqlite3
 def cli():
     pass
 
-@click.command()
+@click.command(help="Lists channels")
 def list():
-    click.echo('Listing channels')
+    click.echo("Listing channels")
 
-@click.command()
-@click.option('--channel', 'channel_id', required=True, help='--id [channel id]')
+@click.command( help='download [channel id]')
+@click.argument('channel_id', required=True)
 def download(channel_id):
     click.echo(f'Downloading {channel_id}!')
 
-@click.command()
-@click.option('--channel', 'channel_id', required=True, help='--id [channel id]')
-@click.option('--text', 'search_text', required=True, help='text to search')
+@click.command( help='search [channel id] [search text]')
+@click.argument('channel_id', required=True)
+@click.argument('search_text', required=True)
 def search(channel_id, search_text):
     click.echo(f'Searching for quotes in channel {channel_id} for text {search_text}')
     get_quotes(channel_id, search_text)
