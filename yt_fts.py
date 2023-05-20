@@ -1,4 +1,7 @@
 import click, re, sqlite3
+import os, tempfile 
+import requests
+
 
 @click.group()
 def cli():
@@ -8,10 +11,14 @@ def cli():
 def list():
     click.echo("Listing channels")
 
-@click.command( help='download [channel id]')
-@click.argument('channel_id', required=True)
-def download(channel_id):
-    click.echo(f'Downloading {channel_id}!')
+@click.command( help='download [channel url]')
+@click.argument('channel_url', required=True)
+def download(channel_url):
+    channel_id = get_channel_id(channel_url)
+    if channel_id:
+        download_channel(channel_id)
+    else:
+        print("Error finding channel id")
 
 @click.command( help='search [channel id] [search text]')
 @click.argument('channel_id', required=True)
@@ -23,6 +30,32 @@ def search(channel_id, search_text):
 cli.add_command(list)
 cli.add_command(download)
 cli.add_command(search)
+
+
+
+def download_channel(channel_id):
+    print("Downloading channel")
+    import subprocess
+    channel_url = f"https://www.youtube.com/c/{channel_id}/videos"
+    subprocess.run([
+        "yt-dlp",
+        "-o", "%(id)s.%(ext)s",  
+        "--write-auto-sub",  
+        "--convert-subs", "vtt",  
+        "--skip-download",  
+        channel_url
+    ])
+
+
+def get_channel_id(url):
+    res = requests.get(url)
+    if res.status_code == 200:
+        html = res.text
+        channel_id = re.search('channelId":"(.{24})"', html).group(1)
+        print(channel_id)
+        return channel_id
+    else:
+        return None
 
 
 def get_quotes(channel_id, search_text):
