@@ -1,18 +1,34 @@
-import sys, sqlite3, re
+import click, re, sqlite3
 
-def main():
+@click.group()
+def cli():
+    pass
 
-    if len(sys.argv) < 2:
-        print("Need quote as argument")
-        exit(0)
-    else:
-        get_quotes(sys.argv[1])
+@click.command()
+def list():
+    click.echo('Listing channels')
 
-def get_quotes(quote):
+@click.command()
+@click.option('--channel', 'channel_id', required=True, help='--id [channel id]')
+def download(channel_id):
+    click.echo(f'Downloading {channel_id}!')
 
+@click.command()
+@click.option('--channel', 'channel_id', required=True, help='--id [channel id]')
+@click.option('--text', 'search_text', required=True, help='text to search')
+def search(channel_id, search_text):
+    click.echo(f'Searching for quotes in channel {channel_id} for text {search_text}')
+    get_quotes(channel_id, search_text)
+
+cli.add_command(list)
+cli.add_command(download)
+cli.add_command(search)
+
+
+def get_quotes(channel_id, search_text):
     con = sqlite3.connect("yt_fts.db")
     cur = con.cursor()
-    cur.execute("SELECT * FROM rick WHERE sub_titles LIKE ?", ('%'+quote+'%',))
+    cur.execute(f"SELECT * FROM {channel_id} WHERE sub_titles LIKE ?", ('%'+search_text+'%',))
     res = cur.fetchall()
     con.close()
 
@@ -61,6 +77,5 @@ def time_to_secs(time_str):
 
 
 
-
 if __name__ == '__main__':
-    main()
+    cli()
