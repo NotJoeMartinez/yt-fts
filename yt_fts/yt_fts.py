@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import json
 
 
-from db_scripts import * 
+from yt_fts.db_scripts import * 
 
 @click.group()
 def cli():
