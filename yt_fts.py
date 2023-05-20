@@ -13,12 +13,15 @@ def list():
 
 @click.command( help='download [channel url]')
 @click.argument('channel_url', required=True)
-def download(channel_url):
-    channel_id = get_channel_id(channel_url)
+@click.option('--channel-id', default=None, help='Optional channel id to override the one from the url')
+def download(channel_url, channel_id):
+    if channel_id is None:
+        channel_id = get_channel_id(channel_url)
     if channel_id:
         download_channel(channel_id)
     else:
-        print("Error finding channel id")
+        print("Error finding channel id try --channel-id option")
+
 
 @click.command( help='search [channel id] [search text]')
 @click.argument('channel_id', required=True)
