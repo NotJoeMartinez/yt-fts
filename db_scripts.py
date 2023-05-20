@@ -105,5 +105,7 @@ def delete_channel(channel_id):
     con = sqlite3.connect('subtitles.db')
     cur = con.cursor()
     cur.execute(f"DELETE FROM Channels WHERE channel_id = ?", (channel_id,))
+    cur.execute(f"DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
+    cur.execute(f"DELETE FROM Videos WHERE channel_id = ?", (channel_id,))
     con.commit()
     con.close()
