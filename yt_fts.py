@@ -25,6 +25,7 @@ def list():
 @click.argument('channel_url', required=True)
 @click.option('--channel-id', default=None, help='Optional channel id to override the one from the url')
 def download(channel_url, channel_id):
+    handle_reject_consent_cookie(channel_url)
     if channel_id is None:
         channel_id = get_channel_id(channel_url)
     if channel_id:
@@ -73,6 +74,22 @@ cli.add_command(delete)
 cli.add_command(export)
 
 
+
+def handle_reject_consent_cookie(channel_url):
+    r = s.get(channel_url)
+    if "https://consent.youtube.com" in r.url:
+        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
+        if m:
+            data = {
+                "gl":"DE",
+                "pc":"yt",
+                "continue":channel_url,
+                "x":"6",
+                "bl":m.group(1),
+                "hl":"de",
+                "set_eom":"true"
+            }
+            s.post("https://consent.youtube.com/save", data=data)
 
 def download_channel(channel_id):
     print("Downloading channel")
@@ -158,7 +175,7 @@ def parse_vtt(file_path):
 
 
 def get_vid_title(vid_url):
-    res = requests.get(vid_url)
+    res = s.get(vid_url)
     if res.status_code == 200:
         html = res.text
         soup = BeautifulSoup(html, 'html.parser')
@@ -170,7 +187,7 @@ def get_vid_title(vid_url):
 
  
 def get_channel_id(url):
-    res = requests.get(url)
+    res = s.get(url)
     if res.status_code == 200:
         html = res.text
         channel_id = re.search('channelId":"(.{24})"', html).group(1)
@@ -181,7 +198,7 @@ def get_channel_id(url):
 
 def get_channel_name(channel_id):
 
-    res = requests.get(f"https://www.youtube.com/channel/{channel_id}/videos")
+    res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
 
     if res.status_code == 200:
 
@@ -270,4 +287,5 @@ def time_to_secs(time_str):
 
 
 if __name__ == '__main__':
+    s = requests.session()
     cli()
