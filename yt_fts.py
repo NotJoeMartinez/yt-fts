@@ -39,7 +39,7 @@ cli.add_command(search)
 def download_channel(channel_id):
     print("Downloading channel")
     import subprocess
-    channel_url = f"https://www.youtube.com/c/{channel_id}/videos"
+    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
     subprocess.run([
         "yt-dlp",
         "-o", "%(id)s.%(ext)s",  
