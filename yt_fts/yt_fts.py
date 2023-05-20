@@ -10,6 +10,8 @@ import json
 
 from yt_fts.db_scripts import * 
 
+YT_DLP='yt-dlp'
+
 @click.group()
 def cli():
     make_db()
@@ -24,11 +26,12 @@ def list():
 @click.command( help='download [channel url]')
 @click.argument('channel_url', required=True)
 @click.option('--channel-id', default=None, help='Optional channel id to override the one from the url')
-def download(channel_url, channel_id):
+@click.option('--number-of-jobs', type=int, default=1, help='Optional number of jobs to parallelize the run')
+def download(channel_url, channel_id, number_of_jobs):
     if channel_id is None:
         channel_id = get_channel_id(channel_url)
     if channel_id:
-        download_channel(channel_id)
+        download_channel(channel_id, channel_url, number_of_jobs)
     else:
         print("Error finding channel id try --channel-id option")
 
@@ -72,24 +75,54 @@ cli.add_command(search)
 cli.add_command(delete)
 cli.add_command(export)
 
+from concurrent.futures import ThreadPoolExecutor
 
 
-def download_channel(channel_id):
+def get_vtt(tmp_dir, video_url):
+    cmd = [
+        YT_DLP,
+        "-o", f"{tmp_dir}/%(id)s.%(ext)s",  
+        "--write-auto-sub",  
+        "--convert-subs", "vtt",  
+        "--skip-download",
+        video_url
+    ]
+    subprocess.run(cmd)
+
+def get_videos_list(channel_url):
+    cmd = [
+        YT_DLP,
+        "--flat-playlist",
+        "--print",
+        "id",
+        f"{channel_url}"
+    ]
+    res = subprocess.run(cmd, capture_output=True, check=True)
+    list_of_videos_urls = res.stdout.decode().splitlines()
+    return list_of_videos_urls
+
+def download_vtts(number_of_jobs, list_of_videos_urls, tmp_dir):
+    executor = ThreadPoolExecutor(number_of_jobs)
+    futures = []
+    for video_id in list_of_videos_urls:
+        video_url = f'https://www.youtube.com/watch?v={video_id}'
+        future = executor.submit(get_vtt, tmp_dir, video_url)
+        futures.append(future)
+    
+    for i in range(len(list_of_videos_urls)):
+        futures[i].result()
+
+def download_channel(channel_id, channel_url, number_of_jobs):
     print("Downloading channel")
     with tempfile.TemporaryDirectory() as tmp_dir:
         print('Saving vtt files to', tmp_dir)
-
         channel_name = get_channel_name(channel_id)
-        channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
-        subprocess.run([
-            "yt-dlp",
-            "-o", f"{tmp_dir}/%(id)s.%(ext)s",  
-            "--write-auto-sub",  
-            "--convert-subs", "vtt",  
-            "--skip-download",  
-            channel_url
-        ])
-        add_channel_info(channel_id, channel_name, channel_url)
+        list_of_videos_urls = get_videos_list(channel_url)
+        print(f'Downloading vtt info of {len(list_of_videos_urls)} videos')
+        download_vtts(number_of_jobs, list_of_videos_urls, tmp_dir)
+
+        videos_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+        add_channel_info(channel_id, channel_name, videos_url)
         print("Adding VTT data to db")
         vtt_to_db(channel_id, tmp_dir)
 
