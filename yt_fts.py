@@ -1,5 +1,5 @@
 import click, re, sqlite3 
-import os, tempfile, subprocess, requests 
+import os, tempfile, subprocess, requests, datetime, csv
 
 from tabulate import tabulate
 from progress.bar import Bar
@@ -40,6 +40,18 @@ def search(channel_id, search_text):
     click.echo(f'Searching for quotes in channel {channel_id} for text {search_text}')
     get_quotes(channel_id, search_text)
 
+
+@click.command( help='export [channel id] [search text] ')
+@click.argument('channel_id', required=True)
+@click.argument('search_text', required=True)
+def export(channel_id, search_text):
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f'{channel_id}_{timestamp}.csv'
+    click.echo(f'Exporting search results to csv: {file_name}')
+    search_to_csv(channel_id, search_text, file_name)
+
+
+
 @click.command( help='delete [channel id]')
 @click.argument('channel_id', required=True)
 def delete(channel_id):
@@ -53,10 +65,12 @@ def delete(channel_id):
     else:
         print("Aborting")
 
+
 cli.add_command(list)
 cli.add_command(download)
 cli.add_command(search)
 cli.add_command(delete)
+cli.add_command(export)
 
 
 
@@ -214,6 +228,31 @@ def get_quotes(channel_id, text):
                 print(f"    Link: https://youtu.be/{vid_id}?t={time}")
                 shown_stamps.append(id_stamp)
 
+
+def search_to_csv(channel_id, text, file_name):
+    res = search_channel(channel_id, text)
+
+    if len(res) == 0:
+        print("No matches found")
+    else:
+        with open(file_name, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['Video Title', 'Quote', 'Time Stamp', 'Link'])
+            
+            shown_stamps = []
+
+            for quote in res: 
+                sub_id = quote[0]
+                vid_title = get_title_from_db(sub_id)
+                vid_id = quote[1]
+                time_stamp = quote[2]
+                subs = quote[3]
+                id_stamp =  vid_id + time_stamp[:-4]  
+                time = time_to_secs(time_stamp) 
+
+                if id_stamp not in shown_stamps:
+                    writer.writerow([vid_title, subs.strip(), time_stamp, f"https://youtu.be/{vid_id}?t={time}"])
+                    shown_stamps.append(id_stamp)
 
 
 def time_to_secs(time_str):

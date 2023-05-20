@@ -157,3 +157,4 @@ saved_vtt/**
 *.db
 tests/
 *.html
+*.csv

@@ -16,7 +16,8 @@ source .env/bin/activate
 pip install -r requirements.txt
 ```
 
-This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. See [here](https://github.com/yt-dlp/yt-dlp/wiki/Installation) if you have issues 
+This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. See [here](https://github.com/yt-dlp/yt-dlp/wiki/Installation) if you have issues.
+
 **pip**
 ```bash
 python3 -m pip install -U yt-dlp
@@ -37,6 +38,7 @@ Options:
 Commands:
   delete    delete [channel id]
   download  download [channel url]
+  export    export [channel id] [search text]
   list      Lists channels
   search    search [channel id] [search text]
 ```
@@ -96,6 +98,10 @@ Video title"('164 - Life In The Big City - YouTube',)"
     Time Stamp: 00:27:17.549
     Link: https://youtu.be/dqGyCTbzYmc?t=1634
 ```
+
+### `Export`
+Similar to `search` except it will export all of the search results to a csv 
+with the format `Video Title,	Quote, Time Stamp,	Link` as it's headers
 
 ### `Delete` 
 Will delete a channel from your database 
