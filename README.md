@@ -73,7 +73,7 @@ will print a url to that point in the video
 ```bash
 python yt_fts.py search [channel_id] "text you want to find"
 ```
-EX:
+**EX:**
 
 ```bash
 python yt_fts.py search UC4woSp8ITBoYDmjkukhEhxg "life in the big city"
@@ -101,7 +101,7 @@ Video title"('164 - Life In The Big City - YouTube',)"
 
 ### `Export`
 Similar to `search` except it will export all of the search results to a csv 
-with the format `Video Title,	Quote, Time Stamp,	Link` as it's headers
+with the format: `Video Title,Quote,Time Stamp,Link` as it's headers
 
 ### `Delete` 
 Will delete a channel from your database 
