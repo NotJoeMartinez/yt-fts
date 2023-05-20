@@ -37,9 +37,23 @@ def search(channel_id, search_text):
     click.echo(f'Searching for quotes in channel {channel_id} for text {search_text}')
     get_quotes(channel_id, search_text)
 
+@click.command( help='delete [channel id]')
+@click.argument('channel_id', required=True)
+def delete(channel_id):
+    channel_name = get_channel_name_from_db(channel_id) 
+    print(f"Deleting channel {channel_name}")
+    print("Are you sure you want to delete this channel and all its data?")
+    confirm = input("y/n: ")
+    if confirm == "y":
+        click.echo(f'deleting channel {channel_name}')
+        delete_channel(channel_id)
+    else:
+        print("Aborting")
+
 cli.add_command(list)
 cli.add_command(download)
 cli.add_command(search)
+cli.add_command(delete)
 
 
 

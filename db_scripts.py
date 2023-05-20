@@ -91,3 +91,19 @@ def get_title_from_db(sub_id):
     res = cur.fetchone()
     con.close()
     return res
+
+
+def get_channel_name_from_db(channel_id):
+    con = sqlite3.connect('subtitles.db')
+    cur = con.cursor()
+    cur.execute(f"SELECT channel_name FROM Channels WHERE channel_id = ?", (channel_id,))
+    res = cur.fetchone()
+    con.close()
+    return res[0]
+
+def delete_channel(channel_id):
+    con = sqlite3.connect('subtitles.db')
+    cur = con.cursor()
+    cur.execute(f"DELETE FROM Channels WHERE channel_id = ?", (channel_id,))
+    con.commit()
+    con.close()
