@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 import json
 
 
+from db_scripts import * 
+
 @click.group()
 def cli():
     make_db()
@@ -66,11 +68,61 @@ def vtt_to_db(channel_id, dir_path):
         if os.path.isfile(item_path):
             file_paths.append(item_path)    
 
-    for i in file_paths:
-        print(i)
+    for vtt in file_paths:
+        base_name = os.path.basename(vtt)
+        vid_id = re.match(r'^([^.]*)', base_name).group(1)
+        vid_url = f"https://youtu.be/{vid_id}"
+        vid_title = get_vid_title(vid_url)
+        add_video(channel_id, vid_id, vid_title, vid_url)
+
+        vtt_json = parse_vtt(vtt)
+        for sub in vtt_json:
+            start_time = sub['start_time']
+            text = sub['text']
+            add_subtitle(vid_id, start_time, text)
+        
+
+def parse_vtt(file_path):
+
+    result = []
+
+    time_pattern = "^(.*) align:start position:0%"
+
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+        for count, line in enumerate(lines):
+            time_match = re.match(time_pattern, line)
+
+            if time_match:
+                start = re.search("^(.*) -->",time_match.group(1))
+                end = re.search("--> (.*)",time_match.group(1))
+
+                start_time = start.group(1)
+                end_time = end.group(1)
+
+                sub_titles = lines[count + 1]
+
+                result.append({
+                    'start_time': start_time,
+                    'text': sub_titles.strip('\n'),
+                })
+        
+    # result_json = json.dumps(result, indent=4)
+    return result 
 
 
+def get_vid_title(vid_url):
+    res = requests.get(vid_url)
+    if res.status_code == 200:
+        html = res.text
+        soup = BeautifulSoup(html, 'html.parser')
+        title = soup.title.string
+        return title 
+    else:
+        return None
+        
 
+ 
 def get_channel_id(url):
     res = requests.get(url)
     if res.status_code == 200:
@@ -148,48 +200,7 @@ def time_to_secs(time_str):
     return total_secs - 3
 
 
-def add_channel_info(channel_id, channel_name, channel_url):
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
 
-    cur.execute(f"INSERT INTO Channels VALUES (?, ?, ?)", (channel_id, channel_name, channel_url))
-    con.commit()
-    con.close()
-
-def make_db():
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS Channels (
-            channel_id TEXT PRIMARY KEY,
-            channel_name TEXT NOT NULL,
-            channel_url TEXT NOT NULL
-        );
-    ''')
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS Videos (
-            video_id TEXT PRIMARY KEY,
-            video_title TEXT NOT NULL,
-            video_url TEXT NOT NULL,
-            channel_id TEXT,
-            FOREIGN KEY(channel_id) REFERENCES Channels(channel_id)
-        );
-    ''')
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS Subtitles (
-            subtitle_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            video_id TEXT,
-            timestamp TEXT NOT NULL,
-            text TEXT NOT NULL,
-            FOREIGN KEY(video_id) REFERENCES Videos(video_id)
-        );
-    ''')
-
-    con.commit()
-    con.close()
 
 
 if __name__ == '__main__':
