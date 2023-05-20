@@ -61,3 +61,33 @@ def add_subtitle(vid_id, start_time, text):
     cur.execute(f"INSERT INTO Subtitles (video_id, timestamp, text) VALUES (?, ?, ?)", (vid_id, start_time, text))
     con.commit()
     con.close()
+
+
+
+def get_channels():
+    con = sqlite3.connect('subtitles.db')  
+    cur = con.cursor()  
+
+    cur.execute(f"SELECT * FROM Channels")
+    res = cur.fetchall()
+    con.close()
+    return res
+
+
+def search_channel(channel_id, text):
+    con = sqlite3.connect('subtitles.db')  
+    cur = con.cursor()  
+
+    cur.execute(f"SELECT * FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?) AND text LIKE ?", (channel_id, '%'+text+'%'))
+    res = cur.fetchall()
+    con.close()
+    return res
+
+
+def get_title_from_db(sub_id):
+    con = sqlite3.connect('subtitles.db')
+    cur = con.cursor()
+    cur.execute(f"SELECT video_title FROM Videos WHERE video_id IN (SELECT video_id FROM Subtitles WHERE subtitle_id = ?)", (sub_id,))
+    res = cur.fetchone()
+    con.close()
+    return res

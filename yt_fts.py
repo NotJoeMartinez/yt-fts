@@ -1,6 +1,6 @@
-import click, re, sqlite3
-import os, tempfile, subprocess
-import requests 
+import click, re, sqlite3 
+import os, tempfile, subprocess, requests 
+from tabulate import tabulate
 from bs4 import BeautifulSoup
 import json
 
@@ -14,6 +14,9 @@ def cli():
 @click.command(help="Lists channels")
 def list():
     click.echo("Listing channels")
+    channels = get_channels()
+    print(tabulate(channels, headers=["channel_id","channel_name", "channel_url"]))
+
 
 @click.command( help='download [channel url]')
 @click.argument('channel_url', required=True)
@@ -107,7 +110,6 @@ def parse_vtt(file_path):
                     'text': sub_titles.strip('\n'),
                 })
         
-    # result_json = json.dumps(result, indent=4)
     return result 
 
 
@@ -149,12 +151,8 @@ def get_channel_name(channel_id):
     else:
         return None
 
-def get_quotes(channel_id, search_text):
-    con = sqlite3.connect("subtitles.db")
-    cur = con.cursor()
-    cur.execute(f"SELECT * FROM {channel_id} WHERE sub_titles LIKE ?", ('%'+search_text+'%',))
-    res = cur.fetchall()
-    con.close()
+def get_quotes(channel_id, text):
+    res = search_channel(channel_id, text)
 
     if len(res) == 0:
         print("No matches found")
@@ -164,16 +162,15 @@ def get_quotes(channel_id, search_text):
         shown_stamps = []
 
         for quote in res: 
-            vid_id = quote[0]
-            vid_title = quote[1]
-            start = quote[2]
-            end = quote[3]
-            subs = quote[4]
+            sub_id = quote[0]
+            vid_title = get_title_from_db(sub_id)
+            vid_id = quote[1]
+            time_stamp = quote[2]
+            subs = quote[3]
 
-            #  should look like: 6C7vx4Ot2qk01:28:00
-            id_stamp =  vid_id + start[:-4]  
+            id_stamp =  vid_id + time_stamp[:-4]  
 
-            time = time_to_secs(start) 
+            time = time_to_secs(time_stamp) 
 
             if vid_title not in shown_titles:
                 print(f"\nMatches found in: \"{vid_title}\"")
@@ -183,7 +180,7 @@ def get_quotes(channel_id, search_text):
             if id_stamp not in shown_stamps:
                 print(f"\n") 
                 print(f"    Quote: \"{subs.strip()}\"")
-                print(f"    Time Stamp: {start}")
+                print(f"    Time Stamp: {time_stamp}")
                 print(f"    Link: https://youtu.be/{vid_id}?t={time}")
                 shown_stamps.append(id_stamp)
 
