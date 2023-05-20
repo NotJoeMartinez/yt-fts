@@ -1,6 +1,8 @@
 import click, re, sqlite3
 import os, tempfile, subprocess
 import requests 
+from bs4 import BeautifulSoup
+import json
 
 
 @click.group()
@@ -41,6 +43,7 @@ def download_channel(channel_id):
     with tempfile.TemporaryDirectory() as tmp_dir:
         print('Saving vtt files to', tmp_dir)
 
+        channel_name = get_channel_name(channel_id)
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         subprocess.run([
             "yt-dlp",
@@ -50,6 +53,7 @@ def download_channel(channel_id):
             "--skip-download",  
             channel_url
         ])
+        add_channel_info(channel_id, channel_name, channel_url)
         vtt_to_db(channel_id, tmp_dir)
 
 def vtt_to_db(channel_id, dir_path):
@@ -65,6 +69,8 @@ def vtt_to_db(channel_id, dir_path):
     for i in file_paths:
         print(i)
 
+
+
 def get_channel_id(url):
     res = requests.get(url)
     if res.status_code == 200:
@@ -75,9 +81,24 @@ def get_channel_id(url):
     else:
         return None
 
+def get_channel_name(channel_id):
+
+    res = requests.get(f"https://www.youtube.com/channel/{channel_id}/videos")
+
+    if res.status_code == 200:
+
+        html = res.text
+        soup = BeautifulSoup(html, 'html.parser')
+        script = soup.find('script', type='application/ld+json')
+        data = json.loads(script.string)
+        channel_name = data['itemListElement'][0]['item']['name']
+        print(channel_name)
+        return channel_name 
+    else:
+        return None
 
 def get_quotes(channel_id, search_text):
-    con = sqlite3.connect("yt_fts.db")
+    con = sqlite3.connect("subtitles.db")
     cur = con.cursor()
     cur.execute(f"SELECT * FROM {channel_id} WHERE sub_titles LIKE ?", ('%'+search_text+'%',))
     res = cur.fetchall()
@@ -127,6 +148,13 @@ def time_to_secs(time_str):
     return total_secs - 3
 
 
+def add_channel_info(channel_id, channel_name, channel_url):
+    con = sqlite3.connect('subtitles.db')  
+    cur = con.cursor()  
+
+    cur.execute(f"INSERT INTO Channels VALUES (?, ?, ?)", (channel_id, channel_name, channel_url))
+    con.commit()
+    con.close()
 
 def make_db():
     con = sqlite3.connect('subtitles.db')  
