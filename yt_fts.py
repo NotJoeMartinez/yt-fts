@@ -88,7 +88,7 @@ def download_channel(channel_id, language):
             "--write-auto-sub",  
             "--convert-subs", "vtt",  
             "--skip-download",  
-            "--sub-langs", language + ",-live_chat",
+            "--sub-langs", f"{language},-live_chat",
             channel_url
         ])
         add_channel_info(channel_id, channel_name, channel_url)
