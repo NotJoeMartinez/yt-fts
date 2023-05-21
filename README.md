@@ -17,13 +17,13 @@ source .env/bin/activate
 pip install -r requirements.txt
 ```
 
-This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. See [here](https://github.com/yt-dlp/yt-dlp/wiki/Installation) if you have issues.
+This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. Platform specific installation instructions are available on the [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation). 
 
 **pip**
 ```bash
 python3 -m pip install -U yt-dlp
 ```
-**homebrew**
+**MacOS/Homebrew**
 ```bash
 brew install yt-dlp
 ```
