@@ -53,6 +53,10 @@ If this fails you can manually input the channel id with the `--channel-id` flag
 ```bash
 python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --channel-id "UC4woSp8ITBoYDmjkukhEhxg"
 ```
+You can specify expected subtitles language
+```bash
+python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --language de
+```
 
 ### `list`
 Will list all of your downloaded channels 

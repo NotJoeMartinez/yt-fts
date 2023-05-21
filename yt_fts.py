@@ -24,11 +24,12 @@ def list():
 @click.command( help='download [channel url]')
 @click.argument('channel_url', required=True)
 @click.option('--channel-id', default=None, help='Optional channel id to override the one from the url')
-def download(channel_url, channel_id):
+@click.option('--language', default="en", help='Language of the subtitles to download')
+def download(channel_url, channel_id, language):
     if channel_id is None:
         channel_id = get_channel_id(channel_url)
     if channel_id:
-        download_channel(channel_id)
+        download_channel(channel_id, language)
     else:
         print("Error finding channel id try --channel-id option")
 
@@ -74,7 +75,7 @@ cli.add_command(export)
 
 
 
-def download_channel(channel_id):
+def download_channel(channel_id, language):
     print("Downloading channel")
     with tempfile.TemporaryDirectory() as tmp_dir:
         print('Saving vtt files to', tmp_dir)
@@ -87,6 +88,7 @@ def download_channel(channel_id):
             "--write-auto-sub",  
             "--convert-subs", "vtt",  
             "--skip-download",  
+            "--sub-langs", f"{language},-live_chat",
             channel_url
         ])
         add_channel_info(channel_id, channel_name, channel_url)
