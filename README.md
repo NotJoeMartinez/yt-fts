@@ -11,6 +11,7 @@ the video containing the keyword.
 
 ```bash
 git clone https://github.com/NotJoeMartinez/yt-fts
+cd yt-fts
 python3 -m venv .env
 source .env/bin/activate
 pip install -r requirements.txt
