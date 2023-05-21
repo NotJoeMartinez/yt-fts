@@ -27,6 +27,10 @@ python3 -m pip install -U yt-dlp
 ```bash
 brew install yt-dlp
 ```
+**Windows/winget**
+```bash
+winget install yt-dlp
+```
 
 
 ### Usage 
