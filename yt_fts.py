@@ -4,13 +4,13 @@ import os, tempfile, subprocess, requests, datetime, csv
 from tabulate import tabulate
 from progress.bar import Bar
 
+from concurrent.futures import ThreadPoolExecutor
+
 from bs4 import BeautifulSoup
 import json
 
 
 from db_scripts import * 
-
-YT_DLP='yt-dlp'
 
 @click.group()
 def cli():
@@ -26,12 +26,14 @@ def list():
 @click.command( help='download [channel url]')
 @click.argument('channel_url', required=True)
 @click.option('--channel-id', default=None, help='Optional channel id to override the one from the url')
+@click.option('--language', default="en", help='Language of the subtitles to download')
 @click.option('--number-of-jobs', type=int, default=1, help='Optional number of jobs to parallelize the run')
-def download(channel_url, channel_id, number_of_jobs):
+def download(channel_url, channel_id, language, number_of_jobs):
+    handle_reject_consent_cookie(channel_url)
     if channel_id is None:
         channel_id = get_channel_id(channel_url)
     if channel_id:
-        download_channel(channel_id, channel_url, number_of_jobs)
+        download_channel(channel_id, language, number_of_jobs)
     else:
         print("Error finding channel id try --channel-id option")
 
@@ -75,23 +77,48 @@ cli.add_command(search)
 cli.add_command(delete)
 cli.add_command(export)
 
-from concurrent.futures import ThreadPoolExecutor
+def download_channel(channel_id, language, number_of_jobs):
+    print("Downloading channel")
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        print('Saving vtt files to', tmp_dir)
+
+        channel_name = get_channel_name(channel_id)
+        channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+        list_of_videos_urls = get_videos_list(channel_url)
+
+        download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
+        add_channel_info(channel_id, channel_name, channel_url)
+
+        print("Adding VTT data to db")
+        vtt_to_db(channel_id, tmp_dir)
 
 
-def get_vtt(tmp_dir, video_url):
-    cmd = [
-        YT_DLP,
-        "-o", f"{tmp_dir}/%(id)s.%(ext)s",  
-        "--write-auto-sub",  
-        "--convert-subs", "vtt",  
-        "--skip-download",
-        video_url
-    ]
-    subprocess.run(cmd)
+def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
+    executor = ThreadPoolExecutor(number_of_jobs)
+    futures = []
+    for video_id in list_of_videos_urls:
+        video_url = f'https://www.youtube.com/watch?v={video_id}'
+        future = executor.submit(get_vtt, tmp_dir, video_url, language)
+        futures.append(future)
+    
+    for i in range(len(list_of_videos_urls)):
+        futures[i].result()
+
+
+def get_vtt(tmp_dir, video_url, language):
+    subprocess.run([
+            "yt-dlp",
+            "-o", f"{tmp_dir}/%(id)s.%(ext)s",  
+            "--write-auto-sub",  
+            "--convert-subs", "vtt",  
+            "--skip-download",  
+            "--sub-langs", f"{language},-live_chat",
+            video_url 
+        ])
 
 def get_videos_list(channel_url):
     cmd = [
-        YT_DLP,
+        "yt-dlp",
         "--flat-playlist",
         "--print",
         "id",
@@ -101,30 +128,6 @@ def get_videos_list(channel_url):
     list_of_videos_urls = res.stdout.decode().splitlines()
     return list_of_videos_urls
 
-def download_vtts(number_of_jobs, list_of_videos_urls, tmp_dir):
-    executor = ThreadPoolExecutor(number_of_jobs)
-    futures = []
-    for video_id in list_of_videos_urls:
-        video_url = f'https://www.youtube.com/watch?v={video_id}'
-        future = executor.submit(get_vtt, tmp_dir, video_url)
-        futures.append(future)
-    
-    for i in range(len(list_of_videos_urls)):
-        futures[i].result()
-
-def download_channel(channel_id, channel_url, number_of_jobs):
-    print("Downloading channel")
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        print('Saving vtt files to', tmp_dir)
-        channel_name = get_channel_name(channel_id)
-        list_of_videos_urls = get_videos_list(channel_url)
-        print(f'Downloading vtt info of {len(list_of_videos_urls)} videos')
-        download_vtts(number_of_jobs, list_of_videos_urls, tmp_dir)
-
-        videos_url = f"https://www.youtube.com/channel/{channel_id}/videos"
-        add_channel_info(channel_id, channel_name, videos_url)
-        print("Adding VTT data to db")
-        vtt_to_db(channel_id, tmp_dir)
 
 def vtt_to_db(channel_id, dir_path):
     items = os.listdir(dir_path)
@@ -191,7 +194,7 @@ def parse_vtt(file_path):
 
 
 def get_vid_title(vid_url):
-    res = requests.get(vid_url)
+    res = s.get(vid_url)
     if res.status_code == 200:
         html = res.text
         soup = BeautifulSoup(html, 'html.parser')
@@ -203,7 +206,7 @@ def get_vid_title(vid_url):
 
  
 def get_channel_id(url):
-    res = requests.get(url)
+    res = s.get(url)
     if res.status_code == 200:
         html = res.text
         channel_id = re.search('channelId":"(.{24})"', html).group(1)
@@ -214,14 +217,23 @@ def get_channel_id(url):
 
 def get_channel_name(channel_id):
 
-    res = requests.get(f"https://www.youtube.com/channel/{channel_id}/videos")
+    res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
 
     if res.status_code == 200:
 
         html = res.text
         soup = BeautifulSoup(html, 'html.parser')
         script = soup.find('script', type='application/ld+json')
-        data = json.loads(script.string)
+
+        # Hot fix for channels with special characters in the name
+        try:
+            print("Trying to parse json normally")
+            data = json.loads(script.string)
+        except:
+            print("json parse failed retrying with escaped backslashes")
+            script = script.string.replace('\\', '\\\\')
+            data = json.loads(script)
+
         channel_name = data['itemListElement'][0]['item']['name']
         print(channel_name)
         return channel_name 
@@ -298,9 +310,26 @@ def time_to_secs(time_str):
     total_secs =  hours + mins + secs
     return total_secs - 3
 
+def handle_reject_consent_cookie(channel_url):
+    r = s.get(channel_url)
+    if "https://consent.youtube.com" in r.url:
+        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
+        if m:
+            data = {
+                "gl":"DE",
+                "pc":"yt",
+                "continue":channel_url,
+                "x":"6",
+                "bl":m.group(1),
+                "hl":"de",
+                "set_eom":"true"
+            }
+            s.post("https://consent.youtube.com/save", data=data)
+
 
 
 
 
 if __name__ == '__main__':
+    s = requests.session()
     cli()

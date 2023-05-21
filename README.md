@@ -11,20 +11,25 @@ the video containing the keyword.
 
 ```bash
 git clone https://github.com/NotJoeMartinez/yt-fts
+cd yt-fts
 python3 -m venv .env
 source .env/bin/activate
 pip install -r requirements.txt
 ```
 
-This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. See [here](https://github.com/yt-dlp/yt-dlp/wiki/Installation) if you have issues.
+This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. Platform specific installation instructions are available on the [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation). 
 
 **pip**
 ```bash
 python3 -m pip install -U yt-dlp
 ```
-**homebrew**
+**MacOS/Homebrew**
 ```bash
 brew install yt-dlp
+```
+**Windows/winget**
+```bash
+winget install yt-dlp
 ```
 
 
@@ -51,6 +56,16 @@ python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos"
 If this fails you can manually input the channel id with the `--channel-id` flag
 ```bash
 python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --channel-id "UC4woSp8ITBoYDmjkukhEhxg"
+```
+
+To speed up downloads you can `--number-of-jobs` for multi threaded downloading 
+```bash
+python yt_fts.py download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
+```
+
+You can specify expected subtitles with `--language`
+```bash
+python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --language de
 ```
 
 ### `list`
