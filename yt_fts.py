@@ -207,7 +207,16 @@ def get_channel_name(channel_id):
         html = res.text
         soup = BeautifulSoup(html, 'html.parser')
         script = soup.find('script', type='application/ld+json')
-        data = json.loads(script.string)
+
+        # Hot fix for channels with special characters in the name
+        try:
+            print("Trying to parse json normally")
+            data = json.loads(script.string)
+        except:
+            print("json parse failed retrying with escaped backslashes")
+            script = script.string.replace('\\', '\\\\')
+            data = json.loads(script)
+
         channel_name = data['itemListElement'][0]['item']['name']
         print(channel_name)
         return channel_name 
