@@ -233,27 +233,24 @@ def get_quotes(channel_id, text):
         shown_titles = []
         shown_stamps = []
 
-        for quote in res: 
-            sub_id = quote[0]
-            vid_title = get_title_from_db(sub_id)
-            vid_id = quote[1]
-            time_stamp = quote[2]
-            subs = quote[3]
-
-            id_stamp =  vid_id + time_stamp[:-4]  
-
+        for quote in res:
+            video_id = quote["video_id"]
+            video_title = get_title_from_db(video_id)
+            time_stamp = quote["timestamp"]
+            subs = quote["text"]
+            id_stamp =  video_id + time_stamp[:-4]  
             time = time_to_secs(time_stamp) 
 
-            if vid_title not in shown_titles:
-                print(f"\nVideo title\"{vid_title}\"")
-                shown_titles.append(vid_title)
+            if video_title not in shown_titles:
+                print(f"\nVideo title\"{video_title}\"")
+                shown_titles.append(video_title)
 
 
             if id_stamp not in shown_stamps:
                 print(f"\n") 
                 print(f"    Quote: \"{subs.strip()}\"")
                 print(f"    Time Stamp: {time_stamp}")
-                print(f"    Link: https://youtu.be/{vid_id}?t={time}")
+                print(f"    Link: https://youtu.be/{video_id}?t={time}")
                 shown_stamps.append(id_stamp)
 
 
@@ -270,16 +267,15 @@ def search_to_csv(channel_id, text, file_name):
             shown_stamps = []
 
             for quote in res: 
-                sub_id = quote[0]
-                vid_title = get_title_from_db(sub_id)
-                vid_id = quote[1]
-                time_stamp = quote[2]
-                subs = quote[3]
-                id_stamp =  vid_id + time_stamp[:-4]  
+                video_id = quote["video_id"]
+                video_title = get_title_from_db(video_id)
+                time_stamp = quote["timestamp"]
+                subs = quote["text"]
+                id_stamp =  video_id + time_stamp[:-4]  
                 time = time_to_secs(time_stamp) 
 
                 if id_stamp not in shown_stamps:
-                    writer.writerow([vid_title, subs.strip(), time_stamp, f"https://youtu.be/{vid_id}?t={time}"])
+                    writer.writerow([video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
                     shown_stamps.append(id_stamp)
 
 
