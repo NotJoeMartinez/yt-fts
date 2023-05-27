@@ -58,7 +58,7 @@ If this fails you can manually input the channel id with the `--channel-id` flag
 python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --channel-id "UC4woSp8ITBoYDmjkukhEhxg"
 ```
 
-To speed up downloads you can `--number-of-jobs` for multi threaded downloading 
+To speed up downloads you can specify `--number-of-jobs` for multi threaded downloading 
 ```bash
 python yt_fts.py download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
 ```
