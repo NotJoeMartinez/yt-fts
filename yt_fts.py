@@ -107,14 +107,14 @@ def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
 
 def get_vtt(tmp_dir, video_url, language):
     subprocess.run([
-            "yt-dlp",
-            "-o", f"{tmp_dir}/%(id)s.%(ext)s",  
-            "--write-auto-sub",  
-            "--convert-subs", "vtt",  
-            "--skip-download",  
-            "--sub-langs", f"{language},-live_chat",
-            video_url 
-        ])
+        "yt-dlp",
+        "-o", f"{tmp_dir}/%(id)s.%(ext)s",
+        "--write-auto-sub",
+        "--convert-subs", "vtt",
+        "--skip-download",
+        "--sub-langs", f"{language},-live_chat",
+        video_url
+    ])
 
 def get_videos_list(channel_url):
     cmd = [
