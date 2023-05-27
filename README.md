@@ -62,6 +62,16 @@ You can specify expected subtitles language
 python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --language de
 ```
 
+To speed up downloads you can specify `--number-of-jobs` for multi threaded downloading 
+```bash
+python yt_fts.py download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
+```
+
+You can specify expected subtitles with `--language`
+```bash
+python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --language de
+```
+
 ### `list`
 Will list all of your downloaded channels 
 ```bash

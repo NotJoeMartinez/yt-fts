@@ -4,6 +4,8 @@ import os, tempfile, subprocess, requests, datetime, csv
 from tabulate import tabulate
 from progress.bar import Bar
 
+from concurrent.futures import ThreadPoolExecutor
+
 from bs4 import BeautifulSoup
 import json
 
@@ -25,12 +27,15 @@ def list():
 @click.argument('channel_url', required=True)
 @click.option('--channel-id', default=None, help='Optional channel id to override the one from the url')
 @click.option('--language', default="en", help='Language of the subtitles to download')
-def download(channel_url, channel_id, language):
+@click.option('--number-of-jobs', type=int, default=1, help='Optional number of jobs to parallelize the run')
+@click.option('--language', default="en", help='Language of the subtitles to download')
+def download(channel_url, channel_id, language, number_of_jobs):
+    handle_reject_consent_cookie(channel_url)
     handle_reject_consent_cookie(channel_url)
     if channel_id is None:
         channel_id = get_channel_id(channel_url)
     if channel_id:
-        download_channel(channel_id, language)
+        download_channel(channel_id, language, number_of_jobs)
     else:
         print("Error finding channel id try --channel-id option")
 
@@ -74,8 +79,6 @@ cli.add_command(search)
 cli.add_command(delete)
 cli.add_command(export)
 
-
-
 def handle_reject_consent_cookie(channel_url):
     r = s.get(channel_url)
     if "https://consent.youtube.com" in r.url:
@@ -92,25 +95,58 @@ def handle_reject_consent_cookie(channel_url):
             }
             s.post("https://consent.youtube.com/save", data=data)
 
-def download_channel(channel_id, language):
+def download_channel(channel_id, language, number_of_jobs):
     print("Downloading channel")
     with tempfile.TemporaryDirectory() as tmp_dir:
         print('Saving vtt files to', tmp_dir)
 
         channel_name = get_channel_name(channel_id)
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
-        subprocess.run([
-            "yt-dlp",
-            "-o", f"{tmp_dir}/%(id)s.%(ext)s",  
-            "--write-auto-sub",  
-            "--convert-subs", "vtt",  
-            "--skip-download",  
-            "--sub-langs", f"{language},-live_chat",
-            channel_url
-        ])
+        list_of_videos_urls = get_videos_list(channel_url)
+
+        download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
+
         print("Adding VTT data to db")
         vtt_to_db(channel_id, tmp_dir)
+
+
+def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
+    executor = ThreadPoolExecutor(number_of_jobs)
+    futures = []
+    for video_id in list_of_videos_urls:
+        video_url = f'https://www.youtube.com/watch?v={video_id}'
+        future = executor.submit(get_vtt, tmp_dir, video_url, language)
+        futures.append(future)
+    
+    for i in range(len(list_of_videos_urls)):
+        futures[i].result()
+
+
+def get_vtt(tmp_dir, video_url, language):
+    subprocess.run([
+        "yt-dlp",
+        "-o", f"{tmp_dir}/%(id)s.%(ext)s",
+        "--write-auto-sub",
+        "--convert-subs", "vtt",
+        "--skip-download",
+            "--sub-langs", f"{language},-live_chat",
+        "--sub-langs", f"{language},-live_chat",
+        video_url
+    ])
+
+def get_videos_list(channel_url):
+    cmd = [
+        "yt-dlp",
+        "--flat-playlist",
+        "--print",
+        "id",
+        f"{channel_url}"
+    ]
+    res = subprocess.run(cmd, capture_output=True, check=True)
+    list_of_videos_urls = res.stdout.decode().splitlines()
+    return list_of_videos_urls
+
 
 def vtt_to_db(channel_id, dir_path):
     items = os.listdir(dir_path)
@@ -292,6 +328,22 @@ def time_to_secs(time_str):
 
     total_secs =  hours + mins + secs
     return total_secs - 3
+
+def handle_reject_consent_cookie(channel_url):
+    r = s.get(channel_url)
+    if "https://consent.youtube.com" in r.url:
+        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
+        if m:
+            data = {
+                "gl":"DE",
+                "pc":"yt",
+                "continue":channel_url,
+                "x":"6",
+                "bl":m.group(1),
+                "hl":"de",
+                "set_eom":"true"
+            }
+            s.post("https://consent.youtube.com/save", data=data)
 
 
 
