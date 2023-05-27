@@ -54,29 +54,30 @@ Will download all of a channels vtt files into your database
 python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
-**`--channel-id`**
+**`--channel-id [youtube channel id]`**
 
-If `download` fails you can manually input the channel id with the `--channel-id` flag
+If `download` fails you can manually input the channel id with the `--channel-id` flag.
+The channel url should still be an argument 
 ```bash
 python yt_fts.py download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
-**`--language`**
+**`--language [en/fr/es/etc..]`**
 
-You can specify expected subtitles language
+Specify subtitles language 
 ```bash
 python yt_fts.py download --language de "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
-**``--number-of-jobs`**
+**`--number-of-jobs [number]`**
 
-To speed up downloads you can specify `--number-of-jobs` for multi threaded downloading 
+Speed up downloads with multi threading 
 ```bash
 python yt_fts.py download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
 ### `list`
-Will list all of your downloaded channels 
+List all of your downloaded channels 
 ```bash
 python yt_fts.py list
 ```
@@ -90,8 +91,8 @@ UC4woSp8ITBoYDmjkukhEhxg  The Tim Dillon Show  https://www.youtube.com/channel/U
 ```
 
 ### `search`
-Will search a channel for text based off the channel id you give it and 
-will print a url to that point in the video
+Search a channel for text based off the channel id you give it and 
+print a url to that point in the video
 ```bash
 python yt_fts.py search [channel_id] "text you want to find"
 ```
