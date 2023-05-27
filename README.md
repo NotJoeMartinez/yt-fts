@@ -53,23 +53,26 @@ Will download all of a channels vtt files into your database
 ```bash
 python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos"
 ```
-If this fails you can manually input the channel id with the `--channel-id` flag
+
+**`--channel-id`**
+
+If `download` fails you can manually input the channel id with the `--channel-id` flag
 ```bash
-python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --channel-id "UC4woSp8ITBoYDmjkukhEhxg"
+python yt_fts.py download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
 ```
+
+**`--language`**
+
 You can specify expected subtitles language
 ```bash
-python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --language de
+python yt_fts.py download --language de "https://www.youtube.com/@TimDillonShow/videos" 
 ```
+
+**``--number-of-jobs`**
 
 To speed up downloads you can specify `--number-of-jobs` for multi threaded downloading 
 ```bash
 python yt_fts.py download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
-```
-
-You can specify expected subtitles with `--language`
-```bash
-python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos" --language de
 ```
 
 ### `list`
