@@ -31,7 +31,6 @@ def list():
 @click.option('--language', default="en", help='Language of the subtitles to download')
 def download(channel_url, channel_id, language, number_of_jobs):
     handle_reject_consent_cookie(channel_url)
-    handle_reject_consent_cookie(channel_url)
     if channel_id is None:
         channel_id = get_channel_id(channel_url)
     if channel_id:
@@ -78,22 +77,6 @@ cli.add_command(download)
 cli.add_command(search)
 cli.add_command(delete)
 cli.add_command(export)
-
-def handle_reject_consent_cookie(channel_url):
-    r = s.get(channel_url)
-    if "https://consent.youtube.com" in r.url:
-        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
-        if m:
-            data = {
-                "gl":"DE",
-                "pc":"yt",
-                "continue":channel_url,
-                "x":"6",
-                "bl":m.group(1),
-                "hl":"de",
-                "set_eom":"true"
-            }
-            s.post("https://consent.youtube.com/save", data=data)
 
 def download_channel(channel_id, language, number_of_jobs):
     print("Downloading channel")
