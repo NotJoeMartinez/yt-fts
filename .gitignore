@@ -158,3 +158,4 @@ saved_vtt/**
 tests/
 *.html
 *.csv
+make_dist.sh

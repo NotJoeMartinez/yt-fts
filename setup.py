@@ -5,7 +5,7 @@ with open('requirements.txt') as f:
 
 entry_points = {
     'console_scripts': [
-        'yt_fts=yt_fts.yt_fts:main',
+        'yt_fts=yt_fts.yt_fts:cli',
     ],
 }
 

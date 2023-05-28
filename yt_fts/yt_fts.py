@@ -6,12 +6,7 @@ from progress.bar import Bar
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 
-
-
-from db_scripts import * 
-
-def main():
-    cli()
+from yt_fts.db_scripts import *
 
 @click.group()
 def cli():
@@ -31,11 +26,15 @@ def list():
 @click.option('--number-of-jobs', type=int, default=1, help='Optional number of jobs to parallelize the run')
 @click.option('--language', default="en", help='Language of the subtitles to download')
 def download(channel_url, channel_id, language, number_of_jobs):
-    handle_reject_consent_cookie(channel_url)
+    s = requests.session()
+    handle_reject_consent_cookie(channel_url, s)
     if channel_id is None:
-        channel_id = get_channel_id(channel_url)
+        channel_id = get_channel_id(channel_url, s)
+    
+    channel_name = get_channel_name(channel_id, s)
+
     if channel_id:
-        download_channel(channel_id, language, number_of_jobs)
+        download_channel(channel_id, channel_name, language, number_of_jobs, s)
     else:
         print("Error finding channel id try --channel-id option")
 
@@ -79,12 +78,11 @@ cli.add_command(search)
 cli.add_command(delete)
 cli.add_command(export)
 
-def download_channel(channel_id, language, number_of_jobs):
+def download_channel(channel_id, channel_name, language, number_of_jobs, s):
     print("Downloading channel")
     with tempfile.TemporaryDirectory() as tmp_dir:
         print('Saving vtt files to', tmp_dir)
 
-        channel_name = get_channel_name(channel_id)
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         list_of_videos_urls = get_videos_list(channel_url)
 
@@ -92,7 +90,7 @@ def download_channel(channel_id, language, number_of_jobs):
         add_channel_info(channel_id, channel_name, channel_url)
 
         print("Adding VTT data to db")
-        vtt_to_db(channel_id, tmp_dir)
+        vtt_to_db(channel_id, tmp_dir, s)
 
 
 def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
@@ -133,7 +131,7 @@ def get_videos_list(channel_url):
     return list_of_videos_urls
 
 
-def vtt_to_db(channel_id, dir_path):
+def vtt_to_db(channel_id, dir_path, s):
     items = os.listdir(dir_path)
 
     file_paths = []
@@ -152,7 +150,7 @@ def vtt_to_db(channel_id, dir_path):
         base_name = os.path.basename(vtt)
         vid_id = re.match(r'^([^.]*)', base_name).group(1)
         vid_url = f"https://youtu.be/{vid_id}"
-        vid_title = get_vid_title(vid_url)
+        vid_title = get_vid_title(vid_url, s)
         add_video(channel_id, vid_id, vid_title, vid_url)
 
         vtt_json = parse_vtt(vtt)
@@ -268,7 +266,7 @@ def time_to_secs(time_str):
     return total_secs - 3
 
 
-def get_vid_title(vid_url):
+def get_vid_title(vid_url, s):
     res = s.get(vid_url)
     if res.status_code == 200:
         html = res.text
@@ -279,7 +277,7 @@ def get_vid_title(vid_url):
         return None
         
  
-def get_channel_id(url):
+def get_channel_id(url, s):
     res = s.get(url)
     if res.status_code == 200:
         html = res.text
@@ -290,7 +288,7 @@ def get_channel_id(url):
         return None
 
 
-def get_channel_name(channel_id):
+def get_channel_name(channel_id, s):
 
     res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
 
@@ -316,7 +314,7 @@ def get_channel_name(channel_id):
         return None
 
 
-def handle_reject_consent_cookie(channel_url):
+def handle_reject_consent_cookie(channel_url, s):
     r = s.get(channel_url)
     if "https://consent.youtube.com" in r.url:
         m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
@@ -332,8 +330,4 @@ def handle_reject_consent_cookie(channel_url):
             }
             s.post("https://consent.youtube.com/save", data=data)
 
-
-if __name__ == '__main__':
-    s = requests.session()
-    main()
 
