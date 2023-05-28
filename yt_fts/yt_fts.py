@@ -1,16 +1,17 @@
-import click, re, sqlite3 
+import click, re, sqlite3, json 
 import os, tempfile, subprocess, requests, datetime, csv
 
 from tabulate import tabulate
 from progress.bar import Bar
-
 from concurrent.futures import ThreadPoolExecutor
-
 from bs4 import BeautifulSoup
-import json
+
 
 
 from db_scripts import * 
+
+def main():
+    cli()
 
 @click.group()
 def cli():
@@ -329,9 +330,7 @@ def handle_reject_consent_cookie(channel_url):
             s.post("https://consent.youtube.com/save", data=data)
 
 
-
-
-
 if __name__ == '__main__':
     s = requests.session()
-    cli()
+    main()
+
