@@ -9,14 +9,21 @@ the video containing the keyword.
 
 ### Installation 
 
+**pip**
+```bash
+pip install yt-fts
+```
+
+**from source**
 ```bash
 git clone https://github.com/NotJoeMartinez/yt-fts
-cd yt-fts
 python3 -m venv .env
 source .env/bin/activate
 pip install -r requirements.txt
+python3 -m yt-fts
 ```
 
+### Dependencies 
 This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. Platform specific installation instructions are available on the [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation). 
 
 **pip**
@@ -32,10 +39,9 @@ brew install yt-dlp
 winget install yt-dlp
 ```
 
-
 ### Usage 
 ```
-Usage: yt_fts.py [OPTIONS] COMMAND [ARGS]...
+Usage: yt-fts [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -51,7 +57,7 @@ Commands:
 ### `download`
 Will download all of a channels vtt files into your database 
 ```bash
-python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos"
+yt-fts download "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
 **`--channel-id [youtube channel id]`**
@@ -59,27 +65,27 @@ python yt_fts.py download "https://www.youtube.com/@TimDillonShow/videos"
 If `download` fails you can manually input the channel id with the `--channel-id` flag.
 The channel url should still be an argument 
 ```bash
-python yt_fts.py download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
+yt-fts download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
 **`--language [en/fr/es/etc..]`**
 
 Specify subtitles language 
 ```bash
-python yt_fts.py download --language de "https://www.youtube.com/@TimDillonShow/videos" 
+yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
 **`--number-of-jobs [number]`**
 
 Speed up downloads with multi threading 
 ```bash
-python yt_fts.py download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
+yt-fts download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
 ### `list`
 List all of your downloaded channels 
 ```bash
-python yt_fts.py list
+yt-fts list
 ```
 
 output:
@@ -94,12 +100,12 @@ UC4woSp8ITBoYDmjkukhEhxg  The Tim Dillon Show  https://www.youtube.com/channel/U
 Search a channel for text based off the channel id you give it and 
 print a url to that point in the video
 ```bash
-python yt_fts.py search [channel_id] "text you want to find"
+yt-fts search [channel_id] "text you want to find"
 ```
 **EX:**
 
 ```bash
-python yt_fts.py search UC4woSp8ITBoYDmjkukhEhxg "life in the big city"
+yt-fts search UC4woSp8ITBoYDmjkukhEhxg "life in the big city"
 ```
 output:
 ```
@@ -125,9 +131,12 @@ Video title"('164 - Life In The Big City - YouTube',)"
 ### `Export`
 Similar to `search` except it will export all of the search results to a csv 
 with the format: `Video Title,Quote,Time Stamp,Link` as it's headers
+```bash
+yt-fts export UC4woSp8ITBoYDmjkukhEhxg "life in the big city" 
+```
 
 ### `Delete` 
 Will delete a channel from your database 
 ```bash
-python yt_fts.py delete [channel_id]
+yt-fts delete [channel_id]
 ```

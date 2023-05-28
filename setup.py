@@ -5,13 +5,13 @@ with open('requirements.txt') as f:
 
 entry_points = {
     'console_scripts': [
-        'yt_fts=yt_fts.yt_fts:cli',
+        'yt-fts=yt_fts.yt_fts:cli',
     ],
 }
 
 setup(
     name='yt-fts', 
-    version='0.1.2',
+    version='0.1.3',
     description='yt-fts is a simple python script that uses yt-dlp to scrape all of a youtube channels subtitles and load them into an sqlite database that is searchable from the command line. It allows you to query a channel for specific key word or phrase and will generate time stamped youtube urls to the video containing the keyword.', 
     author='NotJoeMartinez',
     url='https://github.com/NotJoeMartinez/yt-fts',  
