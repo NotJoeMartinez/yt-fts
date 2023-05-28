@@ -119,6 +119,7 @@ def get_vtt(tmp_dir, video_url, language):
         video_url
     ])
 
+
 def get_videos_list(channel_url):
     cmd = [
         "yt-dlp",
@@ -166,7 +167,7 @@ def vtt_to_db(channel_id, dir_path):
 
     bar.finish() 
     con.close()
-        
+
 
 def parse_vtt(file_path):
 
@@ -195,53 +196,6 @@ def parse_vtt(file_path):
         
     return result 
 
-
-def get_vid_title(vid_url):
-    res = s.get(vid_url)
-    if res.status_code == 200:
-        html = res.text
-        soup = BeautifulSoup(html, 'html.parser')
-        title = soup.title.string
-        return title 
-    else:
-        return None
-        
-
- 
-def get_channel_id(url):
-    res = s.get(url)
-    if res.status_code == 200:
-        html = res.text
-        channel_id = re.search('channelId":"(.{24})"', html).group(1)
-        print(channel_id)
-        return channel_id
-    else:
-        return None
-
-def get_channel_name(channel_id):
-
-    res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
-
-    if res.status_code == 200:
-
-        html = res.text
-        soup = BeautifulSoup(html, 'html.parser')
-        script = soup.find('script', type='application/ld+json')
-
-        # Hot fix for channels with special characters in the name
-        try:
-            print("Trying to parse json normally")
-            data = json.loads(script.string)
-        except:
-            print("json parse failed retrying with escaped backslashes")
-            script = script.string.replace('\\', '\\\\')
-            data = json.loads(script)
-
-        channel_name = data['itemListElement'][0]['item']['name']
-        print(channel_name)
-        return channel_name 
-    else:
-        return None
 
 def get_quotes(channel_id, text):
     res = search_channel(channel_id, text)
@@ -312,6 +266,55 @@ def time_to_secs(time_str):
 
     total_secs =  hours + mins + secs
     return total_secs - 3
+
+
+def get_vid_title(vid_url):
+    res = s.get(vid_url)
+    if res.status_code == 200:
+        html = res.text
+        soup = BeautifulSoup(html, 'html.parser')
+        title = soup.title.string
+        return title 
+    else:
+        return None
+        
+ 
+def get_channel_id(url):
+    res = s.get(url)
+    if res.status_code == 200:
+        html = res.text
+        channel_id = re.search('channelId":"(.{24})"', html).group(1)
+        print(channel_id)
+        return channel_id
+    else:
+        return None
+
+
+def get_channel_name(channel_id):
+
+    res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
+
+    if res.status_code == 200:
+
+        html = res.text
+        soup = BeautifulSoup(html, 'html.parser')
+        script = soup.find('script', type='application/ld+json')
+
+        # Hot fix for channels with special characters in the name
+        try:
+            print("Trying to parse json normally")
+            data = json.loads(script.string)
+        except:
+            print("json parse failed retrying with escaped backslashes")
+            script = script.string.replace('\\', '\\\\')
+            data = json.loads(script)
+
+        channel_name = data['itemListElement'][0]['item']['name']
+        print(channel_name)
+        return channel_name 
+    else:
+        return None
+
 
 def handle_reject_consent_cookie(channel_url):
     r = s.get(channel_url)
