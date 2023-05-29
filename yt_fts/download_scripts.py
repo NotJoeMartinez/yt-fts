@@ -5,33 +5,33 @@ from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 
 from yt_fts.db_scripts import add_video
+from yt_fts.utils import parse_vtt
 
 
-def get_vid_title(vid_url, s):
-    res = s.get(vid_url)
-    if res.status_code == 200:
-        html = res.text
-        soup = BeautifulSoup(html, 'html.parser')
-        title = soup.title.string
-        return title 
-    else:
-        return None
-
-
-def get_videos_list(channel_url):
-    cmd = [
-        "yt-dlp",
-        "--flat-playlist",
-        "--print",
-        "id",
-        f"{channel_url}"
-    ]
-    res = subprocess.run(cmd, capture_output=True, check=True)
-    list_of_videos_urls = res.stdout.decode().splitlines()
-    return list_of_videos_urls 
+def handle_reject_consent_cookie(channel_url, s):
+    """
+    Auto rejects the consent cookie if request is redirected to the consent page
+    """
+    r = s.get(channel_url)
+    if "https://consent.youtube.com" in r.url:
+        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
+        if m:
+            data = {
+                "gl":"DE",
+                "pc":"yt",
+                "continue":channel_url,
+                "x":"6",
+                "bl":m.group(1),
+                "hl":"de",
+                "set_eom":"true"
+            }
+            s.post("https://consent.youtube.com/save", data=data)
 
 
 def get_channel_id(url, s):
+    """
+    Scrapes channel id from the channel page
+    """
     res = s.get(url)
     if res.status_code == 200:
         html = res.text
@@ -43,7 +43,9 @@ def get_channel_id(url, s):
 
 
 def get_channel_name(channel_id, s):
-
+    """
+    Scrapes channel name from the channel page
+    """
     res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
 
     if res.status_code == 200:
@@ -68,25 +70,26 @@ def get_channel_name(channel_id, s):
         return None
 
 
-def handle_reject_consent_cookie(channel_url, s):
-    r = s.get(channel_url)
-    if "https://consent.youtube.com" in r.url:
-        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
-        if m:
-            data = {
-                "gl":"DE",
-                "pc":"yt",
-                "continue":channel_url,
-                "x":"6",
-                "bl":m.group(1),
-                "hl":"de",
-                "set_eom":"true"
-            }
-            s.post("https://consent.youtube.com/save", data=data)
-
+def get_videos_list(channel_url):
+    """
+    Scrapes list of all video urls from the channel
+    """
+    cmd = [
+        "yt-dlp",
+        "--flat-playlist",
+        "--print",
+        "id",
+        f"{channel_url}"
+    ]
+    res = subprocess.run(cmd, capture_output=True, check=True)
+    list_of_videos_urls = res.stdout.decode().splitlines()
+    return list_of_videos_urls 
 
 
 def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
+    """
+    Multi-threaded download of vtt files
+    """
     executor = ThreadPoolExecutor(number_of_jobs)
     futures = []
     for video_id in list_of_videos_urls:
@@ -108,36 +111,14 @@ def get_vtt(tmp_dir, video_url, language):
         "--sub-langs", f"{language},-live_chat",
         video_url
     ])
-
-
-def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
-    executor = ThreadPoolExecutor(number_of_jobs)
-    futures = []
-    for video_id in list_of_videos_urls:
-        video_url = f'https://www.youtube.com/watch?v={video_id}'
-        future = executor.submit(get_vtt, tmp_dir, video_url, language)
-        futures.append(future)
-    
-    for i in range(len(list_of_videos_urls)):
-        futures[i].result()
-
-
-def get_vtt(tmp_dir, video_url, language):
-    subprocess.run([
-        "yt-dlp",
-        "-o", f"{tmp_dir}/%(id)s.%(ext)s",
-        "--write-auto-sub",
-        "--convert-subs", "vtt",
-        "--skip-download",
-        "--sub-langs", f"{language},-live_chat",
-        video_url
-    ])
-
 
 
 def vtt_to_db(channel_id, dir_path, s):
+    """
+    Iterates through all vtt files in the temp_dir, passes them to 
+    the vtt parsing function, then inserts the data into the database.
+    """
     items = os.listdir(dir_path)
-
     file_paths = []
 
     for item in items:
@@ -171,30 +152,15 @@ def vtt_to_db(channel_id, dir_path, s):
     con.close()
 
 
-def parse_vtt(file_path):
-
-    result = []
-
-    time_pattern = "^(.*) align:start position:0%"
-
-    with open(file_path, "r") as f:
-        lines = f.readlines()
-
-    for count, line in enumerate(lines):
-        time_match = re.match(time_pattern, line)
-
-        if time_match:
-            start = re.search("^(.*) -->",time_match.group(1))
-            start_time = start.group(1)
-            sub_titles = lines[count + 1]
-
-            # prevent duplicate entries
-            if result and result[-1]['text'] == sub_titles.strip('\n'):
-                continue
-            else:   
-                result.append({
-                    'start_time': start_time,
-                    'text': sub_titles.strip('\n'),
-                })
-
-    return result 
+def get_vid_title(vid_url, s):
+    """
+    Scrapes video title from the video page
+    """
+    res = s.get(vid_url)
+    if res.status_code == 200:
+        html = res.text
+        soup = BeautifulSoup(html, 'html.parser')
+        title = soup.title.string
+        return title 
+    else:
+        return None

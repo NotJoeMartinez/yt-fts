@@ -27,6 +27,7 @@ def list():
 def download(channel_url, channel_id, language, number_of_jobs):
     s = requests.session()
     handle_reject_consent_cookie(channel_url, s)
+
     if channel_id is None:
         channel_id = get_channel_id(channel_url, s)
     
@@ -38,7 +39,7 @@ def download(channel_url, channel_id, language, number_of_jobs):
         print("Error finding channel id try --channel-id option")
 
 
-@click.command( help='search [channel id] [search text]')
+@click.command( help='search [channel_id] [search_text]')
 @click.argument('search_text', required=True)
 @click.option('--all', is_flag=True, help='Search in all channels')
 @click.argument('channel_id', required=False)
@@ -46,18 +47,19 @@ def search(channel_id, search_text, all):
     if len(search_text) > 40:
         show_message("search_too_long")
         return
+
     if all:
         click.echo('Searching in all channels')
-        get_quotes("all", search_text)
+        get_text("all", search_text)
     else:
         if channel_id is None:
             click.echo('Error: Channel ID is required when not using --all option')
             return
         click.echo(f'Searching in channel {channel_id}')
-        get_quotes(channel_id, search_text)
+        get_text(channel_id, search_text)
 
 
-@click.command( help="export [channel id] [search text]")
+@click.command( help="export [channel_id] [search_text]")
 @click.argument("search_text", required=True)
 @click.option("--all", is_flag=True, help="Export from all channels")
 @click.argument("channel_id", required=False)
@@ -65,27 +67,31 @@ def export(channel_id, search_text, all):
     if len(search_text) > 40:
         show_message("search_too_long")
         return
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
     if all:
         file_name = f"all_{timestamp}.csv"
         click.echo(f"Exporting search results from all channels to csv: {file_name}")
-        search_to_csv("all", search_text, file_name)
+        export_search("all", search_text, file_name)
     else:
         if channel_id is None:
             click.echo("Error: Channel ID is required when not using --all option")
             return
         file_name = f"{channel_id}_{timestamp}.csv"
         click.echo(f"Exporting search results to csv: {file_name}")
-        search_to_csv(channel_id, search_text, file_name)
+        export_search(channel_id, search_text, file_name)
 
 
-@click.command( help="delete [channel id]")
+@click.command( help="delete [channel_id]")
 @click.argument("channel_id", required=True)
 def delete(channel_id):
     channel_name = get_channel_name_from_id(channel_id) 
+
     print(f"Deleting channel {channel_name}")
     print("Are you sure you want to delete this channel and all its data?")
     confirm = input("y/n: ")
+
     if confirm == "y":
         click.echo(f'deleting channel {channel_name}')
         delete_channel(channel_id)
@@ -93,28 +99,28 @@ def delete(channel_id):
         print("Aborting")
 
 
-cli.add_command(list)
-cli.add_command(download)
-cli.add_command(search)
-cli.add_command(delete)
-cli.add_command(export)
+commands = [list, download, search, delete, export]
+
+for command in commands:
+    cli.add_command(command)
 
 
 def download_channel(channel_id, channel_name, language, number_of_jobs, s):
-    print("Downloading channel")
+    """
+    Downloads all the videos from a channel to a tmp directory
+    """
     with tempfile.TemporaryDirectory() as tmp_dir:
-
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         list_of_videos_urls = get_videos_list(channel_url)
-
         download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
-
         vtt_to_db(channel_id, tmp_dir, s)
 
 
-def get_quotes(channel_id, text):
-
+def get_text(channel_id, text):
+    """
+    Calls search functions and prints the results 
+    """
     if channel_id == "all":
         res = search_all(text)
     else:
@@ -126,14 +132,10 @@ def get_quotes(channel_id, text):
 
     for quote in res:
         video_id = quote["video_id"]
-
-        video_title = get_title_from_db(video_id)
-
-        channel_name = get_channel_name_from_video_id(video_id)
-
-        time_stamp = quote["timestamp"]
         subs = quote["text"]
-
+        time_stamp = quote["timestamp"]
+        video_title = get_title_from_db(video_id)
+        channel_name = get_channel_name_from_video_id(video_id)
         time = time_to_secs(time_stamp) 
 
         print("")
@@ -144,7 +146,10 @@ def get_quotes(channel_id, text):
         print(f"    Link: https://youtu.be/{video_id}?t={time}\n")
 
 
-def search_to_csv(channel_id, text, file_name):
+def export_search(channel_id, text, file_name):
+    """
+    Calls search functions and exports the results to a csv file
+    """
     if channel_id == "all":
         res = search_all(text)
     else:
@@ -160,14 +165,10 @@ def search_to_csv(channel_id, text, file_name):
         
         for quote in res:
             video_id = quote["video_id"]
-
             channel_name = get_channel_name_from_video_id(video_id)
-
             video_title = get_title_from_db(video_id)
-
             time_stamp = quote["timestamp"]
             subs = quote["text"]
-
             time = time_to_secs(time_stamp) 
 
             writer.writerow([channel_name,video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
