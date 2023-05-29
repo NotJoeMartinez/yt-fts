@@ -1,111 +1,112 @@
-import sqlite3
+from sqlite_utils import Database
+
+db_name = 'subtitles.db'
 
 def make_db():
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
+    db = Database(db_name)
 
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS Channels (
-            channel_id TEXT PRIMARY KEY,
-            channel_name TEXT NOT NULL,
-            channel_url TEXT NOT NULL
-        );
-    ''')
+    db["Channels"].create({
+            "channel_id": str,
+            "channel_name": str,
+            "channel_url": str,
+        }, 
+        pk="channel_id", 
+        not_null={"channel_name", "channel_url"}, 
+        if_not_exists=True
+    )
 
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS Videos (
-            video_id TEXT PRIMARY KEY,
-            video_title TEXT NOT NULL,
-            video_url TEXT NOT NULL,
-            channel_id TEXT,
-            FOREIGN KEY(channel_id) REFERENCES Channels(channel_id)
-        );
-    ''')
+    db["Videos"].create({
+            "video_id": str,
+            "video_title": str,
+            "video_url": str,
+            "channel_id": str
+        }, 
+        pk="video_id", 
+        not_null={"video_title", "video_url"}, 
+        if_not_exists=True, 
+        foreign_keys=[
+            ("channel_id", "Channels")
+        ]
+    )
 
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS Subtitles (
-            subtitle_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            video_id TEXT,
-            timestamp TEXT NOT NULL,
-            text TEXT NOT NULL,
-            FOREIGN KEY(video_id) REFERENCES Videos(video_id)
-        );
-    ''')
-
-    con.commit()
-    con.close()
+    db["Subtitles"].create(
+        {
+            "subtitle_id": int,
+            "video_id": str,
+            "timestamp": str,
+            "text": str
+        }, 
+        pk="subtitle_id", 
+        not_null={"timestamp", "text"}, 
+        if_not_exists=True, 
+        foreign_keys=[
+            ("video_id", "Videos")
+        ]
+    ).enable_fts(
+        ["text"], 
+        create_triggers=True, 
+        replace=True
+    )
 
 
 def add_channel_info(channel_id, channel_name, channel_url):
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
+    db = Database(db_name)
 
-    cur.execute(f"INSERT INTO Channels VALUES (?, ?, ?)", (channel_id, channel_name, channel_url))
-    con.commit()
-    con.close()
-
-
-def add_video(channel_id, vid_id,  vid_title, vid_url):
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
-
-    cur.execute(f"INSERT INTO Videos VALUES (?, ?, ?, ?)", (vid_id, vid_title, vid_url, channel_id))
-    con.commit()
-    con.close()
+    db["Channels"].insert({
+        "channel_id": channel_id,
+        "channel_name": channel_name,
+        "channel_url": channel_url
+    })
 
 
-def add_subtitle(vid_id, start_time, text):
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
+def add_video(channel_id, video_id,  video_title, video_url):
+    db = Database(db_name)
 
-    cur.execute(f"INSERT INTO Subtitles (video_id, timestamp, text) VALUES (?, ?, ?)", (vid_id, start_time, text))
-    con.commit()
-    con.close()
+    db["Videos"].insert({
+        "video_id": video_id,
+        "video_title": video_title,
+        "video_url": video_url,
+        "channel_id": channel_id
+    })
 
+
+def add_subtitle(video_id, start_time, text):
+    db = Database(db_name)
+
+    db["Subtitles"].insert({
+        "video_id": video_id,
+        "timestamp": start_time,
+        "text": text
+    })
 
 
 def get_channels():
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
+    db = Database(db_name)
 
-    cur.execute(f"SELECT * FROM Channels")
-    res = cur.fetchall()
-    con.close()
-    return res
+    return db.execute("SELECT * FROM Channels").fetchall()
 
 
 def search_channel(channel_id, text):
-    con = sqlite3.connect('subtitles.db')  
-    cur = con.cursor()  
+    db = Database(db_name)
 
-    cur.execute(f"SELECT * FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?) AND text LIKE ?", (channel_id, '%'+text+'%'))
-    res = cur.fetchall()
-    con.close()
-    return res
+    return list(db["Subtitles"].search(text, where=f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')"))
 
 
-def get_title_from_db(sub_id):
-    con = sqlite3.connect('subtitles.db')
-    cur = con.cursor()
-    cur.execute(f"SELECT video_title FROM Videos WHERE video_id IN (SELECT video_id FROM Subtitles WHERE subtitle_id = ?)", (sub_id,))
-    res = cur.fetchone()
-    con.close()
-    return res
+def get_title_from_db(video_id):
+    db = Database(db_name)
+
+    return db.execute(f"SELECT video_title FROM Videos WHERE video_id = ?", [video_id]).fetchone()
 
 
 def get_channel_name_from_db(channel_id):
-    con = sqlite3.connect('subtitles.db')
-    cur = con.cursor()
-    cur.execute(f"SELECT channel_name FROM Channels WHERE channel_id = ?", (channel_id,))
-    res = cur.fetchone()
-    con.close()
-    return res[0]
+    db = Database(db_name)
+
+    return db.execute(f"SELECT channel_name FROM Channels WHERE channel_id = ?", [channel_id]).fetchone()[0]
+
 
 def delete_channel(channel_id):
-    con = sqlite3.connect('subtitles.db')
-    cur = con.cursor()
-    cur.execute(f"DELETE FROM Channels WHERE channel_id = ?", (channel_id,))
-    cur.execute(f"DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
-    cur.execute(f"DELETE FROM Videos WHERE channel_id = ?", (channel_id,))
-    con.commit()
-    con.close()
+    db = Database(db_name)
+    
+    db.execute(f"DELETE FROM Channels WHERE channel_id = ?", [channel_id])
+    db.execute(f"DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", [channel_id])
+    db.execute(f"DELETE FROM Videos WHERE channel_id = ?", [channel_id])
