@@ -41,33 +41,50 @@ def download(channel_url, channel_id, language, number_of_jobs):
 
 
 @click.command( help='search [channel id] [search text]')
-@click.argument('channel_id', required=True)
 @click.argument('search_text', required=True)
-def search(channel_id, search_text):
+@click.option('--all', is_flag=True, help='Search in all channels')
+@click.argument('channel_id', required=False)
+def search(channel_id, search_text, all):
     if len(search_text) > 40:
         show_message("search_too_long")
         return
-    click.echo(f'Searching in channel {channel_id}')
-    get_quotes(channel_id, search_text)
+    if all:
+        click.echo('Searching in all channels')
+        get_quotes("all", search_text)
+    else:
+        if channel_id is None:
+            click.echo('Error: Channel ID is required when not using --all option')
+            return
+        click.echo(f'Searching in channel {channel_id}')
+        get_quotes(channel_id, search_text)
 
 
-@click.command( help='export [channel id] [search text] ')
-@click.argument('channel_id', required=True)
-@click.argument('search_text', required=True)
-def export(channel_id, search_text):
+@click.command( help="export [channel id] [search text]")
+@click.argument("search_text", required=True)
+@click.option("--all", is_flag=True, help="Export from all channels")
+@click.argument("channel_id", required=False)
+def export(channel_id, search_text, all):
     if len(search_text) > 40:
         show_message("search_too_long")
         return
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f'{channel_id}_{timestamp}.csv'
-    click.echo(f'Exporting search results to csv: {file_name}')
-    search_to_csv(channel_id, search_text, file_name)
+    if all:
+        file_name = f"all_{timestamp}.csv"
+        click.echo(f"Exporting search results from all channels to csv: {file_name}")
+        search_to_csv("all", search_text, file_name)
+    else:
+        if channel_id is None:
+            click.echo("Error: Channel ID is required when not using --all option")
+            return
+        file_name = f"{channel_id}_{timestamp}.csv"
+        click.echo(f"Exporting search results to csv: {file_name}")
+        search_to_csv(channel_id, search_text, file_name)
 
 
-@click.command( help='delete [channel id]')
-@click.argument('channel_id', required=True)
+@click.command( help="delete [channel id]")
+@click.argument("channel_id", required=True)
 def delete(channel_id):
-    channel_name = get_channel_name_from_db(channel_id) 
+    channel_name = get_channel_name_from_id(channel_id) 
     print(f"Deleting channel {channel_name}")
     print("Are you sure you want to delete this channel and all its data?")
     confirm = input("y/n: ")
@@ -179,83 +196,85 @@ def parse_vtt(file_path):
 
     with open(file_path, "r") as f:
         lines = f.readlines()
-        for count, line in enumerate(lines):
-            time_match = re.match(time_pattern, line)
 
-            if time_match:
-                start = re.search("^(.*) -->",time_match.group(1))
-                start_time = start.group(1)
-                sub_titles = lines[count + 1]
+    for count, line in enumerate(lines):
+        time_match = re.match(time_pattern, line)
 
-                # prevent duplicate entries
-                if result and result[-1]['text'] == sub_titles.strip('\n'):
-                    continue
-                else:   
-                    result.append({
-                        'start_time': start_time,
-                        'text': sub_titles.strip('\n'),
-                    })
+        if time_match:
+            start = re.search("^(.*) -->",time_match.group(1))
+            start_time = start.group(1)
+            sub_titles = lines[count + 1]
+
+            # prevent duplicate entries
+            if result and result[-1]['text'] == sub_titles.strip('\n'):
+                continue
+            else:   
+                result.append({
+                    'start_time': start_time,
+                    'text': sub_titles.strip('\n'),
+                })
 
     return result 
 
 
 def get_quotes(channel_id, text):
-    res = search_channel(channel_id, text)
+
+    if channel_id == "all":
+        res = search_all(text)
+    else:
+        res = search_channel(channel_id, text)
 
     if len(res) == 0:
         show_message("no_matches_found")
-    else:
+        exit()
 
-        shown_titles = []
-        shown_stamps = []
+    for quote in res:
+        video_id = quote["video_id"]
 
-        for quote in res:
-            video_id = quote["video_id"]
-            video_title = get_title_from_db(video_id)
-            video_title = video_title[0]
-            time_stamp = quote["timestamp"]
-            subs = quote["text"]
-            id_stamp =  video_id + time_stamp[:-4]  
+        video_title = get_title_from_db(video_id)
 
-            time = time_to_secs(time_stamp) 
+        channel_name = get_channel_name_from_video_id(video_id)
 
-            if video_title not in shown_titles:
-                print(f"\nVideo Title: \"{video_title}\"")
-                shown_titles.append(video_title)
+        time_stamp = quote["timestamp"]
+        subs = quote["text"]
 
-            if id_stamp not in shown_stamps:
-                print(f"") 
-                print(f"    Quote: \"{subs.strip()}\"")
-                print(f"    Time Stamp: {time_stamp}")
-                print(f"    Link: https://youtu.be/{video_id}?t={time}\n")
-                shown_stamps.append(id_stamp)
+        time = time_to_secs(time_stamp) 
+
+        print("")
+        print(f"{channel_name}: \"{video_title}\"")
+        print(f"") 
+        print(f"    Quote: \"{subs.strip()}\"")
+        print(f"    Time Stamp: {time_stamp}")
+        print(f"    Link: https://youtu.be/{video_id}?t={time}\n")
 
 
 def search_to_csv(channel_id, text, file_name):
-    res = search_channel(channel_id, text)
+    if channel_id == "all":
+        res = search_all(text)
+    else:
+        res = search_channel(channel_id, text)
 
     if len(res) == 0:
         show_message("no_matches_found")
-    else:
-        with open(file_name, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['Video Title', 'Quote', 'Time Stamp', 'Link'])
-            
-            shown_stamps = []
+        exit()
 
-            for quote in res:
-                video_id = quote["video_id"]
-                video_title = get_title_from_db(video_id)
-                video_title = video_title[0]
-                time_stamp = quote["timestamp"]
-                subs = quote["text"]
-                id_stamp =  video_id + time_stamp[:-4]  
+    with open(file_name, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Channel Name','Video Title', 'Quote', 'Time Stamp', 'Link'])
+        
+        for quote in res:
+            video_id = quote["video_id"]
 
-                time = time_to_secs(time_stamp) 
+            channel_name = get_channel_name_from_video_id(video_id)
 
-                if id_stamp not in shown_stamps:
-                    writer.writerow([video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
-                    shown_stamps.append(id_stamp)
+            video_title = get_title_from_db(video_id)
+
+            time_stamp = quote["timestamp"]
+            subs = quote["text"]
+
+            time = time_to_secs(time_stamp) 
+
+            writer.writerow([channel_name,video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
 
 
 def time_to_secs(time_str):

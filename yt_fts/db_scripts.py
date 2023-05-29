@@ -96,14 +96,24 @@ def search_channel(channel_id, text):
 def get_title_from_db(video_id):
     db = Database(db_name)
 
-    return db.execute(f"SELECT video_title FROM Videos WHERE video_id = ?", [video_id]).fetchone()
+    return db.execute(f"SELECT video_title FROM Videos WHERE video_id = ?", [video_id]).fetchone()[0]
 
 
-def get_channel_name_from_db(channel_id):
+def search_all(text):
+    db = Database(db_name)
+
+    return list(db["Subtitles"].search(text))
+
+
+def get_channel_name_from_id(channel_id):
     db = Database(db_name)
 
     return db.execute(f"SELECT channel_name FROM Channels WHERE channel_id = ?", [channel_id]).fetchone()[0]
 
+def get_channel_name_from_video_id(video_id):
+    db = Database(db_name)
+
+    return db.execute(f"SELECT channel_name FROM Channels WHERE channel_id = (SELECT channel_id FROM Videos WHERE video_id = ?)", [video_id]).fetchone()[0]
 
 def delete_channel(channel_id):
     conn = sqlite3.connect(db_name)
