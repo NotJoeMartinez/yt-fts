@@ -152,7 +152,7 @@ with the format: `Channel Name,Video Title,Quote,Time Stamp,Link` as it's header
 yt-fts export "life in the big city" UC4woSp8ITBoYDmjkukhEhxg 
 ```
 
-You can export from all channels in you database as well
+You can export from all channels in your database as well
 ```bash
 yt-fts export "life in the big city" --all
 ```
