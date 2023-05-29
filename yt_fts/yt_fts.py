@@ -88,7 +88,6 @@ cli.add_command(export)
 def download_channel(channel_id, channel_name, language, number_of_jobs, s):
     print("Downloading channel")
     with tempfile.TemporaryDirectory() as tmp_dir:
-        print('Saving vtt files to', tmp_dir)
 
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         list_of_videos_urls = get_videos_list(channel_url)
@@ -96,7 +95,6 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):
         download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
 
-        print("Adding VTT data to db")
         vtt_to_db(channel_id, tmp_dir, s)
 
 
@@ -119,7 +117,6 @@ def get_vtt(tmp_dir, video_url, language):
         "--write-auto-sub",
         "--convert-subs", "vtt",
         "--skip-download",
-            "--sub-langs", f"{language},-live_chat",
         "--sub-langs", f"{language},-live_chat",
         video_url
     ])
@@ -187,18 +184,18 @@ def parse_vtt(file_path):
 
             if time_match:
                 start = re.search("^(.*) -->",time_match.group(1))
-                end = re.search("--> (.*)",time_match.group(1))
-
                 start_time = start.group(1)
-                end_time = end.group(1)
-
                 sub_titles = lines[count + 1]
 
-                result.append({
-                    'start_time': start_time,
-                    'text': sub_titles.strip('\n'),
-                })
-        
+                # prevent duplicate entries
+                if result and result[-1]['text'] == sub_titles.strip('\n'):
+                    continue
+                else:   
+                    result.append({
+                        'start_time': start_time,
+                        'text': sub_titles.strip('\n'),
+                    })
+
     return result 
 
 
@@ -227,7 +224,7 @@ def get_quotes(channel_id, text):
                 shown_titles.append(video_title)
 
             if id_stamp not in shown_stamps:
-                print(f"\n") 
+                print(f"") 
                 print(f"    Quote: \"{subs.strip()}\"")
                 print(f"    Time Stamp: {time_stamp}")
                 print(f"    Link: https://youtu.be/{video_id}?t={time}\n")
@@ -263,7 +260,7 @@ def search_to_csv(channel_id, text, file_name):
 
 def time_to_secs(time_str):
 
-    time_rex = re.search("^(\d\d):(\d\d):(\d\d)",time_str )
+    time_rex = re.search("^(\d\d):(\d\d):(\d\d)",time_str)
     hours = int(time_rex.group(1)) * 3600 
     mins = int(time_rex.group(2)) * 60
     secs = int(time_rex.group(3)) 
