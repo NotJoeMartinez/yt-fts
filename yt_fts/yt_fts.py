@@ -12,6 +12,7 @@ from yt_fts.db_scripts import *
 def cli():
     make_db()
 
+
 @click.command(help="Lists channels")
 def list():
     click.echo("Listing channels")
@@ -43,7 +44,10 @@ def download(channel_url, channel_id, language, number_of_jobs):
 @click.argument('channel_id', required=True)
 @click.argument('search_text', required=True)
 def search(channel_id, search_text):
-    click.echo(f'Searching for quotes in channel {channel_id} for text {search_text}')
+    if len(search_text) > 40:
+        show_message("search_too_long")
+        return
+    click.echo(f'Searching in channel {channel_id}')
     get_quotes(channel_id, search_text)
 
 
@@ -51,11 +55,13 @@ def search(channel_id, search_text):
 @click.argument('channel_id', required=True)
 @click.argument('search_text', required=True)
 def export(channel_id, search_text):
+    if len(search_text) > 40:
+        show_message("search_too_long")
+        return
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f'{channel_id}_{timestamp}.csv'
     click.echo(f'Exporting search results to csv: {file_name}')
     search_to_csv(channel_id, search_text, file_name)
-
 
 
 @click.command( help='delete [channel id]')
@@ -77,6 +83,7 @@ cli.add_command(download)
 cli.add_command(search)
 cli.add_command(delete)
 cli.add_command(export)
+
 
 def download_channel(channel_id, channel_name, language, number_of_jobs, s):
     print("Downloading channel")
@@ -199,33 +206,31 @@ def get_quotes(channel_id, text):
     res = search_channel(channel_id, text)
 
     if len(res) == 0:
-        print("No matches found")
+        show_message("no_matches_found")
     else:
 
         shown_titles = []
         shown_stamps = []
 
-        for quote in res: 
-            sub_id = quote[0]
-            vid_title = get_title_from_db(sub_id)
-            vid_id = quote[1]
-            time_stamp = quote[2]
-            subs = quote[3]
-
-            id_stamp =  vid_id + time_stamp[:-4]  
+        for quote in res:
+            video_id = quote["video_id"]
+            video_title = get_title_from_db(video_id)
+            video_title = video_title[0]
+            time_stamp = quote["timestamp"]
+            subs = quote["text"]
+            id_stamp =  video_id + time_stamp[:-4]  
 
             time = time_to_secs(time_stamp) 
 
-            if vid_title not in shown_titles:
-                print(f"\nVideo title\"{vid_title}\"")
-                shown_titles.append(vid_title)
-
+            if video_title not in shown_titles:
+                print(f"\nVideo Title: \"{video_title}\"")
+                shown_titles.append(video_title)
 
             if id_stamp not in shown_stamps:
                 print(f"\n") 
                 print(f"    Quote: \"{subs.strip()}\"")
                 print(f"    Time Stamp: {time_stamp}")
-                print(f"    Link: https://youtu.be/{vid_id}?t={time}")
+                print(f"    Link: https://youtu.be/{video_id}?t={time}\n")
                 shown_stamps.append(id_stamp)
 
 
@@ -233,7 +238,7 @@ def search_to_csv(channel_id, text, file_name):
     res = search_channel(channel_id, text)
 
     if len(res) == 0:
-        print("No matches found")
+        show_message("no_matches_found")
     else:
         with open(file_name, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -241,17 +246,18 @@ def search_to_csv(channel_id, text, file_name):
             
             shown_stamps = []
 
-            for quote in res: 
-                sub_id = quote[0]
-                vid_title = get_title_from_db(sub_id)
-                vid_id = quote[1]
-                time_stamp = quote[2]
-                subs = quote[3]
-                id_stamp =  vid_id + time_stamp[:-4]  
+            for quote in res:
+                video_id = quote["video_id"]
+                video_title = get_title_from_db(video_id)
+                video_title = video_title[0]
+                time_stamp = quote["timestamp"]
+                subs = quote["text"]
+                id_stamp =  video_id + time_stamp[:-4]  
+
                 time = time_to_secs(time_stamp) 
 
                 if id_stamp not in shown_stamps:
-                    writer.writerow([vid_title, subs.strip(), time_stamp, f"https://youtu.be/{vid_id}?t={time}"])
+                    writer.writerow([video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
                     shown_stamps.append(id_stamp)
 
 
@@ -331,3 +337,10 @@ def handle_reject_consent_cookie(channel_url, s):
             s.post("https://consent.youtube.com/save", data=data)
 
 
+def show_message(code):
+    error_dict = {
+        "search_too_long": "Error: Search text must be less than 40 characters",
+        "no_matches_found": "No matches found.\n- Try shortening the search text or use wildcards to match partial words."
+    }
+
+    print(error_dict[code])
