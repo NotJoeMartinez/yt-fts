@@ -1,4 +1,5 @@
 from sqlite_utils import Database
+import sqlite3
 
 db_name = 'subtitles.db'
 
@@ -105,8 +106,41 @@ def get_channel_name_from_db(channel_id):
 
 
 def delete_channel(channel_id):
-    db = Database(db_name)
-    
-    db.execute(f"DELETE FROM Channels WHERE channel_id = ?", [channel_id])
-    db.execute(f"DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", [channel_id])
-    db.execute(f"DELETE FROM Videos WHERE channel_id = ?", [channel_id])
+    conn = sqlite3.connect(db_name)
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM Channels WHERE channel_id = ?", (channel_id,))
+    cur.execute("DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
+    cur.execute("DELETE FROM Videos WHERE channel_id = ?", (channel_id,))
+
+    conn.commit()
+    conn.close()
+
+# def delete_channel(channel_id):
+
+#     db = Database(db_name)
+
+#     cur  = db.execute(f"DELETE FROM Channels WHERE channel_id = ?", [channel_id])
+#     print(f"channels: {cur.rowcount}")
+
+#     cur = db.execute(f"DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", [channel_id])
+#     print(f"subs: {cur.rowcount}")
+
+#     cur = db.execute(f"DELETE FROM Videos WHERE channel_id = ?", [channel_id])
+#     print(f"vids: {cur.rowcount}")
+
+#     cur = db.execute(f"SELECT * FROM Channels WHERE channel_id = ?", [channel_id])
+#     print("channels after: ", cur, cur.fetchall()) 
+#     cur = db.execute(f"SELECT * FROM Videos WHERE channel_id = ?", [channel_id])
+#     print("Vids after", cur, cur.fetchall()) 
+#     cur = db.execute(f"SELECT * FROM Videos WHERE channel_id = ?", [channel_id])
+
+    # print(f"channel_id: {channel_id}")
+    # print(f"db_name: {db_name}")
+    # print(f"db: {db} ", type(db))
+
+    # db["Channels"].delete_where("channel_id = ?", [channel_id])
+    # db["Subtitles"].delete_where("video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", [channel_id])
+    # db["Videos"].delete_where("channel_id = ?", [channel_id])
+
+

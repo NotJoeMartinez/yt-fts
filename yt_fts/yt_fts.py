@@ -43,6 +43,9 @@ def download(channel_url, channel_id, language, number_of_jobs):
 @click.argument('channel_id', required=True)
 @click.argument('search_text', required=True)
 def search(channel_id, search_text):
+    if len(search_text) > 40:
+        print("Error: Search text can't be more than 40 characters")
+        return
     click.echo(f'Searching for quotes in channel {channel_id} for text {search_text}')
     get_quotes(channel_id, search_text)
 
@@ -51,6 +54,9 @@ def search(channel_id, search_text):
 @click.argument('channel_id', required=True)
 @click.argument('search_text', required=True)
 def export(channel_id, search_text):
+    if len(search_text) > 40:
+        print("Error: Search text can't be more than 40 characters")
+        return
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f'{channel_id}_{timestamp}.csv'
     click.echo(f'Exporting search results to csv: {file_name}')
@@ -232,6 +238,8 @@ def search_to_csv(channel_id, text, file_name):
 
     if len(res) == 0:
         print("No matches found")
+        print("Try shortening the search text or using wildcards in search")
+        print("Example: \"that's what america means to me\" -> \"what america means\"")
     else:
         with open(file_name, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
