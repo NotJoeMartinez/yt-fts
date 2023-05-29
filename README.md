@@ -98,34 +98,48 @@ UC4woSp8ITBoYDmjkukhEhxg  The Tim Dillon Show  https://www.youtube.com/channel/U
 
 ### `search`
 Search a channel for text based off the channel id you give it and 
-print a url to that point in the video
+print a url to that point in the video. The search string does not 
+have to be a word for word and match is limited to 40 characters. 
+
 ```bash
 yt-fts search [channel_id] "text you want to find"
 ```
-**EX:**
-
+**Ex:**
 ```bash
 yt-fts search UC4woSp8ITBoYDmjkukhEhxg "life in the big city"
 ```
 output:
 ```
-Video title"("#208 - Let's Have A Party | The Tim Dillon Show - YouTube",)"
+Video Title: "164 - Life In The Big City - YouTube"
 
-    Quote: "life in the big city Dan is wearing the"
-    Time Stamp: 01:50:07.790
-    Link: https://youtu.be/CJ_KAsz8rjQ?t=6604
+    Quote: "van in the driveway life in the big city"
+    Time Stamp: 00:30:44.580
+    Link: https://youtu.be/dqGyCTbzYmc?t=1841
 
-Video title"('#176 - The Florida Project | The Tim Dillon Show - YouTube',)"
+Video Title: "154 - The 3 AM Episode - YouTube"
 
-    Quote: "the show life in the big city love these"
-    Time Stamp: 00:31:05.669
-    Link: https://youtu.be/nKcqbHQndFQ?t=1862
+    Quote: "Dennis would go hey life in the big city"
+    Time Stamp: 00:58:53.789
+    Link: https://youtu.be/MhaG3Yfv1cU?t=3530
+```
 
-Video title"('164 - Life In The Big City - YouTube',)"
+### Advanced Search Syntax
 
-    Quote: "life in the big city it was one of my"
-    Time Stamp: 00:27:17.549
-    Link: https://youtu.be/dqGyCTbzYmc?t=1634
+The search string supports sqlite [Enhanced Query Syntax](https://www.sqlite.org/fts3.html#full_text_index_queries).
+which includes things like [prefix queries](https://www.sqlite.org/fts3.html#termprefix) which you can use to match parts of a word.  
+
+**Ex:**
+
+```bash
+yt-fts search UC4woSp8ITBoYDmjkukhEhxg 'rea* kni* Mali*'
+```
+output:
+```
+Video Title: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube"
+
+    Quote: "real knife fight down here in Malibu I"
+    Time Stamp: 00:45:39.420
+    Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 
 ### `Export`
