@@ -39,7 +39,7 @@ brew install yt-dlp
 winget install yt-dlp
 ```
 
-### Usage 
+## Usage 
 ```
 Usage: yt-fts [OPTIONS] COMMAND [ARGS]...
 
@@ -54,13 +54,13 @@ Commands:
   search    search [search text] [channel id]
 ```
 
-### `download`
+## `download`
 Will download all of a channels vtt files into your database 
 ```bash
 yt-fts download "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
-**`--channel-id [youtube channel id]`**
+`--channel-id [channel_id]`
 
 If `download` fails you can manually input the channel id with the `--channel-id` flag.
 The channel url should still be an argument 
@@ -68,21 +68,21 @@ The channel url should still be an argument
 yt-fts download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
-**`--language [en/fr/es/etc..]`**
+`--language [en/fr/es/etc..]`
 
 Specify subtitles language 
 ```bash
 yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
-**`--number-of-jobs [number]`**
+`--number-of-jobs [num_threads]`
 
 Speed up downloads with multi threading 
 ```bash
 yt-fts download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
-### `list`
+## `list`
 List all of your downloaded channels 
 ```bash
 yt-fts list
@@ -96,7 +96,7 @@ channel_id                channel_name         channel_url
 UC4woSp8ITBoYDmjkukhEhxg  The Tim Dillon Show  https://www.youtube.com/channel/UC4woSp8ITBoYDmjkukhEhxg/videos
 ```
 
-### `search`
+## `search`
 Search a channel for text based off the channel id you give it and 
 print a url to that point in the video. The search string does not 
 have to be a word for word and match is limited to 40 characters. 
@@ -115,12 +115,14 @@ The Tim Dillon Show: "164 - Life In The Big City - YouTube"
     Quote: "van in the driveway life in the big city"
     Time Stamp: 00:30:44.580
     Link: https://youtu.be/dqGyCTbzYmc?t=1841
+```
 
-The Tim Dillon Show: "154 - The 3 AM Episode - YouTube"
+### Search all channels 
+Use `--all` to search all channels in your database 
 
-    Quote: "Dennis would go hey life in the big city"
-    Time Stamp: 00:58:53.789
-    Link: https://youtu.be/MhaG3Yfv1cU?t=3530
+**Ex:**
+```bash
+yt-fts search "text to search" --all
 ```
 
 ### Advanced Search Syntax
@@ -142,14 +144,20 @@ The Tim Dillon Show: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouT
     Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 
-### `Export`
+## `Export`
 Similar to `search` except it will export all of the search results to a csv 
-with the format: `Video Title,Quote,Time Stamp,Link` as it's headers
+with the format: `Channel Name,Video Title,Quote,Time Stamp,Link` as it's headers
+
 ```bash
 yt-fts export "life in the big city" UC4woSp8ITBoYDmjkukhEhxg 
 ```
 
-### `Delete` 
+You can export from all channels in you database as well
+```bash
+yt-fts export "life in the big city" --all
+```
+
+## `Delete` 
 Will delete a channel from your database 
 ```bash
 yt-fts delete [channel_id]
