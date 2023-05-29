@@ -49,9 +49,9 @@ Options:
 Commands:
   delete    delete [channel id]
   download  download [channel url]
-  export    export [channel id] [search text]
+  export    export [search text] [channel id]
   list      Lists channels
-  search    search [channel id] [search text]
+  search    search [search text] [channel id]
 ```
 
 ### `download`
@@ -102,21 +102,21 @@ print a url to that point in the video. The search string does not
 have to be a word for word and match is limited to 40 characters. 
 
 ```bash
-yt-fts search [channel_id] "text you want to find"
+yt-fts search "text you want to find" [channel_id]
 ```
 **Ex:**
 ```bash
-yt-fts search UC4woSp8ITBoYDmjkukhEhxg "life in the big city"
+yt-fts search "life in the big city" UC4woSp8ITBoYDmjkukhEhxg 
 ```
 output:
 ```
-Video Title: "164 - Life In The Big City - YouTube"
+The Tim Dillon Show: "164 - Life In The Big City - YouTube"
 
     Quote: "van in the driveway life in the big city"
     Time Stamp: 00:30:44.580
     Link: https://youtu.be/dqGyCTbzYmc?t=1841
 
-Video Title: "154 - The 3 AM Episode - YouTube"
+The Tim Dillon Show: "154 - The 3 AM Episode - YouTube"
 
     Quote: "Dennis would go hey life in the big city"
     Time Stamp: 00:58:53.789
@@ -131,11 +131,11 @@ which includes things like [prefix queries](https://www.sqlite.org/fts3.html#ter
 **Ex:**
 
 ```bash
-yt-fts search UC4woSp8ITBoYDmjkukhEhxg 'rea* kni* Mali*'
+yt-fts search "rea* kni* Mali*" UC4woSp8ITBoYDmjkukhEhxg 
 ```
 output:
 ```
-Video Title: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube"
+The Tim Dillon Show: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube"
 
     Quote: "real knife fight down here in Malibu I"
     Time Stamp: 00:45:39.420
@@ -146,7 +146,7 @@ Video Title: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube"
 Similar to `search` except it will export all of the search results to a csv 
 with the format: `Video Title,Quote,Time Stamp,Link` as it's headers
 ```bash
-yt-fts export UC4woSp8ITBoYDmjkukhEhxg "life in the big city" 
+yt-fts export "life in the big city" UC4woSp8ITBoYDmjkukhEhxg 
 ```
 
 ### `Delete` 
