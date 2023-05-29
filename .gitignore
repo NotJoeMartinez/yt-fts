@@ -159,3 +159,5 @@ tests/
 *.html
 *.csv
 make_dist.sh
+*.sql
+tests.sh
