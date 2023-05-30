@@ -83,18 +83,21 @@ def export(channel, search_text, all):
         export_search(channel_id, search_text, file_name)
 
 
-@click.command( help="delete [channel_id]")
-@click.argument("channel_id", required=True)
-def delete(channel_id):
-    channel_name = get_channel_name_from_id(channel_id) 
+@click.command( help="delete [id] or [\"channel_name\"]")
+@click.argument("channel", required=True)
+def delete(channel):
 
-    print(f"Deleting channel {channel_name}")
+    channel_id = get_channel_id_from_input(channel)
+    channel_name = get_channel_name_from_id(channel_id) 
+    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+
+    print(f"Deleting channel {channel_name}: {channel_url}")
     print("Are you sure you want to delete this channel and all its data?")
     confirm = input("y/n: ")
 
     if confirm == "y":
-        click.echo(f'deleting channel {channel_name}')
         delete_channel(channel_id)
+        print(f"Deleted channel {channel_name}: {channel_url}")
     else:
         print("Exiting")
 
