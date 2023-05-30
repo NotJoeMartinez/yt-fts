@@ -150,8 +150,6 @@ def get_channel_id_from_name(channel_name):
 
     res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
 
-    print("res: ", res)
-
     if len(res) > 1:
         channels = db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
         print(tabulate(channels, headers=["id", "channel_name", "channel_url"]))
@@ -161,4 +159,4 @@ def get_channel_id_from_name(channel_name):
     if len(res) == 0:
         return None
     else:
-        return res[0]
+        return res[0][0]

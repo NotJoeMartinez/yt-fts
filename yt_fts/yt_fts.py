@@ -63,11 +63,13 @@ def search(channel, search_text, all):
 @click.command( help="export [channel_id] [search_text]")
 @click.argument("search_text", required=True)
 @click.option("--all", is_flag=True, help="Export from all channels")
-@click.argument("channel_id", required=False)
-def export(channel_id, search_text, all):
+@click.argument('channel', required=False)
+def export(channel, search_text, all):
     if len(search_text) > 40:
         show_message("search_too_long")
-        return
+        exit() 
+
+    channel_id = get_channel_id_from_input(channel)
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -76,9 +78,6 @@ def export(channel_id, search_text, all):
         click.echo(f"Exporting search results from all channels to csv: {file_name}")
         export_search("all", search_text, file_name)
     else:
-        if channel_id is None:
-            click.echo("Error: Channel ID is required when not using --all option")
-            return
         file_name = f"{channel_id}_{timestamp}.csv"
         click.echo(f"Exporting search results to csv: {file_name}")
         export_search(channel_id, search_text, file_name)
@@ -97,7 +96,7 @@ def delete(channel_id):
         click.echo(f'deleting channel {channel_name}')
         delete_channel(channel_id)
     else:
-        print("Aborting")
+        print("Exiting")
 
 
 commands = [list, download, search, delete, export]
