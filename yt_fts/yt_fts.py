@@ -13,9 +13,8 @@ def cli():
 
 @click.command(help="Lists channels")
 def list():
-    click.echo("Listing channels")
     channels = get_channels()
-    print(tabulate(channels, headers=["channel_id","channel_name", "channel_url"]))
+    print(tabulate(channels, headers=["id", "channel_name", "channel_url"]))
 
 
 @click.command( help='download [channel url]')
@@ -39,34 +38,41 @@ def download(channel_url, channel_id, language, number_of_jobs):
         print("Error finding channel id try --channel-id option")
 
 
-@click.command( help='search [channel_id] [search_text]')
+@click.command(help="Search for a specified text within a channel or all channels. SEARCH_TEXT is the text to search for. CHANNEL is the name or id of the channel to search in. CHANNEL is required unless the '--all' option is specified.")
 @click.argument('search_text', required=True)
-@click.option('--all', is_flag=True, help='Search in all channels')
-@click.argument('channel_id', required=False)
-def search(channel_id, search_text, all):
+@click.option('--all', is_flag=True, help='Search in all channels. If ied, a channel name or id is required.')
+@click.argument('channel', required=False)
+def search(channel, search_text, all):
+
     if len(search_text) > 40:
         show_message("search_too_long")
-        return
+        exit()
 
-    if all:
-        click.echo('Searching in all channels')
+    if all == True:
+        print('Searching in all channels')
         get_text("all", search_text)
+    elif channel == None:
+        print('Error: Channel name or id is required when not using --all option')
+        exit()
     else:
-        if channel_id is None:
-            click.echo('Error: Channel ID is required when not using --all option')
-            return
-        click.echo(f'Searching in channel {channel_id}')
+        channel_id = get_channel_id_from_input(channel)
+        channel_name = get_channel_name_from_id(channel_id)
+        channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+        print(f"Searching in channel \"{channel_name}\": {channel_url}")
         get_text(channel_id, search_text)
+
 
 
 @click.command( help="export [channel_id] [search_text]")
 @click.argument("search_text", required=True)
 @click.option("--all", is_flag=True, help="Export from all channels")
-@click.argument("channel_id", required=False)
-def export(channel_id, search_text, all):
+@click.argument('channel', required=False)
+def export(channel, search_text, all):
     if len(search_text) > 40:
         show_message("search_too_long")
-        return
+        exit() 
+
+    channel_id = get_channel_id_from_input(channel)
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -75,28 +81,28 @@ def export(channel_id, search_text, all):
         click.echo(f"Exporting search results from all channels to csv: {file_name}")
         export_search("all", search_text, file_name)
     else:
-        if channel_id is None:
-            click.echo("Error: Channel ID is required when not using --all option")
-            return
         file_name = f"{channel_id}_{timestamp}.csv"
         click.echo(f"Exporting search results to csv: {file_name}")
         export_search(channel_id, search_text, file_name)
 
 
-@click.command( help="delete [channel_id]")
-@click.argument("channel_id", required=True)
-def delete(channel_id):
-    channel_name = get_channel_name_from_id(channel_id) 
+@click.command( help="delete [id] or [\"channel_name\"]")
+@click.argument("channel", required=True)
+def delete(channel):
 
-    print(f"Deleting channel {channel_name}")
+    channel_id = get_channel_id_from_input(channel)
+    channel_name = get_channel_name_from_id(channel_id) 
+    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+
+    print(f"Deleting channel {channel_name}: {channel_url}")
     print("Are you sure you want to delete this channel and all its data?")
     confirm = input("y/n: ")
 
     if confirm == "y":
-        click.echo(f'deleting channel {channel_name}')
         delete_channel(channel_id)
+        print(f"Deleted channel {channel_name}: {channel_url}")
     else:
-        print("Aborting")
+        print("Exiting")
 
 
 commands = [list, download, search, delete, export]
@@ -172,3 +178,20 @@ def export_search(channel_id, text, file_name):
             time = time_to_secs(time_stamp) 
 
             writer.writerow([channel_name,video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
+
+
+def get_channel_id_from_input(channel_input):
+    """
+    Checks if the input is a rowid or a channel name and returns channel id
+    """
+    name_res = get_channel_id_from_name(channel_input) 
+    id_res = get_channel_id_from_rowid(channel_input) 
+
+    if id_res != None:
+        return id_res
+    elif name_res != None: 
+        return name_res
+    else:
+        show_message("channel_not_found")
+        exit()
+    

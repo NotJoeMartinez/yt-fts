@@ -7,7 +7,7 @@ the video containing the keyword.
 
 - [Blog Post](https://notjoemartinez.com/blog/youtube_full_text_search/)
 
-### Installation 
+## Installation 
 
 **pip**
 ```bash
@@ -23,7 +23,7 @@ pip install -r requirements.txt
 python3 -m yt-fts
 ```
 
-### Dependencies 
+## Dependencies 
 This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. Platform specific installation instructions are available on the [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation). 
 
 **pip**
@@ -91,22 +91,38 @@ yt-fts list
 output:
 ```
 Listing channels
-channel_id                channel_name         channel_url
-------------------------  -------------------  ---------------------------------------------------------------
-UC4woSp8ITBoYDmjkukhEhxg  The Tim Dillon Show  https://www.youtube.com/channel/UC4woSp8ITBoYDmjkukhEhxg/videos
+  id  channel_name         channel_url
+----  -------------------  ---------------------------------------------------------------
+   1  The Tim Dillon Show  https://www.youtube.com/channel/UC4woSp8ITBoYDmjkukhEhxg/videos
+   2  Lex Fridman          https://www.youtube.com/channel/UCSHZKyawb77ixDdsGog4iWA/videos
+   3  Traversy Media       https://www.youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA/videos
 ```
 
 ## `search`
-Search a channel for text based off the channel id you give it and 
-print a url to that point in the video. The search string does not 
-have to be a word for word and match is limited to 40 characters. 
+you can specify which channel to search in using the `id` or `channel_name` 
+and it will print a url to that point in the video. 
 
-```bash
-yt-fts search "text you want to find" [channel_id]
 ```
+Usage: yt-fts search [OPTIONS] SEARCH_TEXT [CHANNEL]
+
+  Search for a specified text within a channel or all channels. SEARCH_TEXT is
+  the text to search for. CHANNEL is the name or id of the channel to search
+  in. CHANNEL is required unless the '--all' option is specified.
+
+Options:
+  --all   Search in all channels. If not specified, a channel name or id is
+          required.
+```
+
+- The search string does not have to be a word for word and match 
+- Use Id if you have channels with the same name or channels that have special characters in their name 
+- Search strings are limited to 40 characters. 
+
 **Ex:**
 ```bash
-yt-fts search "life in the big city" UC4woSp8ITBoYDmjkukhEhxg 
+yt-fts search "life in the big city" "The Tim Dillon Show"
+# or 
+yt-fts search "life in the big city" 1  # assuming 1 is id of channel
 ```
 output:
 ```
@@ -133,7 +149,7 @@ which includes things like [prefix queries](https://www.sqlite.org/fts3.html#ter
 **Ex:**
 
 ```bash
-yt-fts search "rea* kni* Mali*" UC4woSp8ITBoYDmjkukhEhxg 
+yt-fts search "rea* kni* Mali*" "The Tim Dillon Show" 
 ```
 output:
 ```
@@ -149,7 +165,7 @@ Similar to `search` except it will export all of the search results to a csv
 with the format: `Channel Name,Video Title,Quote,Time Stamp,Link` as it's headers
 
 ```bash
-yt-fts export "life in the big city" UC4woSp8ITBoYDmjkukhEhxg 
+yt-fts export "life in the big city" "The Tim Dillon Show"
 ```
 
 You can export from all channels in your database as well
