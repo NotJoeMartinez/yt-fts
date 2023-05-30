@@ -44,29 +44,20 @@ def download(channel_url, channel_id, language, number_of_jobs):
 @click.option('--all', is_flag=True, help='Search in all channels')
 @click.argument('channel', required=False)
 def search(channel, search_text, all):
-    name_res = get_channel_id_from_name(channel) 
-    id_res = get_channel_id_from_rowid(channel) 
-
-    if id_res is not None:
-        channel_id = id_res
-
-    if name_res is not None: 
-        channel_id = name_res
-
-    if all:
-        click.echo('Searching in all channels')
-        get_text("all", search_text)
-
-    else:
-        if channel_id is None:
-            click.echo('Error: Channel ID is required when not using --all option')
-            return
-        click.echo(f'Searching in channel {channel_id}')
-        get_text(channel_id, search_text)
 
     if len(search_text) > 40:
         show_message("search_too_long")
         exit()
+
+    channel_id = get_channel_id_from_input(channel)
+
+    if all == True:
+        click.echo('Searching in all channels')
+        get_text("all", search_text)
+    else:
+        click.echo(f'Searching in channel {channel_id}')
+        get_text(channel_id, search_text)
+
 
 
 @click.command( help="export [channel_id] [search_text]")
@@ -182,3 +173,20 @@ def export_search(channel_id, text, file_name):
             time = time_to_secs(time_stamp) 
 
             writer.writerow([channel_name,video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
+
+
+def get_channel_id_from_input(channel_input):
+    """
+    Checks if the input is a rowid or a channel name and returns channel id
+    """
+    name_res = get_channel_id_from_name(channel_input) 
+    id_res = get_channel_id_from_rowid(channel_input) 
+
+    if id_res != None:
+        return id_res
+    elif name_res != None: 
+        return name_res
+    else:
+        show_message("channel_not_found")
+        exit()
+    

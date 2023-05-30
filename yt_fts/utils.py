@@ -6,7 +6,9 @@ import re
 def show_message(code):
     error_dict = {
         "search_too_long": "Error: Search text must be less than 40 characters",
-        "no_matches_found": "No matches found.\n- Try shortening the search text or use wildcards to match partial words."
+        "no_matches_found": "No matches found.\n- Try shortening the search text or use wildcards to match partial words.",
+        "no_channels_found": "channel not found.\n- Try using channel id",
+        "multiple_channels_found": "Multiple channels found.\n- Try searching by id",
     }
 
     print(error_dict[code])

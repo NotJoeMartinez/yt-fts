@@ -1,5 +1,9 @@
-from sqlite_utils import Database
 import sqlite3
+
+from sqlite_utils import Database
+from tabulate import tabulate
+
+from yt_fts.utils import show_message
 
 db_name = 'subtitles.db'
 
@@ -144,8 +148,17 @@ def get_channel_id_from_rowid(rowid):
 def get_channel_id_from_name(channel_name):
     db = Database(db_name)
 
-    res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_name = ?", [channel_name]).fetchone()
-    if res is None:
+    res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
+
+    print("res: ", res)
+
+    if len(res) > 1:
+        channels = db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
+        print(tabulate(channels, headers=["id", "channel_name", "channel_url"]))
+        print("")
+        show_message("multiple_channels_found")
+        exit()
+    if len(res) == 0:
         return None
     else:
         return res[0]
