@@ -84,11 +84,14 @@ def add_subtitle(video_id, start_time, text):
 def get_channels():
     db = Database(db_name)
 
-    return db.execute("SELECT * FROM Channels").fetchall()
+    # return db.execute("SELECT * FROM Channels").fetchall()
+    return db.execute("SELECT ROWID, channel_name, channel_url FROM Channels").fetchall()
 
 
 def search_channel(channel_id, text):
     db = Database(db_name)
+
+    # cur = db.execute(f"SELECT video_id FROM Videos WHERE channel_id = ?", [channel_id]) 
 
     return list(db["Subtitles"].search(text, where=f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')"))
 
@@ -125,3 +128,24 @@ def delete_channel(channel_id):
 
     conn.commit()
     conn.close()
+
+
+def get_channel_id_from_rowid(rowid):
+    db = Database(db_name)
+
+    res = db.execute(f"SELECT channel_id FROM Channels WHERE ROWID = ?", [rowid]).fetchone()
+
+    if res is None:
+        return None
+    else:
+        return res[0]
+
+
+def get_channel_id_from_name(channel_name):
+    db = Database(db_name)
+
+    res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_name = ?", [channel_name]).fetchone()
+    if res is None:
+        return None
+    else:
+        return res[0]

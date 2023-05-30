@@ -15,7 +15,7 @@ def cli():
 def list():
     click.echo("Listing channels")
     channels = get_channels()
-    print(tabulate(channels, headers=["channel_id","channel_name", "channel_url"]))
+    print(tabulate(channels, headers=["id", "channel_name", "channel_url"]))
 
 
 @click.command( help='download [channel url]')
@@ -42,21 +42,31 @@ def download(channel_url, channel_id, language, number_of_jobs):
 @click.command( help='search [channel_id] [search_text]')
 @click.argument('search_text', required=True)
 @click.option('--all', is_flag=True, help='Search in all channels')
-@click.argument('channel_id', required=False)
-def search(channel_id, search_text, all):
-    if len(search_text) > 40:
-        show_message("search_too_long")
-        return
+@click.argument('channel', required=False)
+def search(channel, search_text, all):
+    name_res = get_channel_id_from_name(channel) 
+    id_res = get_channel_id_from_rowid(channel) 
+
+    if id_res is not None:
+        channel_id = id_res
+
+    if name_res is not None: 
+        channel_id = name_res
 
     if all:
         click.echo('Searching in all channels')
         get_text("all", search_text)
+
     else:
         if channel_id is None:
             click.echo('Error: Channel ID is required when not using --all option')
             return
         click.echo(f'Searching in channel {channel_id}')
         get_text(channel_id, search_text)
+
+    if len(search_text) > 40:
+        show_message("search_too_long")
+        exit()
 
 
 @click.command( help="export [channel_id] [search_text]")
