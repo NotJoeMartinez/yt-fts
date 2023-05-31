@@ -6,7 +6,10 @@ from yt_fts.db_scripts import *
 from yt_fts.download_scripts import *
 from yt_fts.utils import *
 
+YT_FTS_VERSION = "0.1.11"
+
 @click.group()
+@click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
 def cli():
     make_db()
 
@@ -60,7 +63,6 @@ def search(channel, search_text, all):
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         print(f"Searching in channel \"{channel_name}\": {channel_url}")
         get_text(channel_id, search_text)
-
 
 
 @click.command( help="export [channel_id] [search_text]")
