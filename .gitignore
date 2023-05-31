@@ -155,7 +155,6 @@ saved_vtt
 saved_vtt/*
 saved_vtt/**
 *.db
-tests/
 *.html
 *.csv
 make_dist.sh
