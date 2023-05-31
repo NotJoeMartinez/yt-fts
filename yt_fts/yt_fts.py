@@ -6,7 +6,7 @@ from yt_fts.db_scripts import *
 from yt_fts.download_scripts import *
 from yt_fts.utils import *
 
-YT_FTS_VERSION = "0.1.11"
+YT_FTS_VERSION = "0.1.12"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -74,8 +74,6 @@ def export(channel, search_text, all):
         show_message("search_too_long")
         exit() 
 
-    channel_id = get_channel_id_from_input(channel)
-
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if all:
@@ -83,6 +81,7 @@ def export(channel, search_text, all):
         click.echo(f"Exporting search results from all channels to csv: {file_name}")
         export_search("all", search_text, file_name)
     else:
+        channel_id = get_channel_id_from_input(channel)
         file_name = f"{channel_id}_{timestamp}.csv"
         click.echo(f"Exporting search results to csv: {file_name}")
         export_search(channel_id, search_text, file_name)
