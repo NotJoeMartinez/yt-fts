@@ -33,7 +33,7 @@ def update_channel(channel_id, channel_name, language, number_of_jobs, s):
         vtt_to_parse = os.listdir(tmp_dir)
         if len(vtt_to_parse) == 0:
             print("No new videos saved")
-            print("Keep in mind that some videos may not have subtitles")
+            print(f"{len(fresh_videos)} videos on \"{channel_name}\" do not have subtitles")
             exit()
 
         vtt_to_db(channel_id, tmp_dir, s)

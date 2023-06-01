@@ -7,7 +7,7 @@ from yt_fts.utils import *
 from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
 
-YT_FTS_VERSION = "0.1.14"
+YT_FTS_VERSION = "0.1.15"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
