@@ -2,6 +2,8 @@
 # downloads
 download() {
     rm *.db
+    rm *.csv
+    rm *.txt
     stack_smashing="https://www.youtube.com/@stacksmashing/videos"
     pwn_function="https://www.youtube.com/@PwnFunction/videos"
     yt-fts download --language en --number-of-jobs 5 $stack_smashing
@@ -18,16 +20,16 @@ test_search_by_channel(){
     # loop through stack smashing keywords by name
     for keyword in "${stack_smashing_keywords[@]}" 
     do
-        yt-fts search "${keyword}" stacksmashing 
-        yt-fts search "${keyword}" 1
+        yt-fts search "${keyword}" --channel stacksmashing >> search_by_channel_name.txt
+        yt-fts search "${keyword}" --channel 1 >> search_by_channel_id.txt
     done
 
     # loop through pwn function keywords
-    for keyword in "${pwn_function_keywords[@]}" 
-    do
-        yt-fts search "${keyword}" PwnFunction 
-        yt-fts search "${keyword}" 2
-    done
+    # for keyword in "${pwn_function_keywords[@]}" 
+    # do
+    #     yt-fts search "${keyword}" --channel PwnFunction >> search_by_channel_name.txt
+    #     yt-fts search "${keyword}" --channel 2
+    # done
 
 }
 
@@ -60,7 +62,7 @@ test_search_export_all(){
     # loop through stack smashing keywords by name
     for keyword in "${keywords[@]}" 
     do
-        yt-fts search "${keyword}" --all
+        yt-fts search "${keyword}" --all >> search_by_all.txt
         yt-fts export "${keyword}" --all
     done
 }
@@ -73,18 +75,18 @@ test_search_video(){
     # loop through stack smashing keywords by name
     for keyword in "${keywords[@]}" 
     do
-        yt-fts search "${keyword}" --video "jkJWA_CWrQs"
+        yt-fts search "${keyword}" --video "jkJWA_CWrQs" >> search_video.txt
     done
 }
 
 test_errors(){
     ## search errors
-    yt-fts search "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" stacksmashing 
-    yt-fts search "these words probably do not exist" stacksmashing
+    yt-fts search "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  stacksmashing 
+    yt-fts search "these words probably do not exist"  stacksmashing
     yt-fts search "linux" foobar
 
     ## export errors
-    yt-fts export  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" stacksmashing 
+    yt-fts export  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  stacksmashing 
     yt-fts export "these words probably do not exist" stacksmashing
     yt-fts export "linux" foobar
 }

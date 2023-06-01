@@ -121,9 +121,9 @@ Options:
 ### Search by channel
 **Ex:**
 ```bash
-yt-fts search "life in the big city" "The Tim Dillon Show"
+yt-fts search "life in the big city" --channel "The Tim Dillon Show"
 # or 
-yt-fts search "life in the big city" 1  # assuming 1 is id of channel
+yt-fts search "life in the big city" --channel 1  # assuming 1 is id of channel
 ```
 output:
 ```
@@ -131,6 +131,7 @@ The Tim Dillon Show: "164 - Life In The Big City - YouTube"
 
     Quote: "van in the driveway life in the big city"
     Time Stamp: 00:30:44.580
+    Video ID: dqGyCTbzYmc
     Link: https://youtu.be/dqGyCTbzYmc?t=1841
 ```
 
@@ -158,7 +159,7 @@ which includes things like [prefix queries](https://www.sqlite.org/fts3.html#ter
 **Ex:**
 
 ```bash
-yt-fts search "rea* kni* Mali*" "The Tim Dillon Show" 
+yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show" 
 ```
 output:
 ```
@@ -166,6 +167,7 @@ The Tim Dillon Show: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouT
 
     Quote: "real knife fight down here in Malibu I"
     Time Stamp: 00:45:39.420
+    Video ID: e79H5nxS65Q
     Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 
