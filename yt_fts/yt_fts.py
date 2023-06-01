@@ -7,6 +7,9 @@ from yt_fts.utils import *
 from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
 
+# semantic search
+from yt_fts.semantic_serch.open_ai_auth import (get_api_key, test_api_access)
+
 YT_FTS_VERSION = "0.1.15"
 
 @click.group()
@@ -171,7 +174,31 @@ def delete(channel):
         print("Exiting")
 
 
-commands = [list, download, update, search, export, delete]
+@click.command( 
+    help="""
+    Generate embeddings for a channel or all channels.
+
+    Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
+    """
+)
+@click.option("--channel", default=None, help="The name or id of the channel to generate embeddings for. This is required unless the --all option is used.")
+@click.option("--all", is_flag=True, help="Generate embeddings for all channels")
+@click.option("--open-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+def generate_embedings(channel, all, open_api_key):
+
+    if open_api_key:
+        api_key = open_api_key
+    else:
+        api_key = get_api_key()
+
+    if api_key is None:
+        print("Error: OPENAI_API_KEY environment variable not set")
+        print("Run export OPENAI_API_KEY=<your_key> to set the key")
+        exit()
+    test_api_access(api_key)
+    
+
+commands = [list, download, update, search, export, delete, generate_embedings]
 
 for command in commands:
     cli.add_command(command)
