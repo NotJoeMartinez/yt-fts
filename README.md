@@ -72,7 +72,7 @@ Options:
   --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
 ```
 
-### Examples
+### Examples:
 
 **Basic download by url**
 
@@ -141,7 +141,7 @@ Options:
 - Use Id if you have channels with the same name or channels that have special characters in their name 
 - Search strings are limited to 40 characters. 
 
-### Examples
+### Examples:
 
 **Search by channel**
 
@@ -215,7 +215,7 @@ You can export from all channels in your database as well
 yt-fts export "life in the big city" --all
 ```
 
-## `Delete` 
+## `delete` 
 Will delete a channel from your database 
 ```
 Usage: yt-fts delete [OPTIONS] CHANNEL_NAME or CHANNEL_ID
