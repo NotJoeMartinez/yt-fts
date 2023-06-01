@@ -160,3 +160,4 @@ saved_vtt/**
 make_dist.sh
 *.sql
 tests.sh
+tests/*.txt

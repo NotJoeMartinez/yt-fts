@@ -2,11 +2,12 @@ import click, tempfile, requests, datetime, csv
 
 from tabulate import tabulate
 
-from yt_fts.db_scripts import *
-from yt_fts.download_scripts import *
+from yt_fts.search_utils import *
+from yt_fts.db_utils import *
+from yt_fts.download_utils import *
 from yt_fts.utils import *
 
-YT_FTS_VERSION = "0.1.12"
+YT_FTS_VERSION = "0.1.13"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -41,28 +42,32 @@ def download(channel_url, channel_id, language, number_of_jobs):
         print("Error finding channel id try --channel-id option")
 
 
-@click.command(help="Search for a specified text within a channel or all channels. SEARCH_TEXT is the text to search for. CHANNEL is the name or id of the channel to search in. CHANNEL is required unless the '--all' option is specified.")
-@click.argument('search_text', required=True)
-@click.option('--all', is_flag=True, help='Search in all channels. If ied, a channel name or id is required.')
-@click.argument('channel', required=False)
-def search(channel, search_text, all):
+@click.command(help="Search for a specified text within a channel, specific video, or all channels. SEARCH_TEXT is the text to search for.")
+@click.argument("search_text", required=True)
+@click.option("--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
+@click.option("--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("--all", is_flag=True, help="Search in all channels.")
+def search(search_text, channel, video, all):
 
     if len(search_text) > 40:
         show_message("search_too_long")
         exit()
 
-    if all == True:
+    if all:
         print('Searching in all channels')
         get_text("all", search_text)
-    elif channel == None:
-        print('Error: Channel name or id is required when not using --all option')
-        exit()
-    else:
+    elif video:
+        print(f"Searching in video {video}")
+        get_text_by_video_id(video, search_text)
+    elif channel:
         channel_id = get_channel_id_from_input(channel)
         channel_name = get_channel_name_from_id(channel_id)
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         print(f"Searching in channel \"{channel_name}\": {channel_url}")
         get_text(channel_id, search_text)
+    else:
+        print("Error: Either --channel, --video, or --all option must be provided")
+        exit()
 
 
 @click.command( help="export [channel_id] [search_text]")
@@ -122,35 +127,6 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):
         download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
         vtt_to_db(channel_id, tmp_dir, s)
-
-
-def get_text(channel_id, text):
-    """
-    Calls search functions and prints the results 
-    """
-    if channel_id == "all":
-        res = search_all(text)
-    else:
-        res = search_channel(channel_id, text)
-
-    if len(res) == 0:
-        show_message("no_matches_found")
-        exit()
-
-    for quote in res:
-        video_id = quote["video_id"]
-        subs = quote["text"]
-        time_stamp = quote["timestamp"]
-        video_title = get_title_from_db(video_id)
-        channel_name = get_channel_name_from_video_id(video_id)
-        time = time_to_secs(time_stamp) 
-
-        print("")
-        print(f"{channel_name}: \"{video_title}\"")
-        print(f"") 
-        print(f"    Quote: \"{subs.strip()}\"")
-        print(f"    Time Stamp: {time_stamp}")
-        print(f"    Link: https://youtu.be/{video_id}?t={time}\n")
 
 
 def export_search(channel_id, text, file_name):

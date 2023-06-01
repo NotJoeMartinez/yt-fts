@@ -99,30 +99,31 @@ Listing channels
 ```
 
 ## `search`
-you can specify which channel to search in using the `id` or `channel_name` 
-and it will print a url to that point in the video. 
-
 ```
-Usage: yt-fts search [OPTIONS] SEARCH_TEXT [CHANNEL]
+Usage: yt-fts search [OPTIONS] SEARCH_TEXT
 
-  Search for a specified text within a channel or all channels. SEARCH_TEXT is
-  the text to search for. CHANNEL is the name or id of the channel to search
-  in. CHANNEL is required unless the '--all' option is specified.
+  Search for a specified text within a channel, a specific video, or all
+  channels. SEARCH_TEXT is the text to search for.
 
 Options:
-  --all   Search in all channels. If not specified, a channel name or id is
-          required.
+  --channel TEXT  The name or id of the channel to search in. This is required
+                  unless the --all or --video options are used.
+  --video TEXT    The id of the video to search in. This is used instead of
+                  the channel option.
+  --all           Search in all channels.
+  --help          Show this message and exit.
 ```
 
 - The search string does not have to be a word for word and match 
 - Use Id if you have channels with the same name or channels that have special characters in their name 
 - Search strings are limited to 40 characters. 
 
+### Search by channel
 **Ex:**
 ```bash
-yt-fts search "life in the big city" "The Tim Dillon Show"
+yt-fts search "life in the big city" --channel "The Tim Dillon Show"
 # or 
-yt-fts search "life in the big city" 1  # assuming 1 is id of channel
+yt-fts search "life in the big city" --channel 1  # assuming 1 is id of channel
 ```
 output:
 ```
@@ -130,6 +131,7 @@ The Tim Dillon Show: "164 - Life In The Big City - YouTube"
 
     Quote: "van in the driveway life in the big city"
     Time Stamp: 00:30:44.580
+    Video ID: dqGyCTbzYmc
     Link: https://youtu.be/dqGyCTbzYmc?t=1841
 ```
 
@@ -141,6 +143,14 @@ Use `--all` to search all channels in your database
 yt-fts search "text to search" --all
 ```
 
+### Search in video
+Use `--video` to search in a specific video by it's ID
+
+**Ex:**
+```bash
+yt-fts search "text to search" --video [VIDEO_ID]
+```
+
 ### Advanced Search Syntax
 
 The search string supports sqlite [Enhanced Query Syntax](https://www.sqlite.org/fts3.html#full_text_index_queries).
@@ -149,7 +159,7 @@ which includes things like [prefix queries](https://www.sqlite.org/fts3.html#ter
 **Ex:**
 
 ```bash
-yt-fts search "rea* kni* Mali*" "The Tim Dillon Show" 
+yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show" 
 ```
 output:
 ```
@@ -157,6 +167,7 @@ The Tim Dillon Show: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouT
 
     Quote: "real knife fight down here in Malibu I"
     Time Stamp: 00:45:39.420
+    Video ID: e79H5nxS65Q
     Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 

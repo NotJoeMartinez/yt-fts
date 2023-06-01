@@ -88,28 +88,30 @@ def add_subtitle(video_id, start_time, text):
 def get_channels():
     db = Database(db_name)
 
-    # return db.execute("SELECT * FROM Channels").fetchall()
     return db.execute("SELECT ROWID, channel_name, channel_url FROM Channels").fetchall()
 
 
 def search_channel(channel_id, text):
     db = Database(db_name)
 
-    # cur = db.execute(f"SELECT video_id FROM Videos WHERE channel_id = ?", [channel_id]) 
-
     return list(db["Subtitles"].search(text, where=f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')"))
+
+
+def search_video(video_id, text):
+    db = Database(db_name)
+
+    return list(db["Subtitles"].search(text, where=f"video_id = '{video_id}'"))
+
+def search_all(text):
+    db = Database(db_name)
+
+    return list(db["Subtitles"].search(text))
 
 
 def get_title_from_db(video_id):
     db = Database(db_name)
 
     return db.execute(f"SELECT video_title FROM Videos WHERE video_id = ?", [video_id]).fetchone()[0]
-
-
-def search_all(text):
-    db = Database(db_name)
-
-    return list(db["Subtitles"].search(text))
 
 
 def get_channel_name_from_id(channel_id):
