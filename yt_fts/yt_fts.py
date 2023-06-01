@@ -15,18 +15,23 @@ def cli():
     make_db()
 
 
-@click.command(help="Lists channels")
+@click.command(help="Lists channels saved in the database")
 def list():
     channels = get_channels()
     print(tabulate(channels, headers=["id", "channel_name", "channel_url"]))
 
 
-@click.command( help='download [channel url]')
-@click.argument('channel_url', required=True)
-@click.option('--channel-id', default=None, help='Optional channel id to override the one from the url')
-@click.option('--language', default="en", help='Language of the subtitles to download')
-@click.option('--number-of-jobs', type=int, default=1, help='Optional number of jobs to parallelize the run')
-@click.option('--language', default="en", help='Language of the subtitles to download')
+@click.command( 
+    help="""
+    Download subtitles from a specified YouTube channel.
+
+    You must provide the URL of the channel as an argument. The script will automatically extract the channel id from the URL.
+    """
+)
+@click.argument("channel_url", required=True)
+@click.option("--channel-id", default=None, help="Optional channel id to override the one from the url")
+@click.option("--language", default="en", help="Language of the subtitles to download")
+@click.option("--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def download(channel_url, channel_id, language, number_of_jobs):
     s = requests.session()
     handle_reject_consent_cookie(channel_url, s)
@@ -42,7 +47,11 @@ def download(channel_url, channel_id, language, number_of_jobs):
         print("Error finding channel id try --channel-id option")
 
 
-@click.command(help="Search for a specified text within a channel, specific video, or all channels. SEARCH_TEXT is the text to search for.")
+@click.command(
+        help="""
+        Search for a specified text within a channel, a specific video, or across all channels.
+        """
+)
 @click.argument("search_text", required=True)
 @click.option("--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
 @click.option("--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
@@ -70,7 +79,13 @@ def search(search_text, channel, video, all):
         exit()
 
 
-@click.command( help="export [channel_id] [search_text]")
+@click.command( 
+    help="""
+    Export search results from a specified YouTube channel or from all channels to a CSV file.
+
+    The results of the search will be exported to a CSV file. The file will be named with the format "{channel_id or 'all'}_{TIME_STAMP}.csv" 
+    """
+)
 @click.argument("search_text", required=True)
 @click.option("--all", is_flag=True, help="Export from all channels")
 @click.argument('channel', required=False)
@@ -92,7 +107,15 @@ def export(channel, search_text, all):
         export_search(channel_id, search_text, file_name)
 
 
-@click.command( help="delete [id] or [\"channel_name\"]")
+@click.command( 
+    help="""
+    Delete a channel and all its data. 
+
+    You must provide the name or the id of the channel you want to delete as an argument. 
+
+    The command will ask for confirmation before performing the deletion. 
+    """
+)
 @click.argument("channel", required=True)
 def delete(channel):
 
@@ -111,7 +134,7 @@ def delete(channel):
         print("Exiting")
 
 
-commands = [list, download, search, delete, export]
+commands = [list, download, search, export, delete]
 
 for command in commands:
     cli.add_command(command)
