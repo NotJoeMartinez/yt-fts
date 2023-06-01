@@ -44,46 +44,69 @@ winget install yt-dlp
 Usage: yt-fts [OPTIONS] COMMAND [ARGS]...
 
 Options:
-  --help  Show this message and exit.
+  --version  Show the version and exit.
+  --help     Show this message and exit.
 
 Commands:
-  delete    delete [channel id]
-  download  download [channel url]
-  export    export [search text] [channel id]
-  list      Lists channels
-  search    search [search text] [channel id]
+  delete    Delete a channel and all its data.
+  download  Download subtitles from a specified YouTube channel.
+  export    Export search results from a specified YouTube channel or...
+  list      Lists channels saved in the database
+  search    Search for a specified text within a channel, a specific...
 ```
 
 ## `download`
-Will download all of a channels vtt files into your database 
+Download subtitles 
+```
+Usage: yt-fts download [OPTIONS] CHANNEL_URL
+
+  Download subtitles from a specified YouTube channel.
+
+  You must provide the URL of the channel as an argument. The script will
+  automatically extract the channel id from the URL.
+
+Options:
+  --channel-id TEXT         Optional channel id to override the one from the
+                            url
+  --language TEXT           Language of the subtitles to download
+  --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
+```
+
+### Examples:
+
+**Basic download by url**
+
 ```bash
 yt-fts download "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
-`--channel-id [channel_id]`
+**Multithreaded download**
 
-If `download` fails you can manually input the channel id with the `--channel-id` flag.
-The channel url should still be an argument 
-```bash
-yt-fts download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
-```
-
-`--language [en/fr/es/etc..]`
-
-Specify subtitles language 
-```bash
-yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
-```
-
-`--number-of-jobs [num_threads]`
-
-Speed up downloads with multi threading 
 ```bash
 yt-fts download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
+**specify channel id**
+
+If `download` fails you can manually input the channel id with the `--channel-id` flag.
+The channel url should still be an argument 
+
+```bash
+yt-fts download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
+```
+
+**specify language**
+
+Languages are represented using [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language codes 
+
+```bash
+yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
+```
+
 ## `list`
-List all of your downloaded channels 
+
+List downloaded channels 
+
 ```bash
 yt-fts list
 ```
@@ -99,11 +122,12 @@ Listing channels
 ```
 
 ## `search`
+Search saved subtitles 
 ```
 Usage: yt-fts search [OPTIONS] SEARCH_TEXT
 
-  Search for a specified text within a channel, a specific video, or all
-  channels. SEARCH_TEXT is the text to search for.
+  Search for a specified text within a channel, a specific video, or across
+  all channels.
 
 Options:
   --channel TEXT  The name or id of the channel to search in. This is required
@@ -111,15 +135,16 @@ Options:
   --video TEXT    The id of the video to search in. This is used instead of
                   the channel option.
   --all           Search in all channels.
-  --help          Show this message and exit.
 ```
 
 - The search string does not have to be a word for word and match 
 - Use Id if you have channels with the same name or channels that have special characters in their name 
 - Search strings are limited to 40 characters. 
 
-### Search by channel
-**Ex:**
+### Examples:
+
+**Search by channel**
+
 ```bash
 yt-fts search "life in the big city" --channel "The Tim Dillon Show"
 # or 
@@ -135,28 +160,22 @@ The Tim Dillon Show: "164 - Life In The Big City - YouTube"
     Link: https://youtu.be/dqGyCTbzYmc?t=1841
 ```
 
-### Search all channels 
-Use `--all` to search all channels in your database 
+**Search all channels**
 
-**Ex:**
 ```bash
 yt-fts search "text to search" --all
 ```
 
-### Search in video
-Use `--video` to search in a specific video by it's ID
+**Search in video**
 
-**Ex:**
 ```bash
 yt-fts search "text to search" --video [VIDEO_ID]
 ```
 
-### Advanced Search Syntax
+**Advanced Search Syntax**
 
 The search string supports sqlite [Enhanced Query Syntax](https://www.sqlite.org/fts3.html#full_text_index_queries).
 which includes things like [prefix queries](https://www.sqlite.org/fts3.html#termprefix) which you can use to match parts of a word.  
-
-**Ex:**
 
 ```bash
 yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show" 
@@ -171,10 +190,22 @@ The Tim Dillon Show: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouT
     Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 
-## `Export`
-Similar to `search` except it will export all of the search results to a csv 
-with the format: `Channel Name,Video Title,Quote,Time Stamp,Link` as it's headers
+## `export`
+Export search results to csv. Exported csv will have `Channel Name,Video Title,Quote,Time Stamp,Link` as it's headers
+```
+Usage: yt-fts export [OPTIONS] SEARCH_TEXT [CHANNEL]
 
+  Export search results from a specified YouTube channel or from all channels
+  to a CSV file.
+
+  The results of the search will be exported to a CSV file. The file will be
+  named with the format "{channel_id or 'all'}_{TIME_STAMP}.csv"
+
+Options:
+  --all   Export from all channels
+```
+
+**Examples:**
 ```bash
 yt-fts export "life in the big city" "The Tim Dillon Show"
 ```
@@ -184,8 +215,23 @@ You can export from all channels in your database as well
 yt-fts export "life in the big city" --all
 ```
 
-## `Delete` 
+## `delete` 
 Will delete a channel from your database 
+```
+Usage: yt-fts delete [OPTIONS] CHANNEL_NAME or CHANNEL_ID
+
+  Delete a channel and all its data.
+
+  You must provide the name or the id of the channel you want to delete as an
+  argument.
+
+  The command will ask for confirmation before performing the deletion.
+```
+
+**Examples:**
+
 ```bash
-yt-fts delete [channel_id]
+yt-fts delete "The Tim Dillon Show"
+# or
+yt-fts delete 1 
 ```
