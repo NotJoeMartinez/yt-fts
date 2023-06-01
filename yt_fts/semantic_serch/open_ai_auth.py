@@ -1,6 +1,5 @@
 import os
 import openai
-from openai.embeddings_utils import get_embedding
 
 
 def get_api_key():

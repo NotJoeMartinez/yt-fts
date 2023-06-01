@@ -8,7 +8,9 @@ from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
 
 # semantic search
-from yt_fts.semantic_serch.open_ai_auth import (get_api_key, test_api_access)
+from yt_fts.semantic_serch.open_ai_auth import get_api_key, test_api_access
+from yt_fts.semantic_serch.embeddings import fetch_embedding
+                                                
 
 YT_FTS_VERSION = "0.1.15"
 
@@ -195,7 +197,9 @@ def generate_embedings(channel, all, open_api_key):
         print("Error: OPENAI_API_KEY environment variable not set")
         print("Run export OPENAI_API_KEY=<your_key> to set the key")
         exit()
-    test_api_access(api_key)
+    
+    embeddings = fetch_embedding(api_key, "which sometimes can lead to cross-site")
+    print(embeddings)
     
 
 commands = [list, download, update, search, export, delete, generate_embedings]
