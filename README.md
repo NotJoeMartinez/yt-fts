@@ -104,8 +104,15 @@ yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
 ## `list`
-
 List downloaded channels 
+```
+Usage: yt-fts list [OPTIONS]
+
+  Lists channels saved in the database
+
+Options:
+  --channel TEXT  Optional name or id of the channel to list
+```
 
 ```bash
 yt-fts list
@@ -113,12 +120,11 @@ yt-fts list
 
 output:
 ```
-Listing channels
-  id  channel_name         channel_url
-----  -------------------  ---------------------------------------------------------------
-   1  The Tim Dillon Show  https://www.youtube.com/channel/UC4woSp8ITBoYDmjkukhEhxg/videos
-   2  Lex Fridman          https://www.youtube.com/channel/UCSHZKyawb77ixDdsGog4iWA/videos
-   3  Traversy Media       https://www.youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA/videos
+  id    count  channel_name         channel_url
+----  -------  -------------------  ----------------------------------------------------
+   1      265  The Tim Dillon Show  https://youtube.com/channel/UC4woSp8ITBoYDmjkukhEhxg
+   2      688  Lex Fridman          https://youtube.com/channel/UCSHZKyawb77ixDdsGog4iWA
+   3      434  Traversy Media       https://youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA
 ```
 
 ## `search`
@@ -213,6 +219,24 @@ yt-fts export "life in the big city" "The Tim Dillon Show"
 You can export from all channels in your database as well
 ```bash
 yt-fts export "life in the big city" --all
+```
+
+## update
+Will update a channel with new subtitles if any are found. 
+```
+Usage: yt-fts update [OPTIONS]
+
+  Updates a specified YouTube channel.
+
+  You must provide the ID of the channel as an argument. Keep in mind some
+  might not have subtitles enabled. This command will still attempt to
+  download subtitles as subtitles are sometimes added later.
+
+Options:
+  --channel TEXT            The name or id of the channel to update.
+                            [required]
+  --language TEXT           Language of the subtitles to download
+  --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
 ```
 
 ## `delete` 
