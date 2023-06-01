@@ -72,44 +72,41 @@ Options:
   --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
 ```
 
-### Basic download by url
-**Ex:**
+### Examples
+
+**Basic download by url**
+
 ```bash
 yt-fts download "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
-### Multithreaded download
-`--number-of-jobs [INTEGER]`
+**Multithreaded download**
 
-Speed up downloads with multi threading 
-
-**Ex:**
 ```bash
 yt-fts download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
 ```
 
-### Specify channel id 
-`--channel-id [CHANNEL_ID]`
+**specify channel id**
 
 If `download` fails you can manually input the channel id with the `--channel-id` flag.
 The channel url should still be an argument 
 
-**Ex:**
 ```bash
 yt-fts download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
-### Specify language
-`--language [en/fr/es/etc..]`
+**specify language**
+
 Languages are represented using [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language codes 
 
-**Ex:**
 ```bash
 yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
 ## `list`
+
 List downloaded channels 
+
 ```bash
 yt-fts list
 ```
@@ -144,8 +141,10 @@ Options:
 - Use Id if you have channels with the same name or channels that have special characters in their name 
 - Search strings are limited to 40 characters. 
 
-### Search by channel
-**Ex:**
+### Examples
+
+**Search by channel**
+
 ```bash
 yt-fts search "life in the big city" --channel "The Tim Dillon Show"
 # or 
@@ -161,27 +160,23 @@ The Tim Dillon Show: "164 - Life In The Big City - YouTube"
     Link: https://youtu.be/dqGyCTbzYmc?t=1841
 ```
 
-### Search all channels 
-Use `--all` to search all channels in your database 
+**Search all channels**
 
-**Ex:**
 ```bash
 yt-fts search "text to search" --all
 ```
 
-### Search in video
-Use `--video` to search in a specific video by it's ID
+**Search in video**
 
-**Ex:**
 ```bash
 yt-fts search "text to search" --video [VIDEO_ID]
 ```
 
-### Advanced Search Syntax
+**Advanced Search Syntax**
+
 The search string supports sqlite [Enhanced Query Syntax](https://www.sqlite.org/fts3.html#full_text_index_queries).
 which includes things like [prefix queries](https://www.sqlite.org/fts3.html#termprefix) which you can use to match parts of a word.  
 
-**Ex:**
 ```bash
 yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show" 
 ```
@@ -196,7 +191,7 @@ The Tim Dillon Show: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouT
 ```
 
 ## `export`
-Export search results to csv
+Export search results to csv. Exported csv will have `Channel Name,Video Title,Quote,Time Stamp,Link` as it's headers
 ```
 Usage: yt-fts export [OPTIONS] SEARCH_TEXT [CHANNEL]
 
@@ -210,16 +205,12 @@ Options:
   --all   Export from all channels
 ```
 
-Exported csv will have `Channel Name,Video Title,Quote,Time Stamp,Link` as it's headers
-
-**Ex:**
+**Examples:**
 ```bash
 yt-fts export "life in the big city" "The Tim Dillon Show"
 ```
 
 You can export from all channels in your database as well
-
-**Ex:**
 ```bash
 yt-fts export "life in the big city" --all
 ```
@@ -227,7 +218,7 @@ yt-fts export "life in the big city" --all
 ## `Delete` 
 Will delete a channel from your database 
 ```
-Usage: yt-fts delete [OPTIONS] CHANNEL
+Usage: yt-fts delete [OPTIONS] CHANNEL_NAME or CHANNEL_ID
 
   Delete a channel and all its data.
 
@@ -235,4 +226,12 @@ Usage: yt-fts delete [OPTIONS] CHANNEL
   argument.
 
   The command will ask for confirmation before performing the deletion.
+```
+
+**Examples:**
+
+```bash
+yt-fts delete "The Tim Dillon Show"
+# or
+yt-fts delete 1 
 ```
