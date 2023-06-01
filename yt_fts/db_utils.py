@@ -162,3 +162,20 @@ def get_channel_id_from_name(channel_name):
         return None
     else:
         return res[0][0]
+
+
+# for listing specific channel 
+def get_channel_list_by_id(channel_id):
+    db = Database(db_name)
+
+    return db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_id = ?", [channel_id]).fetchall()
+
+
+def check_if_channel_exists(channel_id):
+    db=Database(db_name)
+
+    res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_id = ?", [channel_id]).fetchall()
+    if len(res) > 0:
+        return True
+    else:
+        return False

@@ -33,12 +33,20 @@ def list():
 @click.option("--language", default="en", help="Language of the subtitles to download")
 @click.option("--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def download(channel_url, channel_id, language, number_of_jobs):
+
     s = requests.session()
     handle_reject_consent_cookie(channel_url, s)
 
     if channel_id is None:
         channel_id = get_channel_id(channel_url, s)
     
+    exists = check_if_channel_exists(channel_id)
+    if exists:
+        print("Error: Channel already exists in database")
+        existing_channel = get_channel_list_by_id(channel_id)
+        print(tabulate(existing_channel, headers=["id", "channel_name", "channel_url"]))
+        exit()
+
     channel_name = get_channel_name(channel_id, s)
 
     if channel_id:
