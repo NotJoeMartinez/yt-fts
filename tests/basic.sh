@@ -65,6 +65,18 @@ test_search_export_all(){
     done
 }
 
+# search video  
+test_search_video(){
+
+    keywords=("electrion" "same origin policy" "local storage")
+
+    # loop through stack smashing keywords by name
+    for keyword in "${keywords[@]}" 
+    do
+        yt-fts search "${keyword}" --video "jkJWA_CWrQs"
+    done
+}
+
 test_errors(){
     ## search errors
     yt-fts search "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" stacksmashing 
@@ -90,6 +102,7 @@ if [[ -z "$@" ]]; then
     echo "  ./basic.sh all"
     echo "  ./basic.sh download"
     echo "  ./basic.sh search"
+    echo "  ./basic.sh video"
     echo "  ./basic.sh export"
     echo "  ./basic.sh search-export-all"
     echo "  ./basic.sh errors"
@@ -99,6 +112,8 @@ elif [[ "$@" == "download" ]]; then
     download
 elif [[ "$@" == "search" ]]; then
     test_search_by_channel
+elif [[ "$@" == "video" ]]; then
+    test_search_video
 elif [[ "$@" == "export" ]]; then
     test_export_by_channel
 elif [[ "$@" == "search-export-all" ]]; then
@@ -110,6 +125,7 @@ else
     echo "  ./basic.sh all"
     echo "  ./basic.sh download"
     echo "  ./basic.sh search"
+    echo "  ./basic.sh video"
     echo "  ./basic.sh export"
     echo "  ./basic.sh search-export-all"
     echo "  ./basic.sh errors"

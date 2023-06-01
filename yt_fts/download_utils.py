@@ -4,7 +4,7 @@ from progress.bar import Bar
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 
-from yt_fts.db_scripts import add_video
+from yt_fts.db_utils import add_video
 from yt_fts.utils import parse_vtt
 
 

@@ -99,25 +99,26 @@ Listing channels
 ```
 
 ## `search`
-you can specify which channel to search in using the `id` or `channel_name` 
-and it will print a url to that point in the video. 
-
 ```
-Usage: yt-fts search [OPTIONS] SEARCH_TEXT [CHANNEL]
+Usage: yt-fts search [OPTIONS] SEARCH_TEXT
 
-  Search for a specified text within a channel or all channels. SEARCH_TEXT is
-  the text to search for. CHANNEL is the name or id of the channel to search
-  in. CHANNEL is required unless the '--all' option is specified.
+  Search for a specified text within a channel, a specific video, or all
+  channels. SEARCH_TEXT is the text to search for.
 
 Options:
-  --all   Search in all channels. If not specified, a channel name or id is
-          required.
+  --channel TEXT  The name or id of the channel to search in. This is required
+                  unless the --all or --video options are used.
+  --video TEXT    The id of the video to search in. This is used instead of
+                  the channel option.
+  --all           Search in all channels.
+  --help          Show this message and exit.
 ```
 
 - The search string does not have to be a word for word and match 
 - Use Id if you have channels with the same name or channels that have special characters in their name 
 - Search strings are limited to 40 characters. 
 
+### Search by channel
 **Ex:**
 ```bash
 yt-fts search "life in the big city" "The Tim Dillon Show"
@@ -139,6 +140,14 @@ Use `--all` to search all channels in your database
 **Ex:**
 ```bash
 yt-fts search "text to search" --all
+```
+
+### Search in video
+Use `--video` to search in a specific video by it's ID
+
+**Ex:**
+```bash
+yt-fts search "text to search" --video [VIDEO_ID]
 ```
 
 ### Advanced Search Syntax
