@@ -7,7 +7,7 @@ from yt_fts.db_utils import *
 from yt_fts.download_utils import *
 from yt_fts.utils import *
 
-YT_FTS_VERSION = "0.1.13"
+YT_FTS_VERSION = "0.1.14"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
