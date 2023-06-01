@@ -88,7 +88,7 @@ def add_subtitle(video_id, start_time, text):
 def get_channels():
     db = Database(db_name)
 
-    return db.execute("SELECT ROWID, channel_name, channel_url FROM Channels").fetchall()
+    return db.execute("SELECT ROWID, channel_id, channel_name, channel_url FROM Channels").fetchall()
 
 
 def search_channel(channel_id, text):
@@ -162,3 +162,30 @@ def get_channel_id_from_name(channel_name):
         return None
     else:
         return res[0][0]
+
+
+# for listing specific channel 
+def get_channel_list_by_id(channel_id):
+    db = Database(db_name)
+
+    return db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_id = ?", [channel_id]).fetchall()
+
+
+def check_if_channel_exists(channel_id):
+    db=Database(db_name)
+
+    res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_id = ?", [channel_id]).fetchall()
+    if len(res) > 0:
+        return True
+    else:
+        return False
+
+def get_num_vids(channel_id):
+    db = Database(db_name)
+
+    return db.execute(f"SELECT COUNT(*) FROM Videos WHERE channel_id = ?", [channel_id]).fetchone()[0]
+
+def get_vid_ids_by_channel_id(channel_id):
+    db = Database(db_name)
+
+    return db.execute(f"SELECT video_id FROM Videos WHERE channel_id = ?", [channel_id]).fetchall()

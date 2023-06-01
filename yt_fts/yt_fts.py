@@ -1,13 +1,13 @@
 import click, tempfile, requests, datetime, csv
 
-from tabulate import tabulate
-
 from yt_fts.search_utils import *
 from yt_fts.db_utils import *
 from yt_fts.download_utils import *
 from yt_fts.utils import *
+from yt_fts.update_utils import update_channel
+from yt_fts.list_utils import list_channels
 
-YT_FTS_VERSION = "0.1.14"
+YT_FTS_VERSION = "0.1.15"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -16,9 +16,13 @@ def cli():
 
 
 @click.command(help="Lists channels saved in the database")
-def list():
-    channels = get_channels()
-    print(tabulate(channels, headers=["id", "channel_name", "channel_url"]))
+@click.option("--channel", default=None, help="Optional name or id of the channel to list")
+def list(channel):
+    if channel is None:
+        list_channels()
+    else:       
+        channel_id = get_channel_id_from_input(channel)
+        list_channels(channel_id)
 
 
 @click.command( 
@@ -33,18 +37,51 @@ def list():
 @click.option("--language", default="en", help="Language of the subtitles to download")
 @click.option("--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def download(channel_url, channel_id, language, number_of_jobs):
+
     s = requests.session()
     handle_reject_consent_cookie(channel_url, s)
 
     if channel_id is None:
         channel_id = get_channel_id(channel_url, s)
     
+    exists = check_if_channel_exists(channel_id)
+    if exists:
+        print("Error: Channel already exists in database")
+        print("Use update command to update the channel")
+        list_channels(channel_id)
+        exit()
+
     channel_name = get_channel_name(channel_id, s)
 
     if channel_id:
         download_channel(channel_id, channel_name, language, number_of_jobs, s)
     else:
         print("Error finding channel id try --channel-id option")
+
+
+@click.command( 
+    help="""
+    Updates a specified YouTube channel.
+
+    You must provide the ID of the channel as an argument.
+    Keep in mind some might not have subtitles enabled. This command
+    will still attempt to download subtitles as subtitles are sometimes added later.
+    """
+)
+@click.option("--channel", default=None, required=True, help="The name or id of the channel to update.")
+@click.option("--language", default="en", help="Language of the subtitles to download")
+@click.option("--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
+def update(channel, language, number_of_jobs):
+
+    channel_id = get_channel_id_from_input(channel)
+    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos" 
+
+    s = requests.session()
+    handle_reject_consent_cookie(channel_url, s)
+
+    channel_name = get_channel_name(channel_id, s)
+
+    update_channel(channel_id, channel_name, language, number_of_jobs, s)
 
 
 @click.command(
@@ -134,7 +171,7 @@ def delete(channel):
         print("Exiting")
 
 
-commands = [list, download, search, export, delete]
+commands = [list, download, update, search, export, delete]
 
 for command in commands:
     cli.add_command(command)

@@ -36,7 +36,6 @@ def get_channel_id(url, s):
     if res.status_code == 200:
         html = res.text
         channel_id = re.search('channelId":"(.{24})"', html).group(1)
-        print(channel_id)
         return channel_id
     else:
         return None
