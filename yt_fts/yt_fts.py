@@ -8,8 +8,9 @@ from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
 
 # semantic search
-from yt_fts.semantic_serch.open_ai_auth import get_api_key, test_api_access
-from yt_fts.semantic_serch.embeddings import get_openai_embeddings
+from yt_fts.semantic_serch.open_ai_auth import get_api_key 
+from yt_fts.semantic_serch.embeddings import get_openai_embeddings, get_embedding
+from yt_fts.semantic_serch.search_embeddings import search_using_embedding
                                                 
 
 YT_FTS_VERSION = "0.1.15"
@@ -115,11 +116,30 @@ def search(search_text, channel, video, all):
         channel_name = get_channel_name_from_id(channel_id)
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         print(f"Searching in channel \"{channel_name}\": {channel_url}")
-        get_text(channel_id, search_text)
     else:
         print("Error: Either --channel, --video, or --all option must be provided")
         exit()
 
+
+# Semantic search
+
+@click.command(
+        help="""
+        semantic search for a specified text within a channel
+        """
+)
+@click.argument("search_text", required=True)
+@click.option("--limit", default=3, help="top n results to return")
+def semantic_search(search_text, limit):
+
+    if len(search_text) > 40:
+        show_message("search_too_long")
+        exit()
+
+    api_key = get_api_key()
+    search_embedding = get_embedding(api_key, search_text)
+    top_n = 5
+    search_using_embedding(search_embedding, top_n)
 
 @click.command( 
     help="""
@@ -203,7 +223,7 @@ def generate_embedings(channel, all, open_api_key):
     make_embeddings_db()
     get_openai_embeddings(channel_subs, api_key)
 
-commands = [list, download, update, search, export, delete, generate_embedings]
+commands = [list, download, update, search, semantic_search, export, delete, generate_embedings]
 
 for command in commands:
     cli.add_command(command)
