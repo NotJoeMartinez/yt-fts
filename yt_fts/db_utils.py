@@ -189,3 +189,33 @@ def get_vid_ids_by_channel_id(channel_id):
     db = Database(db_name)
 
     return db.execute(f"SELECT video_id FROM Videos WHERE channel_id = ?", [channel_id]).fetchall()
+
+def get_all_subs_by_channel_id(channel_id):
+    db = Database(db_name)
+
+    parsed_subs = []
+    subs = db.execute("""
+        SELECT s.subtitle_id, s.video_id, s.timestamp, s.text 
+        FROM Subtitles s
+        JOIN Videos v ON s.video_id = v.video_id
+        WHERE v.channel_id = ?
+        """, [channel_id]).fetchall()
+    
+    for sub in subs:
+        if len(sub[3].strip()) > 0:
+            parsed_subs.append(sub)
+    return parsed_subs
+
+def make_embeddings_db():
+    conn = sqlite3.connect("embeddings.db")
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS Embeddings (
+        [subtitle_id] INTEGER PRIMARY KEY,
+        [video_id] TEXT,
+        [timestamp] TEXT NOT NULL,
+        [text] TEXT NOT NULL,
+        [embeddings] TEXT NOT NULL
+        );""")
+    conn.commit()
+    conn.close()
