@@ -1,12 +1,12 @@
 import openai
 import sqlite3 
+import pickle
 
 from progress.bar import Bar
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 
-
 def get_openai_embeddings(subs, api_key):
-    conn = sqlite3.connect("embeddings.db")
+    conn = sqlite3.connect("subtitles.db")
     cur = conn.cursor()
 
     bar = Bar('Generating embeddings', max=len(subs))
@@ -17,12 +17,12 @@ def get_openai_embeddings(subs, api_key):
         text = sub[3]
 
         embedding = get_embedding(api_key, text)
-        vector_str = ','.join(map(str, embedding))
+        embeddings_blob = pickle.dumps(embedding)
 
         cur.execute(""" 
             INSERT INTO Embeddings (subtitle_id, video_id, timestamp, text, embeddings)
             VALUES (?, ?, ?, ?, ?)
-            """, [subtitle_id, video_id, timestamp, text, vector_str])
+            """, [subtitle_id, video_id, timestamp, text, embeddings_blob])
         conn.commit()
         bar.next()
 
@@ -34,3 +34,63 @@ def get_openai_embeddings(subs, api_key):
 def get_embedding(api_key, text: str, model="text-embedding-ada-002") -> list[float]:
     openai.api_key = api_key
     return openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
+
+
+# save embedding string 
+# should take a string for search_string and array of embeddings for search_embedding
+def save_search_embedding(search_string, search_embedding):
+    search_embedding_blob = pickle.dumps(search_embedding)
+    con = sqlite3.connect("subtitles.db")
+    cur = con.cursor()
+
+    cur.execute(""" 
+        INSERT INTO SemanticSearchHist (search_str, embeddings)
+        VALUES (?, ?)
+        """, [search_string, search_embedding_blob])
+    con.commit()
+    con.close()
+
+
+# get embedding blob if exists 
+# should return an array of embeddings
+def search_semantic_search_hist(search_string):
+    con = sqlite3.connect("subtitles.db")
+    cur = con.cursor()
+
+    cur.execute(""" 
+        SELECT embeddings FROM SemanticSearchHist 
+        WHERE search_str = ?
+        """, [search_string])
+    res = cur.fetchone()
+    if res is None:
+        return None
+    else:
+        return pickle.loads(res[0])
+
+
+# check if semantic search has been enabled for channel
+def check_ss_enabled(channel_id):
+    con = sqlite3.connect("subtitles.db")
+    cur = con.cursor()
+
+    cur.execute(""" 
+        SELECT channel_id FROM SemanticSearchEnabled 
+        WHERE channel_id = ?
+        """, [channel_id])
+    res = cur.fetchone()
+    if res is None:
+        return None
+    else:
+        return res[0]
+
+# enable semantic search for channel
+def enable_ss(channel_id):
+    con = sqlite3.connect("subtitles.db")
+    cur = con.cursor()
+
+    cur.execute(""" 
+        INSERT INTO SemanticSearchEnabled (channel_id)
+        VALUES (?)
+        """, [channel_id])
+    con.commit()
+    con.close() 
