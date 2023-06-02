@@ -1,10 +1,18 @@
+aiohttp==3.8.4
+aiosignal==1.3.1
+async-timeout==4.0.2
+attrs==23.1.0
 beautifulsoup4==4.12.2
 bs4==0.0.1
 certifi==2023.5.7
 charset-normalizer==3.1.0
 click==8.1.3
 click-default-group-wheel==1.2.2
+frozenlist==1.3.3
 idna==3.4
+multidict==6.0.4
+numpy==1.24.3
+openai==0.27.7
 progress==1.6
 python-dateutil==2.8.2
 requests==2.31.0
@@ -13,5 +21,7 @@ soupsieve==2.4.1
 sqlite-fts4==1.0.3
 sqlite-utils==3.32.1
 tabulate==0.9.0
+tenacity==8.2.2
+tqdm==4.65.0
 urllib3==2.0.2
-openai==0.27.7
+yarl==1.9.2
