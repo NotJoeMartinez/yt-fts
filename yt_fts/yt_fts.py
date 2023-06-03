@@ -13,7 +13,7 @@ from yt_fts.semantic_serch.embeddings import *
 from yt_fts.semantic_serch.search_embeddings import search_using_embedding
                                                 
 
-YT_FTS_VERSION = "0.1.15"
+YT_FTS_VERSION = "0.1.16"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
