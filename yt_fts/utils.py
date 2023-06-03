@@ -56,3 +56,11 @@ def parse_vtt(file_path):
                 })
 
     return result 
+
+def get_api_key():
+    import os
+    api_key = os.environ.get("OPENAI_API_KEY")
+
+    if api_key is None:
+        return None
+    return api_key

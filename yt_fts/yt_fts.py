@@ -7,13 +7,8 @@ from yt_fts.utils import *
 from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
 
-# semantic search
-from yt_fts.semantic_serch.open_ai_auth import get_api_key 
-from yt_fts.semantic_serch.embeddings import * 
-from yt_fts.semantic_serch.search_embeddings import search_using_embedding
-                                                
 
-YT_FTS_VERSION = "0.1.16"
+YT_FTS_VERSION = "0.1.17"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -205,6 +200,17 @@ def delete(channel):
 @click.option("--limit", default=3, help="top n results to return")
 def semantic_search(search_text, channel, all, limit):
 
+    from yt_fts.semantic_serch.embeddings import (
+        get_embedding,  
+        save_search_embedding, 
+        search_semantic_search_hist, 
+        check_ss_enabled,
+        )
+
+    from yt_fts.semantic_serch.search_embeddings import (
+        search_using_embedding
+    )
+
     # check if search string is in semantic search history
     print("checking if search string in history")
     search_embedding = search_semantic_search_hist(search_text)
@@ -259,6 +265,12 @@ def semantic_search(search_text, channel, all, limit):
 @click.option("--channel", default=None, help="The name or id of the channel to generate embeddings for")
 @click.option("--open-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
 def generate_embeddings(channel, open_api_key):
+
+    from yt_fts.semantic_serch.embeddings import (
+        get_openai_embeddings,
+        check_ss_enabled, 
+        enable_ss
+        )
 
     channel_id = get_channel_id_from_input(channel)
 
