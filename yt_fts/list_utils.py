@@ -1,7 +1,6 @@
 from tabulate import tabulate
-
 from yt_fts.db_utils import get_channels, get_num_vids, get_channel_list_by_id
-from yt_fts.semantic_serch.embeddings import check_ss_enabled
+import sqlite3
 
 def list_channels(channel_id=None):
 
@@ -28,3 +27,24 @@ def list_channels(channel_id=None):
         channels.append([row_id, count, channel_name, channel_url])
 
     print(tabulate(channels, headers=["id", "count", "channel_name", "channel_url"]))
+
+#  not dry but for some reason importing from embeddings.py causes slow down 
+def check_ss_enabled(channel_id=None):
+    con = sqlite3.connect("subtitles.db")
+    cur = con.cursor()
+
+    if channel_id is None:
+        cur.execute(""" 
+            SELECT channel_id FROM SemanticSearchEnabled 
+            """)
+    else:
+        cur.execute(""" 
+            SELECT channel_id FROM SemanticSearchEnabled 
+            WHERE channel_id = ?
+            """, [channel_id])
+
+    res = cur.fetchone()
+    if res is None:
+        return False 
+    else:
+        return True 
