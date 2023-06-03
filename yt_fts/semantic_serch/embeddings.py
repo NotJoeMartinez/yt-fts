@@ -69,19 +69,25 @@ def search_semantic_search_hist(search_string):
 
 
 # check if semantic search has been enabled for channel
-def check_ss_enabled(channel_id):
+def check_ss_enabled(channel_id=None):
     con = sqlite3.connect("subtitles.db")
     cur = con.cursor()
 
-    cur.execute(""" 
-        SELECT channel_id FROM SemanticSearchEnabled 
-        WHERE channel_id = ?
-        """, [channel_id])
+    if channel_id is None:
+        cur.execute(""" 
+            SELECT channel_id FROM SemanticSearchEnabled 
+            """)
+    else:
+        cur.execute(""" 
+            SELECT channel_id FROM SemanticSearchEnabled 
+            WHERE channel_id = ?
+            """, [channel_id])
+
     res = cur.fetchone()
     if res is None:
-        return None
+        return False 
     else:
-        return res[0]
+        return True 
 
 # enable semantic search for channel
 def enable_ss(channel_id):

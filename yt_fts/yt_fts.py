@@ -195,8 +195,6 @@ def semantic_search(search_text, channel, all, limit):
     search_embedding = search_semantic_search_hist(search_text)
     if search_embedding != None:
         print("Using cached results")
-        search_using_embedding(search_embedding, limit)
-        exit()
     else:
         print("Generating embeddings for search string")
         print("getting api key")
@@ -211,12 +209,12 @@ def semantic_search(search_text, channel, all, limit):
         save_search_embedding(search_text, search_embedding)
 
     if channel != None:
-        print("getting channel id")
+
         channel_id = get_channel_id_from_input(channel)
 
         # verify that embeddings have been created for the channel
         print("checking if ss enabled")
-        if check_ss_enabled(channel_id) == None:
+        if check_ss_enabled(channel_id) == False:
             print("Error: Semantic search not enabled for channel")
             exit()
 
@@ -225,6 +223,11 @@ def semantic_search(search_text, channel, all, limit):
         search_using_embedding(search_embedding, limit, channel_id)
 
     if all:
+        print("checking if ss enabled")
+        if check_ss_enabled() == False:
+            print("Error: Semantic search not enabled for any channels")
+            exit()
+
         # search all ss enabled channels
         print("searching all channels ss enabled")
         search_using_embedding(search_embedding, limit)
