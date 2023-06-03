@@ -51,6 +51,7 @@ def download(channel_url, channel_id, language, number_of_jobs):
     handle_reject_consent_cookie(channel_url, s)
 
     if channel_id is None:
+        check_channel_url_pattern(channel_url)
         channel_id = get_channel_id(channel_url, s)
     
     exists = check_if_channel_exists(channel_id)
@@ -301,6 +302,16 @@ commands = [list, download, update, search, semantic_search, export, delete, gen
 
 for command in commands:
     cli.add_command(command)
+
+
+def check_channel_url_pattern(channel_url):
+    """
+    Check the given channel URL against the expected pattern 
+    """
+    expected_url_format = "https:\/\/www.youtube.com\/@(.*)\/videos"
+    if not re.match(expected_url_format, channel_url):
+        show_message("channel_url_not_correct")
+        exit()
 
 
 def download_channel(channel_id, channel_name, language, number_of_jobs, s):

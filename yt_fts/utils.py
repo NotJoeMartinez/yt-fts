@@ -9,6 +9,7 @@ def show_message(code):
         "no_matches_found": "No matches found.\n- Try shortening the search text or use wildcards to match partial words.",
         "channel_not_found": "channel not found.\n- Try using channel id",
         "multiple_channels_found": "Multiple channels found.\n- Try using id",
+        "channel_url_not_correct": "The given channel URL is not correct, expected pattern : https://www.youtube.com/@TimDillonShow/videos",
     }
 
     print(error_dict[code])
