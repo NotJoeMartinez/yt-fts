@@ -21,7 +21,14 @@ def cli():
     make_db()
 
 
-@click.command(help="Lists channels saved in the database")
+# list
+@click.command(
+        help="""
+        Lists channels saved in the database.
+        
+        The (ss) next to channel name indicates that semantic search is enabled for the channel.
+        """
+)
 @click.option("--channel", default=None, help="Optional name or id of the channel to list")
 def list(channel):
     if channel is None:
@@ -31,6 +38,7 @@ def list(channel):
         list_channels(channel_id)
 
 
+# download
 @click.command( 
     help="""
     Download subtitles from a specified YouTube channel.
@@ -65,6 +73,7 @@ def download(channel_url, channel_id, language, number_of_jobs):
         print("Error finding channel id try --channel-id option")
 
 
+# update
 @click.command( 
     help="""
     Updates a specified YouTube channel.
@@ -90,6 +99,7 @@ def update(channel, language, number_of_jobs):
     update_channel(channel_id, channel_name, language, number_of_jobs, s)
 
 
+# search
 @click.command(
         help="""
         Search for a specified text within a channel, a specific video, or across all channels.
@@ -122,7 +132,7 @@ def search(search_text, channel, video, all):
         exit()
 
 
-
+# export
 @click.command( 
     help="""
     Export search results from a specified YouTube channel or from all channels to a CSV file.
@@ -151,6 +161,7 @@ def export(channel, search_text, all):
         export_search(channel_id, search_text, file_name)
 
 
+# delete
 @click.command( 
     help="""
     Delete a channel and all its data. 
@@ -181,7 +192,11 @@ def delete(channel):
 # Semantic search
 @click.command(
         help="""
-        semantic search for a specified text within a channel
+        Semantic search for specified text.
+
+        Before running this command, you must generate embeddings for the channel using the generate-embeddings command.
+        This command uses OpenAI's embeddings API to search for specified text.
+        An OpenAI API key must be set as an environment variable OPENAI_API_KEY.
         """
 )
 @click.argument("search_text", required=True)
@@ -236,14 +251,14 @@ def semantic_search(search_text, channel, all, limit):
 # Generate embeddings
 @click.command( 
     help="""
-    Generate embeddings for a channel or all channels.
+    Generate embeddings for a channel using OpenAI's embeddings API.
 
     Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
     """
 )
-@click.option("--channel", default=None, help="The name or id of the channel to generate embeddings for. This is required unless the --all option is used.")
+@click.option("--channel", default=None, help="The name or id of the channel to generate embeddings for")
 @click.option("--open-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
-def generate_embedings(channel, open_api_key):
+def generate_embeddings(channel, open_api_key):
 
     channel_id = get_channel_id_from_input(channel)
 
@@ -270,7 +285,7 @@ def generate_embedings(channel, open_api_key):
     enable_ss(channel_id)
     print("Embeddings generated")
 
-commands = [list, download, update, search, semantic_search, export, delete, generate_embedings]
+commands = [list, download, update, search, semantic_search, export, delete, generate_embeddings]
 
 for command in commands:
     cli.add_command(command)

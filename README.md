@@ -1,11 +1,12 @@
 
-# yt-fts 
+# yt-fts - Youtube Full Text Search 
 `yt-fts` is a simple python script that uses yt-dlp to scrape all of a youtube channels subtitles
 and load them into an sqlite database that is searchable from the command line. It allows you to
 query a channel for specific key word or phrase and will generate time stamped youtube urls to
 the video containing the keyword. 
 
 - [Blog Post](https://notjoemartinez.com/blog/youtube_full_text_search/)
+- [Semantic Search](#Semantic-Search-via-OpenAI-embeddings-API) (Experimental)
 
 ## Installation 
 
@@ -48,11 +49,14 @@ Options:
   --help     Show this message and exit.
 
 Commands:
-  delete    Delete a channel and all its data.
-  download  Download subtitles from a specified YouTube channel.
-  export    Export search results from a specified YouTube channel or...
-  list      Lists channels saved in the database
-  search    Search for a specified text within a channel, a specific...
+  delete              Delete a channel and all its data.
+  download            Download subtitles from a specified YouTube channel.
+  export              Export search results from a specified YouTube...
+  generate-embeddings  Generate embeddings for a channel using OpenAI's...
+  list                Lists channels saved in the database.
+  search              Search for a specified text within a channel, a...
+  semantic-search     Semantic search for specified text.
+  update              Updates a specified YouTube channel.
 ```
 
 ## `download`
@@ -108,7 +112,10 @@ List downloaded channels
 ```
 Usage: yt-fts list [OPTIONS]
 
-  Lists channels saved in the database
+  Lists channels saved in the database.
+
+  The (ss) next to channel name indicates that semantic search is enabled for
+  the channel.
 
 Options:
   --channel TEXT  Optional name or id of the channel to list
@@ -123,7 +130,7 @@ output:
   id    count  channel_name         channel_url
 ----  -------  -------------------  ----------------------------------------------------
    1      265  The Tim Dillon Show  https://youtube.com/channel/UC4woSp8ITBoYDmjkukhEhxg
-   2      688  Lex Fridman          https://youtube.com/channel/UCSHZKyawb77ixDdsGog4iWA
+   2      688  Lex Fridman (ss)     https://youtube.com/channel/UCSHZKyawb77ixDdsGog4iWA
    3      434  Traversy Media       https://youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA
 ```
 
@@ -258,4 +265,50 @@ Usage: yt-fts delete [OPTIONS] CHANNEL_NAME or CHANNEL_ID
 yt-fts delete "The Tim Dillon Show"
 # or
 yt-fts delete 1 
+```
+
+--- 
+# Semantic Search via OpenAI embeddings API 
+The following commands are a work in progress but should enable semantic search. 
+This requires that you have an openAI API key which you can learn more about that [here](https://platform.openai.com/docs/api-reference/introduction). 
+
+**Limitations**
+
+Keep in mind that generating embeddings will substantially grow the size of your subtitles database and will run slower due to the limitations of working with vectors in sqlite. When running semantic
+searches for the first time, API access is still required to generate embeddings for the search string.
+These search string embeddings are saved to a history table and won't require additional api requests
+after. 
+
+### `semantic-search` 
+```
+Usage: yt-fts semantic [OPTIONS] SEARCH_TEXT
+
+  Semantic search for specified text.
+
+  Before running this command, you must generate embeddings for the channel
+  using the generate-embeddings command. This command uses OpenAI's embeddings 
+  API to search for specified text. An OpenAI API key must be set as an
+  environment variable OPENAI_API_KEY.
+
+Options:
+  --channel TEXT   channel name or id to search in
+  --all            Search all semantic search enabled channels
+  --limit INTEGER  top n results to return
+```
+
+### `generate-embedings`
+```
+Usage: yt-fts generate-embedings [OPTIONS]
+
+  Generate embeddings for a channel using OpenAI's embeddings API.
+
+  Requires an OpenAI API key to be set as an environment variable
+  OPENAI_API_KEY.
+
+Options:
+  --channel TEXT       The name or id of the channel to generate embeddings
+                       for
+  --open-api-key TEXT  OpenAI API key. If not provided, the script will
+                       attempt to read it from the OPENAI_API_KEY environment
+                       variable.
 ```

@@ -20,7 +20,7 @@ def list_channels(channel_id=None):
         channel_id = i[1]
         channel_name = i[2]
 
-        if check_ss_enabled(channel_id) != None:
+        if check_ss_enabled(channel_id) == True:
             channel_name += " (ss)"
 
         channel_url = f"https://youtube.com/channel/{channel_id}"
