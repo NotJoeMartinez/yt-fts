@@ -8,7 +8,7 @@ from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
 
 
-YT_FTS_VERSION = "0.1.17"
+YT_FTS_VERSION = "0.1.19"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -275,7 +275,7 @@ def generate_embeddings(channel, open_api_key):
     channel_id = get_channel_id_from_input(channel)
 
     # verify that embeddings have not already been created for the channel
-    if check_ss_enabled(channel_id) != None:
+    if check_ss_enabled(channel_id) == True:
         print("Error: Semantic embeddings already created for channel")
         exit()
 
