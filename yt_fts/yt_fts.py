@@ -1,7 +1,7 @@
-import click, tempfile, requests, datetime, csv, pickle
+import click, tempfile, requests, datetime, csv 
 
-from yt_fts.search_utils import *
-from yt_fts.db_utils import *
+from yt_fts.search_utils import get_text, get_text_by_video_id
+from yt_fts.db_utils import * 
 from yt_fts.download_utils import *
 from yt_fts.utils import *
 from yt_fts.update_utils import update_channel
@@ -185,22 +185,10 @@ def delete(channel):
         """
 )
 @click.argument("search_text", required=True)
-@click.option("--channel", default=None, help="top n results to return")
+@click.option("--channel", default=None, help="channel name or id to search in")
+@click.option("--all", is_flag=True, help="Search all semantic search enabled channels")
 @click.option("--limit", default=3, help="top n results to return")
-def semantic_search(search_text, channel, limit):
-
-    print("getting channel id")
-    channel_id = get_channel_id_from_input(channel)
-
-    # verify that embeddings have been created for the channel
-    print("checking if ss enabled")
-    if check_ss_enabled(channel_id) == None:
-        print("Error: Semantic search not enabled for channel")
-        exit()
-
-    if len(search_text) > 40:
-        show_message("search_too_long")
-        exit()
+def semantic_search(search_text, channel, all, limit):
 
     # check if search string is in semantic search history
     print("checking if search string in history")
@@ -211,7 +199,6 @@ def semantic_search(search_text, channel, limit):
         exit()
     else:
         print("Generating embeddings for search string")
-        
         print("getting api key")
         api_key = get_api_key()
 
@@ -223,9 +210,23 @@ def semantic_search(search_text, channel, limit):
         print("saving embedding for search string")
         save_search_embedding(search_text, search_embedding)
 
-        # search using embedding
-        print("searching using embedding")
-        print(type(search_embedding))
+    if channel != None:
+        print("getting channel id")
+        channel_id = get_channel_id_from_input(channel)
+
+        # verify that embeddings have been created for the channel
+        print("checking if ss enabled")
+        if check_ss_enabled(channel_id) == None:
+            print("Error: Semantic search not enabled for channel")
+            exit()
+
+        # search using channel id 
+        print("searching in channel")
+        search_using_embedding(search_embedding, limit, channel_id)
+
+    if all:
+        # search all ss enabled channels
+        print("searching all channels ss enabled")
         search_using_embedding(search_embedding, limit)
 
 
@@ -238,9 +239,8 @@ def semantic_search(search_text, channel, limit):
     """
 )
 @click.option("--channel", default=None, help="The name or id of the channel to generate embeddings for. This is required unless the --all option is used.")
-@click.option("--all", is_flag=True, help="Generate embeddings for all channels")
 @click.option("--open-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
-def generate_embedings(channel, all, open_api_key):
+def generate_embedings(channel, open_api_key):
 
     channel_id = get_channel_id_from_input(channel)
 

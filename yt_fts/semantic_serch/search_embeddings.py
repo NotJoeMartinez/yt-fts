@@ -8,10 +8,13 @@ from yt_fts.search_utils import get_channel_name_from_video_id
 from yt_fts.db_utils import get_title_from_db
 
 
-def search_using_embedding(search_embedding, top_n):
+def search_using_embedding(search_embedding, top_n, channel_id=None):
     con = sqlite3.connect('subtitles.db')
     cur = con.cursor()
-    cur.execute("SELECT * FROM Embeddings")
+    if channel_id is None:
+        cur.execute("SELECT * FROM Embeddings")
+    else:
+        cur.execute(f"SELECT * FROM Embeddings WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')")
     rows = cur.fetchall()
 
     heap = []
@@ -35,7 +38,7 @@ def search_using_embedding(search_embedding, top_n):
         timestamp = row[2]
         time = time_to_secs(timestamp)
         video_id= row[1]
-        link = f"https://youtu.be/{vid_id}?t={time}"
+        link = f"https://youtu.be/{video_id}?t={time}"
         channel_name = get_channel_name_from_video_id(video_id)
         video_title = get_title_from_db(video_id)
 

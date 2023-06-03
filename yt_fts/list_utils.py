@@ -1,6 +1,7 @@
 from tabulate import tabulate
 
 from yt_fts.db_utils import get_channels, get_num_vids, get_channel_list_by_id
+from yt_fts.semantic_serch.embeddings import check_ss_enabled
 
 def list_channels(channel_id=None):
 
@@ -11,13 +12,17 @@ def list_channels(channel_id=None):
         channel.insert(1, count)
         print(tabulate([channel], headers=["id", "count", "channel_name", "channel_url"]))
         exit()
-        
+
     raw_channels = get_channels()
     channels = []
     for i in raw_channels:
         row_id = i[0]
         channel_id = i[1]
         channel_name = i[2]
+
+        if check_ss_enabled(channel_id) != None:
+            channel_name += " (ss)"
+
         channel_url = f"https://youtube.com/channel/{channel_id}"
         count = get_num_vids(channel_id)
         channels.append([row_id, count, channel_name, channel_url])

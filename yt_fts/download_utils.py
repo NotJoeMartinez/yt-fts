@@ -128,7 +128,7 @@ def vtt_to_db(channel_id, dir_path, s):
     con = sqlite3.connect('subtitles.db')  
     cur = con.cursor()
 
-    bar = Bar('Processing', max=len(file_paths))
+    bar = Bar('Adding to database', max=len(file_paths))
 
     for vtt in file_paths:
         base_name = os.path.basename(vtt)
