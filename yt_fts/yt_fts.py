@@ -8,7 +8,7 @@ from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
 
 
-YT_FTS_VERSION = "0.1.19"
+YT_FTS_VERSION = "0.1.20"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -121,7 +121,6 @@ def search(search_text, channel, video, all):
         channel_id = get_channel_id_from_input(channel)
         channel_name = get_channel_name_from_id(channel_id)
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
-        print(f"Searching in channel \"{channel_name}\": {channel_url}")
         get_text(channel_id, search_text)
     else:
         print("Error: Either --channel, --video, or --all option must be provided")
@@ -213,13 +212,11 @@ def semantic_search(search_text, channel, all, limit):
     )
 
     # check if search string is in semantic search history
-    print("checking if search string in history")
     search_embedding = search_semantic_search_hist(search_text)
     if search_embedding != None:
         print("Using cached results")
     else:
         print("Generating embeddings for search string")
-        print("getting api key")
         api_key = get_api_key()
 
         # get embedding for search string and convert to blob
@@ -235,23 +232,19 @@ def semantic_search(search_text, channel, all, limit):
         channel_id = get_channel_id_from_input(channel)
 
         # verify that embeddings have been created for the channel
-        print("checking if ss enabled")
         if check_ss_enabled(channel_id) == False:
             print("Error: Semantic search not enabled for channel")
             exit()
 
         # search using channel id 
-        print("searching in channel")
         search_using_embedding(search_embedding, limit, channel_id)
 
     if all:
-        print("checking if ss enabled")
         if check_ss_enabled() == False:
             print("Error: Semantic search not enabled for any channels")
             exit()
 
         # search all ss enabled channels
-        print("searching all channels ss enabled")
         search_using_embedding(search_embedding, limit)
 
 

@@ -27,8 +27,9 @@ def print_search_results(res):
     for quote in res: 
 
         console.print(f"[magenta]\"[bold][link={quote['link']}]{quote['subs']}[/link][/bold]\"[/magenta]", style="magenta")
+        print("")
         console.print(f"    Channel: {quote['channel_name']}",style="none")
-        console.print(f"    Title: {quote['video_title']}",style="none")
+        print(f"    Title: {quote['video_title']}")
         print(f"    Time Stamp: {quote['time_stamp']}")
         console.print(f"    Video ID: {quote['video_id']}")
         console.print(f"    Link: {quote['link']}")
