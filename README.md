@@ -8,7 +8,7 @@ the video containing the keyword.
 - [Blog Post](https://notjoemartinez.com/blog/youtube_full_text_search/)
 - [Semantic Search](#Semantic-Search-via-OpenAI-embeddings-API) (Experimental)
 
-https://user-images.githubusercontent.com/39905973/243149428-acb4e016-e085-4a1f-b445-7e580e3b5fd1.mp4
+https://user-images.githubusercontent.com/39905973/243149912-6ffd8962-d060-490f-9e73-9ab179402f14.mp4
 
 ## Installation 
 
