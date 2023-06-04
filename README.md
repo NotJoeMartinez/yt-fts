@@ -167,13 +167,13 @@ yt-fts search "life in the big city" --channel 1  # assuming 1 is id of channel
 ```
 output:
 ```
-"real knife fight down here in Malibu I"
+"Dennis would go hey life in the big city"
 
     Channel: The Tim Dillon Show
-    Title: #200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube
-    Time Stamp: 00:45:39.420
-    Video ID: e79H5nxS65Q
-    Link: https://youtu.be/e79H5nxS65Q?t=2736
+    Title: 154 - The 3 AM Episode - YouTube
+    Time Stamp: 00:58:53.789
+    Video ID: MhaG3Yfv1cU
+    Link: https://youtu.be/MhaG3Yfv1cU?t=3530
 ```
 
 **Search all channels**
@@ -198,9 +198,10 @@ yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show"
 ```
 output:
 ```
-The Tim Dillon Show: "#200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube"
+"real knife fight down here in Malibu I"
 
-    Quote: "real knife fight down here in Malibu I"
+    Channel: The Tim Dillon Show
+    Title: #200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube
     Time Stamp: 00:45:39.420
     Video ID: e79H5nxS65Q
     Link: https://youtu.be/e79H5nxS65Q?t=2736
