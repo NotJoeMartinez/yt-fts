@@ -161,13 +161,20 @@ def get_channel_name_from_video_id(video_id):
 
     return db.execute(f"SELECT channel_name FROM Channels WHERE channel_id = (SELECT channel_id FROM Videos WHERE video_id = ?)", [video_id]).fetchone()[0]
 
+
+# delete all videos, subtitles, and embeddings associated with channel
 def delete_channel(channel_id):
     conn = sqlite3.connect(db_name)
     cur = conn.cursor()
 
     cur.execute("DELETE FROM Channels WHERE channel_id = ?", (channel_id,))
+
+    # make sure to delete all subtitles and embeddings before videos  
     cur.execute("DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
+    cur.execute("DELETE FROM Embeddings WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
+
     cur.execute("DELETE FROM Videos WHERE channel_id = ?", (channel_id,))
+    cur.execute("DELETE FROM SemanticSearchEnabled WHERE channel_id = ?", (channel_id,))
 
     conn.commit()
     conn.close()
