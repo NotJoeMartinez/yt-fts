@@ -1,0 +1,25 @@
+Searching in all channels
+
+"people have been hacking Furbies for"
+    Link: https://youtu.be/RvBgOjZsffQ?t=166
+    MixMorris: "Hacking A Furby To Demonically Whisper While I Sleep - YouTube"
+    Time Stamp: 00:02:49.970
+    Video ID: RvBgOjZsffQ
+
+"itself most Furby hacking consists of"
+    Link: https://youtu.be/RvBgOjZsffQ?t=184
+    MixMorris: "Hacking A Furby To Demonically Whisper While I Sleep - YouTube"
+    Time Stamp: 00:03:07.309
+    Video ID: RvBgOjZsffQ
+
+"hacking"
+    Link: https://youtu.be/EJtUW2AklVs?t=699
+    PwnFunction: "How some functions can be Dangerous | bin 0x01 - YouTube"
+    Time Stamp: 00:11:42.470
+    Video ID: EJtUW2AklVs
+
+"we will be hacking some simple binaries"
+    Link: https://youtu.be/EJtUW2AklVs?t=21
+    PwnFunction: "How some functions can be Dangerous | bin 0x01 - YouTube"
+    Time Stamp: 00:00:24.390
+    Video ID: EJtUW2AklVs
