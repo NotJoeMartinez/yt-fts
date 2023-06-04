@@ -260,7 +260,7 @@ Usage: yt-fts delete [OPTIONS]
   The command will ask for confirmation before performing the deletion.
 
 Options:
-  --channel TEXT  The name or id of the channel to delete in  [required]
+  --channel TEXT  The name or id of the channel to delete [required]
 ```
 
 **Examples:**

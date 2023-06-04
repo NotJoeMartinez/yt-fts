@@ -166,7 +166,7 @@ def export(channel, search_text, all):
     The command will ask for confirmation before performing the deletion. 
     """
 )
-@click.option("--channel", default=None, required=True, help="The name or id of the channel to delete in")
+@click.option("--channel", default=None, required=True, help="The name or id of the channel to delete")
 def delete(channel):
 
     channel_id = get_channel_id_from_input(channel)
