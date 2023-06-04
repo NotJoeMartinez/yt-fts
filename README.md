@@ -165,12 +165,13 @@ yt-fts search "life in the big city" --channel 1  # assuming 1 is id of channel
 ```
 output:
 ```
-The Tim Dillon Show: "164 - Life In The Big City - YouTube"
+"real knife fight down here in Malibu I"
 
-    Quote: "van in the driveway life in the big city"
-    Time Stamp: 00:30:44.580
-    Video ID: dqGyCTbzYmc
-    Link: https://youtu.be/dqGyCTbzYmc?t=1841
+    Channel: The Tim Dillon Show
+    Title: #200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube
+    Time Stamp: 00:45:39.420
+    Video ID: e79H5nxS65Q
+    Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 
 **Search all channels**
@@ -259,7 +260,7 @@ Usage: yt-fts delete [OPTIONS]
   The command will ask for confirmation before performing the deletion.
 
 Options:
-  --channel TEXT  The name or id of the channel to delete in  [required]
+  --channel TEXT  The name or id of the channel to delete [required]
 ```
 
 **Examples:**
