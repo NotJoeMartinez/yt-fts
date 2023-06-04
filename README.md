@@ -249,7 +249,7 @@ Options:
 ## `delete` 
 Will delete a channel from your database 
 ```
-Usage: yt-fts delete [OPTIONS] CHANNEL_NAME or CHANNEL_ID
+Usage: yt-fts delete [OPTIONS]
 
   Delete a channel and all its data.
 
@@ -257,6 +257,9 @@ Usage: yt-fts delete [OPTIONS] CHANNEL_NAME or CHANNEL_ID
   argument.
 
   The command will ask for confirmation before performing the deletion.
+
+Options:
+  --channel TEXT  The name or id of the channel to delete in  [required]
 ```
 
 **Examples:**
