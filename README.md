@@ -146,11 +146,13 @@ Usage: yt-fts search [OPTIONS] SEARCH_TEXT
   all channels.
 
 Options:
-  --channel TEXT  The name or id of the channel to search in. This is required
-                  unless the --all or --video options are used.
-  --video TEXT    The id of the video to search in. This is used instead of
-                  the channel option.
-  --all           Search in all channels.
+  -c, --channel TEXT  The name or id of the channel to search in. This is
+                      required unless the --all or --video options are used.
+  -v, --video TEXT    The id of the video to search in. This is used instead
+                      of the channel option.
+  -a, --all           Search in all channels.
+  -e, --export        Export search results to a CSV file.
+  --help              Show this message and exit.
 ```
 
 - The search string does not have to be a word for word and match 
@@ -206,31 +208,6 @@ output:
     Time Stamp: 00:45:39.420
     Video ID: e79H5nxS65Q
     Link: https://youtu.be/e79H5nxS65Q?t=2736
-```
-
-## `export`
-Export search results to csv. Exported csv will have `Channel Name,Video Title,Quote,Time Stamp,Link` as it's headers
-```
-Usage: yt-fts export [OPTIONS] SEARCH_TEXT [CHANNEL]
-
-  Export search results from a specified YouTube channel or from all channels
-  to a CSV file.
-
-  The results of the search will be exported to a CSV file. The file will be
-  named with the format "{channel_id or 'all'}_{TIME_STAMP}.csv"
-
-Options:
-  --all   Export from all channels
-```
-
-**Examples:**
-```bash
-yt-fts export "life in the big city" "The Tim Dillon Show"
-```
-
-You can export from all channels in your database as well
-```bash
-yt-fts export "life in the big city" --all
 ```
 
 ## update

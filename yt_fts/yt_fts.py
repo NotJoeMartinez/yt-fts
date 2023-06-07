@@ -9,7 +9,7 @@ from yt_fts.list_utils import list_channels
 from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
-YT_FTS_VERSION = "0.1.22"
+YT_FTS_VERSION = "0.1.23"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -120,13 +120,31 @@ def update(channel, language, number_of_jobs):
         """
 )
 @click.argument("search_text", required=True)
-@click.option("--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
-@click.option("--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
-@click.option("--all", is_flag=True, help="Search in all channels.")
-def search(search_text, channel, video, all):
+@click.option("-c", "--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
+@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("-a", "--all", is_flag=True, help="Search in all channels.")
+@click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
+def search(search_text, channel, video, all, export):
+
+    from yt_fts.export import export_search
 
     if len(search_text) > 40:
         show_message("search_too_long")
+        exit()
+    
+    if export:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        if all:
+            file_name = f"all_{timestamp}.csv"
+            export_search(search_text, file_name, search_id="all", scope="all")
+        elif video:
+            file_name = f"video_{video}_{timestamp}.csv"
+            export_search(search_text, file_name, search_id=video, scope="video")
+        else:
+            channel_id = get_channel_id_from_input(channel)
+            file_name = f"channel_{channel_id}_{timestamp}.csv"
+            export_search(search_text, file_name, search_id=channel_id ,scope="channel")
         exit()
 
     if all:
@@ -137,42 +155,10 @@ def search(search_text, channel, video, all):
         get_text_by_video_id(video, search_text)
     elif channel:
         channel_id = get_channel_id_from_input(channel)
-        channel_name = get_channel_name_from_id(channel_id)
-        channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         get_text(channel_id, search_text)
     else:
         print("Error: Either --channel, --video, or --all option must be provided")
         exit()
-
-
-# export
-@click.command( 
-    help="""
-    Export search results from a specified YouTube channel or from all channels to a CSV file.
-
-    The results of the search will be exported to a CSV file. The file will be named with the format "{channel_id or 'all'}_{TIME_STAMP}.csv" 
-    """
-)
-@click.argument("search_text", required=True)
-@click.option("--all", is_flag=True, help="Export from all channels")
-@click.argument('channel', required=False)
-def export(channel, search_text, all):
-    if len(search_text) > 40:
-        show_message("search_too_long")
-        exit() 
-
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    if all:
-        file_name = f"all_{timestamp}.csv"
-        click.echo(f"Exporting search results from all channels to csv: {file_name}")
-        export_search("all", search_text, file_name)
-    else:
-        channel_id = get_channel_id_from_input(channel)
-        file_name = f"{channel_id}_{timestamp}.csv"
-        click.echo(f"Exporting search results to csv: {file_name}")
-        export_search(channel_id, search_text, file_name)
-
 
 # delete
 @click.command( 
@@ -341,7 +327,7 @@ def show(video, channel, config):
 
 
 commands = [list, download, update, search, semantic_search, 
-            export, delete, generate_embeddings, show]
+            delete, generate_embeddings, show]
 
 for command in commands:
     cli.add_command(command)
@@ -369,32 +355,7 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):
         vtt_to_db(channel_id, tmp_dir, s)
 
 
-def export_search(channel_id, text, file_name):
-    """
-    Calls search functions and exports the results to a csv file
-    """
-    if channel_id == "all":
-        res = search_all(text)
-    else:
-        res = search_channel(channel_id, text)
 
-    if len(res) == 0:
-        show_message("no_matches_found")
-        exit()
-
-    with open(file_name, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['Channel Name','Video Title', 'Quote', 'Time Stamp', 'Link'])
-        
-        for quote in res:
-            video_id = quote["video_id"]
-            channel_name = get_channel_name_from_video_id(video_id)
-            video_title = get_title_from_db(video_id)
-            time_stamp = quote["timestamp"]
-            subs = quote["text"]
-            time = time_to_secs(time_stamp) 
-
-            writer.writerow([channel_name,video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
 
 
 def get_channel_id_from_input(channel_input):
