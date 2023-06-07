@@ -9,7 +9,7 @@ from yt_fts.show import list_channels
 from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
-YT_FTS_VERSION = "0.1.26"
+YT_FTS_VERSION = "0.1.27"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -43,9 +43,9 @@ def cli():
     """
 )
 @click.argument("channel_url", required=True)
-@click.option("--channel-id", default=None, help="Optional channel id to override the one from the url")
-@click.option("--language", default="en", help="Language of the subtitles to download")
-@click.option("--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
+@click.option("-id", "--channel-id", default=None, help="Optional channel id to override the one from the url")
+@click.option("-l", "--language", default="en", help="Language of the subtitles to download")
+@click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def download(channel_url, channel_id, language, number_of_jobs):
 
     s = requests.session()
@@ -80,9 +80,9 @@ def download(channel_url, channel_id, language, number_of_jobs):
     will still attempt to download subtitles as subtitles are sometimes added later.
     """
 )
-@click.option("--channel", default=None, required=True, help="The name or id of the channel to update.")
-@click.option("--language", default="en", help="Language of the subtitles to download")
-@click.option("--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
+@click.option("-c", "--channel", default=None, required=True, help="The name or id of the channel to update.")
+@click.option("-l", "--language", default="en", help="Language of the subtitles to download")
+@click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def update(channel, language, number_of_jobs):
 
     channel_id = get_channel_id_from_input(channel)
@@ -156,7 +156,7 @@ def search(text, channel, video, all, semantic, limit, export):
         exit()
 
 
-# delete
+# Delete
 @click.command( 
     help="""
     Delete a channel and all its data. 
@@ -166,7 +166,7 @@ def search(text, channel, video, all, semantic, limit, export):
     The command will ask for confirmation before performing the deletion. 
     """
 )
-@click.option("--channel", default=None, required=True, help="The name or id of the channel to delete")
+@click.option("-c", "--channel", default=None, required=True, help="The name or id of the channel to delete")
 def delete(channel):
 
     channel_id = get_channel_id_from_input(channel)
@@ -184,6 +184,38 @@ def delete(channel):
         print("Exiting")
 
 
+# Show
+@click.command( 
+    help="""
+    View library, transcripts, channel video list and config settings.
+    """
+)
+
+@click.option("-t", "--transcript", default=None, help="Show transcript for a video")
+@click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
+@click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
+@click.option("--config", is_flag=True, help="Show path to config directory")
+def show(transcript, channel, library, config):
+
+    from yt_fts.show import show_video_transcript, show_video_list
+
+    if transcript:
+        show_video_transcript(transcript)
+        exit()
+    elif channel:
+        channel_id = get_channel_id_from_input(channel)
+        show_video_list(channel_id)
+    elif library:
+        list_channels()
+    elif config:
+        config_path = get_config_path()
+        print(f"Config path: {config_path}")
+        exit()
+    else:
+        list_channels()
+
+
+
 # Generate embeddings
 @click.command( 
     help="""
@@ -192,9 +224,9 @@ def delete(channel):
     Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
     """
 )
-@click.option("--channel", default=None, help="The name or id of the channel to generate embeddings for")
+@click.option("-c", "--channel", default=None, help="The name or id of the channel to generate embeddings for")
 @click.option("--open-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
-def generate_embeddings(channel, open_api_key):
+def get_embeddings(channel, open_api_key):
 
     from yt_fts.embeddings import get_openai_embeddings
     from yt_fts.search import check_ss_enabled, enable_ss
@@ -226,40 +258,8 @@ def generate_embeddings(channel, open_api_key):
     print("Embeddings generated")
 
 
-
-# Show video transcripts and video list 
-@click.command( 
-    help="""
-    View library, transcripts, channel video list and config settings.
-    """
-)
-
-@click.option("-t", "--transcript", default=None, help="Show transcript for a video")
-@click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
-@click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
-@click.option("--config", is_flag=True, help="Show path to config directory")
-def show(transcript, channel, library, config):
-
-    from yt_fts.show import show_video_transcript, show_video_list
-
-    if transcript:
-        show_video_transcript(transcript)
-        exit()
-    elif channel:
-        channel_id = get_channel_id_from_input(channel)
-        show_video_list(channel_id)
-    elif library:
-        list_channels()
-    elif config:
-        config_path = get_config_path()
-        print(f"Config path: {config_path}")
-        exit()
-    else:
-        list_channels()
-
-
 commands = [download, update, search, delete, 
-            generate_embeddings, show]
+            get_embeddings, show]
 
 for command in commands:
     cli.add_command(command)

@@ -70,10 +70,10 @@ Usage: yt-fts download [OPTIONS] CHANNEL_URL
   automatically extract the channel id from the URL.
 
 Options:
-  --channel-id TEXT         Optional channel id to override the one from the
-                            url
-  --language TEXT           Language of the subtitles to download
-  --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
+  -id, --channel-id TEXT        Optional channel id to override the one from
+                                the url
+  -l, --language TEXT           Language of the subtitles to download
+  -j, --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
 ```
 
 ### Examples:
@@ -111,11 +111,7 @@ yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos"
 ```
 Usage: yt-fts show [OPTIONS]
 
-  View library, transcripts, video lists and config settings.
-
-  When listing your library the (ss) next to channel name 
-  indicates that semantic search is enabled for the channel.
-
+  View library, transcripts, channel video list and config settings.
 
 Options:
   -t, --transcript TEXT  Show transcript for a video
@@ -153,7 +149,6 @@ Options:
   -s, --semantic       Use Semantic Search
   -l, --limit INTEGER  Max number of results to return
   -e, --export         Export search results to a CSV file.
-  --help               Show this message and exit.
 ```
 
 - The search string does not have to be a word for word and match 
@@ -223,10 +218,10 @@ Usage: yt-fts update [OPTIONS]
   download subtitles as subtitles are sometimes added later.
 
 Options:
-  --channel TEXT            The name or id of the channel to update.
-                            [required]
-  --language TEXT           Language of the subtitles to download
-  --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
+  -c, --channel TEXT            The name or id of the channel to update.
+                                [required]
+  -l, --language TEXT           Language of the subtitles to download
+  -j, --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
 ```
 
 ## `delete` 
@@ -242,7 +237,7 @@ Usage: yt-fts delete [OPTIONS]
   The command will ask for confirmation before performing the deletion.
 
 Options:
-  --channel TEXT  The name or id of the channel to delete [required]
+  -c, --channel TEXT  The name or id of the channel to delete  [required]
 ```
 
 **Examples:**
@@ -266,9 +261,9 @@ searches for the first time, API access is still required to generate embeddings
 These search string embeddings are saved to a history table and won't require additional api requests
 after. 
 
-### `generate-embedings`
+### `get-embedings`
 ```
-Usage: yt-fts generate-embedings [OPTIONS]
+Usage: yt-fts get-embeddings [OPTIONS]
 
   Generate embeddings for a channel using OpenAI's embeddings API.
 
@@ -276,7 +271,7 @@ Usage: yt-fts generate-embedings [OPTIONS]
   OPENAI_API_KEY.
 
 Options:
-  --channel TEXT       The name or id of the channel to generate embeddings
+  -c, --channel TEXT   The name or id of the channel to generate embeddings
                        for
   --open-api-key TEXT  OpenAI API key. If not provided, the script will
                        attempt to read it from the OPENAI_API_KEY environment
