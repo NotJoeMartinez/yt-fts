@@ -51,15 +51,12 @@ Options:
   --help     Show this message and exit.
 
 Commands:
-  delete              Delete a channel and all its data.
-  download            Download subtitles from a specified YouTube channel.
-  export              Export search results from a specified YouTube...
+  delete               Delete a channel and all its data.
+  download             Download subtitles from a specified YouTube channel.
   generate-embeddings  Generate embeddings for a channel using OpenAI's...
-  list                Lists channels saved in the database.
-  search              Search for a specified text within a channel, a...
-  semantic-search     Semantic search for specified text.
-  show                Show video transcripts and video list for a...
-  update              Updates a specified YouTube channel.
+  search               Search for a specified text within a channel, a...
+  show                 View library, transcripts, channel video list and...
+  update               Updates a specified YouTube channel.
 ```
 
 ## `download`
@@ -142,19 +139,21 @@ output:
 ## `search`
 Search saved subtitles 
 ```
-Usage: yt-fts search [OPTIONS] SEARCH_TEXT
+Usage: yt-fts search [OPTIONS] TEXT
 
   Search for a specified text within a channel, a specific video, or across
   all channels.
 
 Options:
-  -c, --channel TEXT  The name or id of the channel to search in. This is
-                      required unless the --all or --video options are used.
-  -v, --video TEXT    The id of the video to search in. This is used instead
-                      of the channel option.
-  -a, --all           Search in all channels.
-  -e, --export        Export search results to a CSV file.
-  --help              Show this message and exit.
+  -c, --channel TEXT   The name or id of the channel to search in. This is
+                       required unless the --all or --video options are used.
+  -v, --video TEXT     The id of the video to search in. This is used instead
+                       of the channel option.
+  -a, --all            Search in all channels.
+  -s, --semantic       Use Semantic Search
+  -l, --limit INTEGER  Max number of results to return
+  -e, --export         Export search results to a CSV file.
+  --help               Show this message and exit.
 ```
 
 - The search string does not have to be a word for word and match 
@@ -266,23 +265,6 @@ Keep in mind that generating embeddings will substantially grow the size of your
 searches for the first time, API access is still required to generate embeddings for the search string.
 These search string embeddings are saved to a history table and won't require additional api requests
 after. 
-
-### `semantic-search` 
-```
-Usage: yt-fts semantic [OPTIONS] SEARCH_TEXT
-
-  Semantic search for specified text.
-
-  Before running this command, you must generate embeddings for the channel
-  using the generate-embeddings command. This command uses OpenAI's embeddings 
-  API to search for specified text. An OpenAI API key must be set as an
-  environment variable OPENAI_API_KEY.
-
-Options:
-  --channel TEXT   channel name or id to search in
-  --all            Search all semantic search enabled channels
-  --limit INTEGER  top n results to return
-```
 
 ### `generate-embedings`
 ```
