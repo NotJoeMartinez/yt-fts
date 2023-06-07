@@ -105,6 +105,7 @@ def semantic_search(text, search_id, scope, limit, export=False):
     con.close()
 
 
+    channel_names = []
     semantic_res = []
 
     for sim, row in sorted(heap, reverse=True):
@@ -116,6 +117,7 @@ def semantic_search(text, search_id, scope, limit, export=False):
         video_id= row[1]
         link = f"https://youtu.be/{video_id}?t={time}"
         channel_name = get_channel_name_from_video_id(video_id)
+        channel_names.append(channel_name)
         video_title = get_title_from_db(video_id)
         
         quote_match["channel_name"] = channel_name
@@ -131,7 +133,12 @@ def semantic_search(text, search_id, scope, limit, export=False):
         return semantic_res
 
     print_search_results(semantic_res)
-
+    summary_data = {
+        "num_matches": len(semantic_res),
+        "num_channels": len(set(channel_names)),
+        "num_videos": len(set([quote["video_id"] for quote in semantic_res]))
+    } 
+    print_summary(summary_data)
 
 # video search
 def get_text_by_video_id(video_id, text):
