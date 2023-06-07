@@ -164,3 +164,57 @@ def get_vid_title(vid_url, s):
         return title 
     else:
         return None
+
+
+def check_channel_url_pattern(channel_url):
+    """
+    Check the given channel URL against the expected pattern 
+    """
+
+    from yt_fts.utils import show_message
+
+    expected_url_format = "https:\/\/www.youtube.com\/@(.*)\/videos"
+    if not re.match(expected_url_format, channel_url):
+        show_message("channel_url_not_correct")
+        exit()
+
+
+def download_channel(channel_id, channel_name, language, number_of_jobs, s):
+    """
+    Downloads all the videos from a channel to a tmp directory
+    """
+
+    import tempfile
+    from yt_fts.db_utils import add_channel_info
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+        list_of_videos_urls = get_videos_list(channel_url)
+        download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
+        add_channel_info(channel_id, channel_name, channel_url)
+        vtt_to_db(channel_id, tmp_dir, s)
+
+
+def get_channel_id_from_input(channel_input):
+    """
+    Checks if the input is a rowid or a channel name and returns channel id
+    """
+
+    from yt_fts.db_utils import (
+        get_channel_id_from_rowid, 
+        get_channel_id_from_name
+    )
+
+    from yt_fts.utils import show_message
+
+    name_res = get_channel_id_from_name(channel_input) 
+    id_res = get_channel_id_from_rowid(channel_input) 
+
+    if id_res != None:
+        return id_res
+    elif name_res != None: 
+        return name_res
+    else:
+        show_message("channel_not_found")
+        exit()
+    
