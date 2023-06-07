@@ -1,11 +1,11 @@
 import click, tempfile, requests, datetime, csv 
 
-from yt_fts.search_utils import get_text, get_text_by_video_id
+from yt_fts.search import get_text, get_text_by_video_id
 from yt_fts.db_utils import * 
-from yt_fts.download_utils import *
+from yt_fts.download import *
 from yt_fts.utils import *
-from yt_fts.update_utils import update_channel
-from yt_fts.list_utils import list_channels
+from yt_fts.update import update_channel
+from yt_fts.list import list_channels
 from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
