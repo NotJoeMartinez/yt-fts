@@ -9,7 +9,7 @@ from yt_fts.list_utils import list_channels
 from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
-YT_FTS_VERSION = "0.1.21"
+YT_FTS_VERSION = "0.1.22"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -24,7 +24,7 @@ def cli():
         else:
             new_db_path = os.path.join(new_config_path, "subtitles.db") 
             make_db(new_db_path)
-            print(f"Database saved to: {new_db_path}")
+            print(f"Your subtitles database has been saved to: {new_db_path}")
     else:
         db_path = get_db_path()
         make_db(db_path)
@@ -312,7 +312,8 @@ def generate_embeddings(channel, open_api_key):
 # Show video transcripts and video list 
 @click.command( 
     help="""
-    Show transcripts for a video or list of videos from a channel
+    Show video transcripts and video list for a specified channel or video.
+    Also shows the path to the config directory.
     """
 )
 @click.option("-v", "--video", default=None, help="The video id to show transcripts for")
