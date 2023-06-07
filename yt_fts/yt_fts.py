@@ -1,15 +1,15 @@
-import click, tempfile, requests, datetime, csv 
+import click, requests, datetime
 
 from yt_fts.search import get_text, get_text_by_video_id
 from yt_fts.db_utils import * 
 from yt_fts.download import *
 from yt_fts.utils import *
 from yt_fts.update import update_channel
-from yt_fts.list import list_channels
+from yt_fts.show import list_channels
 from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
-YT_FTS_VERSION = "0.1.24"
+YT_FTS_VERSION = "0.1.25"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -32,23 +32,6 @@ def cli():
     db_path = get_db_path()
     make_db(db_path)
 
-
-
-# list
-@click.command(
-        help="""
-        Lists channels saved in the database.
-        
-        The (ss) next to channel name indicates that semantic search is enabled for the channel.
-        """
-)
-@click.option("--channel", default=None, help="Optional name or id of the channel to list")
-def list(channel):
-    if channel is None:
-        list_channels()
-    else:       
-        channel_id = get_channel_id_from_input(channel)
-        list_channels(channel_id)
 
 
 # download
@@ -296,38 +279,39 @@ def generate_embeddings(channel, open_api_key):
     print("Embeddings generated")
 
 
+
 # Show video transcripts and video list 
 @click.command( 
     help="""
-    Show video transcripts and video list for a specified channel or video.
-    Also shows the path to the config directory.
+    View library, transcripts, channel video list and config settings.
     """
 )
-@click.option("-v", "--video", default=None, help="The video id to show transcripts for")
-@click.option("-c","--channel", default=None, help="The name or id of the channel to show video list")
+
+@click.option("-t", "--transcript", default=None, help="Show transcript for a video")
+@click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
+@click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
 @click.option("--config", is_flag=True, help="Show path to config directory")
-def show(video, channel, config):
+def show(transcript, channel, library, config):
 
     from yt_fts.show import show_video_transcript, show_video_list
 
-    if config:
+    if transcript:
+        show_video_transcript(transcript)
+        exit()
+    elif channel:
+        channel_id = get_channel_id_from_input(channel)
+        show_video_list(channel_id)
+    elif library:
+        list_channels()
+    elif config:
         config_path = get_config_path()
         print(f"Config path: {config_path}")
         exit()
-
-    if video:
-        show_video_transcript(video)
-        exit()
-    
-    if channel:
-        channel_id = get_channel_id_from_input(channel)
-        show_video_list(channel_id)
     else:
         list_channels()
 
 
-
-commands = [list, download, update, search, semantic_search, 
+commands = [download, update, search, semantic_search, 
             delete, generate_embeddings, show]
 
 for command in commands:
