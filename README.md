@@ -58,6 +58,7 @@ Commands:
   list                Lists channels saved in the database.
   search              Search for a specified text within a channel, a...
   semantic-search     Semantic search for specified text.
+  show                Show transcripts for a video or list of videos...
   update              Updates a specified YouTube channel.
 ```
 
@@ -272,6 +273,17 @@ Options:
 yt-fts delete "The Tim Dillon Show"
 # or
 yt-fts delete 1 
+```
+
+## `show`
+```
+Usage: yt-fts show [OPTIONS]
+
+  Show transcripts for a video or list of videos from a channel
+
+Options:
+  -v, --video TEXT    The video id to show transcripts for
+  -c, --channel TEXT  The name or id of the channel to show video list
 ```
 
 --- 
