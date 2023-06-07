@@ -61,6 +61,7 @@ def semantic_search(text, search_id, scope, limit, export=False):
         api_key = os.environ.get("OPENAI_API_KEY")
         print(f"Generating embeddings for \"{text}\"")
         search_embedding = get_embedding(api_key, text)
+        save_search_embedding(text, search_embedding)
     else:
         search_embedding = hist
 
