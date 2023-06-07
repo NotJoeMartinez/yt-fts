@@ -58,6 +58,7 @@ def parse_vtt(file_path):
 
     return result 
 
+
 def get_api_key():
     import os
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -65,3 +66,15 @@ def get_api_key():
     if api_key is None:
         return None
     return api_key
+
+
+def get_time_delta(timestamp1, timestamp2):
+    from datetime import datetime
+    format_string = "%H:%M:%S.%f"
+    dt1 = datetime.strptime(timestamp1, format_string)
+    dt2 = datetime.strptime(timestamp2, format_string)
+    diff = dt2 - dt1
+    # convert to string "HH:MM:SS"
+    diff = str(diff).split(".")[0]
+
+    return diff 

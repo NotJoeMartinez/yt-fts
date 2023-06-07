@@ -291,7 +291,32 @@ def generate_embeddings(channel, open_api_key):
     enable_ss(channel_id)
     print("Embeddings generated")
 
-commands = [list, download, update, search, semantic_search, export, delete, generate_embeddings]
+# Show video transcripts and video list 
+@click.command( 
+    help="""
+    Show transcripts for a video or list of videos from a channel
+    """
+)
+@click.option("-v", "--video", default=None, help="The video id to show transcripts for")
+@click.option("-c","--channel", default=None, help="The name or id of the channel to show video list")
+def show(video, channel):
+
+    from yt_fts.show import show_video_transcript, show_video_list
+
+    if video:
+        show_video_transcript(video)
+        exit()
+    
+    if channel:
+        channel_id = get_channel_id_from_input(channel)
+        show_video_list(channel_id)
+    else:
+        list_channels()
+
+
+
+commands = [list, download, update, search, semantic_search, 
+            export, delete, generate_embeddings, show]
 
 for command in commands:
     cli.add_command(command)
