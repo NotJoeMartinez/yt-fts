@@ -6,6 +6,7 @@ from yt_fts.download_utils import *
 from yt_fts.utils import *
 from yt_fts.update_utils import update_channel
 from yt_fts.list_utils import list_channels
+from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
 YT_FTS_VERSION = "0.1.21"
@@ -13,7 +14,24 @@ YT_FTS_VERSION = "0.1.21"
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
 def cli():
-    make_db()
+
+    config_path = get_config_path()
+    if config_path is None:
+        new_config_path = make_config_dir()
+        if new_config_path is None:
+            print("Error: Could not create config directory, database will be saved in current directory")
+            make_db("subtitles.db")
+        else:
+            new_db_path = os.path.join(new_config_path, "subtitles.db") 
+            make_db(new_db_path)
+            print(f"Database saved to: {new_db_path}")
+    else:
+        db_path = get_db_path()
+        make_db(db_path)
+
+    db_path = get_db_path()
+    make_db(db_path)
+
 
 
 # list
@@ -299,9 +317,15 @@ def generate_embeddings(channel, open_api_key):
 )
 @click.option("-v", "--video", default=None, help="The video id to show transcripts for")
 @click.option("-c","--channel", default=None, help="The name or id of the channel to show video list")
-def show(video, channel):
+@click.option("--config", is_flag=True, help="Show path to config directory")
+def show(video, channel, config):
 
     from yt_fts.show import show_video_transcript, show_video_list
+
+    if config:
+        config_path = get_config_path()
+        print(f"Config path: {config_path}")
+        exit()
 
     if video:
         show_video_transcript(video)
