@@ -30,7 +30,10 @@ def list_channels(channel_id=None):
 
 #  not dry but for some reason importing from embeddings.py causes slow down 
 def check_ss_enabled(channel_id=None):
-    con = sqlite3.connect("subtitles.db")
+    from yt_fts.config import get_db_path
+
+    db_path = get_db_path() 
+    con = sqlite3.connect(db_path)
     cur = con.cursor()
 
     if channel_id is None:

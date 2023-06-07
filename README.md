@@ -1,6 +1,6 @@
 
 # yt-fts - Youtube Full Text Search 
-`yt-fts` is a simple python script that uses yt-dlp to scrape all of a youtube channels subtitles
+`yt-fts` is a command line program that uses yt-dlp to scrape all of a youtube channels subtitles
 and load them into an sqlite database that is searchable from the command line. It allows you to
 query a channel for specific key word or phrase and will generate time stamped youtube urls to
 the video containing the keyword. 
@@ -58,7 +58,7 @@ Commands:
   list                Lists channels saved in the database.
   search              Search for a specified text within a channel, a...
   semantic-search     Semantic search for specified text.
-  show                Show transcripts for a video or list of videos...
+  show                Show video transcripts and video list for a...
   update              Updates a specified YouTube channel.
 ```
 
@@ -279,11 +279,13 @@ yt-fts delete 1
 ```
 Usage: yt-fts show [OPTIONS]
 
-  Show transcripts for a video or list of videos from a channel
+  Show video transcripts and video list for a specified channel or video. Also
+  shows the path to the config directory.
 
 Options:
   -v, --video TEXT    The video id to show transcripts for
   -c, --channel TEXT  The name or id of the channel to show video list
+  --config            Show path to config directory
 ```
 
 --- 

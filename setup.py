@@ -15,7 +15,7 @@ entry_points = {
 
 setup(
     name='yt-fts', 
-    version='0.1.21',
+    version='0.1.22',
     description='yt-fts is a simple python script that uses yt-dlp to scrape all of a youtube channels subtitles and load them into an sqlite database that is searchable from the command line. It allows you to query a channel for specific key word or phrase and will generate time stamped youtube urls to the video containing the keyword.',
     long_description=long_description,
     long_description_content_type='text/markdown', 
@@ -24,5 +24,5 @@ setup(
     packages=find_packages(),
     install_requires=dependencies,
     entry_points=entry_points,
-    python_requires='>=3.11',
+    python_requires='>=3.8',
 )

@@ -11,9 +11,10 @@ from yt_fts.utils import time_to_secs
 from yt_fts.search_utils import get_channel_name_from_video_id
 from yt_fts.db_utils import get_title_from_db
 from yt_fts.search_utils import print_search_results
+from yt_fts.config import get_db_path
 
 def search_using_embedding(search_embedding, top_n, channel_id=None):
-    con = sqlite3.connect('subtitles.db')
+    con = sqlite3.connect(get_db_path())
     cur = con.cursor()
     if channel_id is None:
         cur.execute("SELECT * FROM Embeddings")
