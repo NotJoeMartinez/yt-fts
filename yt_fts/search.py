@@ -21,8 +21,9 @@ def get_text(channel_id, text):
     if len(res) == 0:
         show_message("no_matches_found")
         exit()
-
+    
     fts_res = []
+    channel_names = []
     for quote in res:
 
         quote_match = {}
@@ -33,6 +34,8 @@ def get_text(channel_id, text):
         link = f"https://youtu.be/{video_id}?t={time}"
 
         quote_match["channel_name"] = get_channel_name_from_video_id(video_id)
+        channel_names.append(quote_match["channel_name"])
+
         quote_match["video_title"] = get_title_from_db(video_id)
         quote_match["subs"] = quote["text"].strip()
         quote_match["time_stamp"] = time_stamp
@@ -41,7 +44,14 @@ def get_text(channel_id, text):
 
         fts_res.append(quote_match)
 
+    summary_data = {
+        "num_matches": len(res),
+        "num_channels": len(set(channel_names)),
+        "num_videos": len(set([quote["video_id"] for quote in res]))
+    } 
+
     print_search_results(fts_res)
+    print_summary(summary_data)
 
 
 # semantic search
@@ -95,6 +105,7 @@ def semantic_search(text, search_id, scope, limit, export=False):
     con.close()
 
 
+    channel_names = []
     semantic_res = []
 
     for sim, row in sorted(heap, reverse=True):
@@ -106,6 +117,7 @@ def semantic_search(text, search_id, scope, limit, export=False):
         video_id= row[1]
         link = f"https://youtu.be/{video_id}?t={time}"
         channel_name = get_channel_name_from_video_id(video_id)
+        channel_names.append(channel_name)
         video_title = get_title_from_db(video_id)
         
         quote_match["channel_name"] = channel_name
@@ -121,7 +133,12 @@ def semantic_search(text, search_id, scope, limit, export=False):
         return semantic_res
 
     print_search_results(semantic_res)
-
+    summary_data = {
+        "num_matches": len(semantic_res),
+        "num_channels": len(set(channel_names)),
+        "num_videos": len(set([quote["video_id"] for quote in semantic_res]))
+    } 
+    print_summary(summary_data)
 
 # video search
 def get_text_by_video_id(video_id, text):
@@ -254,3 +271,16 @@ def print_search_results(res):
         console.print(f"    Video ID: {quote['video_id']}")
         console.print(f"    Link: {quote['link']}")
         console.print("")
+
+
+def print_summary(summary_data):
+    """
+    "num_matches": num_matches,
+    "num_channels": num_channels,
+    "num_videos": num_videos,
+    """
+    console = Console()
+
+    console.print("")
+    console.print(f"Found [bold]{summary_data['num_matches']}[/bold] matches in [bold]{summary_data['num_videos']}[/bold] videos from [bold]{summary_data['num_channels']}[/bold] channels")
+    pass
