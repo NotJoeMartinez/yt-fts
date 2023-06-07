@@ -110,24 +110,26 @@ Languages are represented using [ISO 639-1](https://en.wikipedia.org/wiki/List_o
 yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
-## `list`
-List downloaded channels 
+## `show`
 ```
-Usage: yt-fts list [OPTIONS]
+Usage: yt-fts show [OPTIONS]
 
-  Lists channels saved in the database.
+  View library, transcripts, video lists and config settings.
 
-  The (ss) next to channel name indicates that semantic search is enabled for
-  the channel.
+  When listing your library the (ss) next to channel name 
+  indicates that semantic search is enabled for the channel.
+
 
 Options:
-  --channel TEXT  Optional name or id of the channel to list
+  -t, --transcript TEXT  Show transcript for a video
+  -c, --channel TEXT     Show list of videos for a channel
+  -l, --library          Show list of channels in library
+  --config               Show path to config directory
 ```
 
-```bash
-yt-fts list
 ```
-
+yt-fts show -l
+```
 output:
 ```
   id    count  channel_name         channel_url
@@ -252,18 +254,6 @@ yt-fts delete "The Tim Dillon Show"
 yt-fts delete 1 
 ```
 
-## `show`
-```
-Usage: yt-fts show [OPTIONS]
-
-  Show video transcripts and video list for a specified channel or video. Also
-  shows the path to the config directory.
-
-Options:
-  -v, --video TEXT    The video id to show transcripts for
-  -c, --channel TEXT  The name or id of the channel to show video list
-  --config            Show path to config directory
-```
 
 --- 
 # Semantic Search via OpenAI embeddings API 

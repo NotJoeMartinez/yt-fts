@@ -8,9 +8,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 from rich.console import Console
 
 from yt_fts.utils import time_to_secs
-from yt_fts.search_utils import get_channel_name_from_video_id
+from yt_fts.search import get_channel_name_from_video_id
 from yt_fts.db_utils import get_title_from_db
-from yt_fts.search_utils import print_search_results
+from yt_fts.search import print_search_results
 from yt_fts.config import get_db_path
 
 def search_using_embedding(search_embedding, top_n, channel_id=None):
