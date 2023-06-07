@@ -175,7 +175,7 @@ def get_channel_name_from_video_id(video_id):
 # delete all videos, subtitles, and embeddings associated with channel
 def delete_channel(channel_id):
     
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(get_db_path())
     cur = conn.cursor()
 
     cur.execute("DELETE FROM Channels WHERE channel_id = ?", (channel_id,))

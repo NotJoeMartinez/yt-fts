@@ -4,6 +4,7 @@ from progress.bar import Bar
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 
+from yt_fts.config import get_db_path
 from yt_fts.db_utils import add_video
 from yt_fts.utils import parse_vtt
 
@@ -125,7 +126,7 @@ def vtt_to_db(channel_id, dir_path, s):
         if os.path.isfile(item_path):
             file_paths.append(item_path)    
 
-    con = sqlite3.connect('subtitles.db')  
+    con = sqlite3.connect(get_db_path())  
     cur = con.cursor()
 
     bar = Bar('Adding to database', max=len(file_paths))

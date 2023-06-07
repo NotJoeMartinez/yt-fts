@@ -4,9 +4,10 @@ import pickle
 
 from progress.bar import Bar
 from tenacity import retry, wait_random_exponential, stop_after_attempt
+from yt_fts.config import get_db_path
 
 def get_openai_embeddings(subs, api_key):
-    conn = sqlite3.connect("subtitles.db")
+    conn = sqlite3.connect(get_db_path())
     cur = conn.cursor()
 
     bar = Bar('Generating embeddings', max=len(subs))
@@ -40,7 +41,7 @@ def get_embedding(api_key, text: str, model="text-embedding-ada-002") -> list[fl
 # should take a string for search_string and array of embeddings for search_embedding
 def save_search_embedding(search_string, search_embedding):
     search_embedding_blob = pickle.dumps(search_embedding)
-    con = sqlite3.connect("subtitles.db")
+    con = sqlite3.connect(get_db_path())
     cur = con.cursor()
 
     cur.execute(""" 
@@ -54,7 +55,7 @@ def save_search_embedding(search_string, search_embedding):
 # get embedding blob if exists 
 # should return an array of embeddings
 def search_semantic_search_hist(search_string):
-    con = sqlite3.connect("subtitles.db")
+    con = sqlite3.connect(get_db_path())
     cur = con.cursor()
 
     cur.execute(""" 
@@ -70,7 +71,7 @@ def search_semantic_search_hist(search_string):
 
 # check if semantic search has been enabled for channel
 def check_ss_enabled(channel_id=None):
-    con = sqlite3.connect("subtitles.db")
+    con = sqlite3.connect(get_db_path())
     cur = con.cursor()
 
     if channel_id is None:
@@ -91,7 +92,7 @@ def check_ss_enabled(channel_id=None):
 
 # enable semantic search for channel
 def enable_ss(channel_id):
-    con = sqlite3.connect("subtitles.db")
+    con = sqlite3.connect(get_db_path())
     cur = con.cursor()
 
     cur.execute(""" 
