@@ -5,11 +5,11 @@ from yt_fts.db_utils import *
 from yt_fts.download import *
 from yt_fts.utils import *
 from yt_fts.update import update_channel
-from yt_fts.show import list_channels
+from yt_fts.list import list_channels
 from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
-YT_FTS_VERSION = "0.1.27"
+YT_FTS_VERSION = "0.1.28"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -195,9 +195,9 @@ def delete(channel):
 @click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
 @click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
 @click.option("--config", is_flag=True, help="Show path to config directory")
-def show(transcript, channel, library, config):
+def list(transcript, channel, library, config):
 
-    from yt_fts.show import show_video_transcript, show_video_list
+    from yt_fts.list import show_video_transcript, show_video_list
 
     if transcript:
         show_video_transcript(transcript)
@@ -259,7 +259,7 @@ def get_embeddings(channel, open_api_key):
 
 
 commands = [download, update, search, delete, 
-            get_embeddings, show]
+            get_embeddings, list]
 
 for command in commands:
     cli.add_command(command)

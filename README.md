@@ -55,7 +55,7 @@ Commands:
   download        Download subtitles from a specified YouTube channel.
   get-embeddings  Generate embeddings for a channel using OpenAI's...
   search          Search for a specified text within a channel, a...
-  show            View library, transcripts, channel video list and...
+  list View library, transcripts, channel video list and...
   update          Updates a specified YouTube channel.
 ```
 
@@ -107,9 +107,9 @@ Languages are represented using [ISO 639-1](https://en.wikipedia.org/wiki/List_o
 yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
 ```
 
-## `show`
+## `list`
 ```
-Usage: yt-fts show [OPTIONS]
+Usage: yt-fts list [OPTIONS]
 
   View library, transcripts, channel video list and config settings.
 
