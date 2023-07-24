@@ -9,7 +9,7 @@ from yt_fts.list import list_channels
 from yt_fts.config import get_config_path, make_config_dir, get_db_path
 
 
-YT_FTS_VERSION = "0.1.28"
+YT_FTS_VERSION = "0.1.29"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
