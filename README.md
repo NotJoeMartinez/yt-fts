@@ -206,7 +206,7 @@ output:
     Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 
-## update
+## `update`
 Will update a channel with new subtitles if any are found. 
 ```
 Usage: yt-fts update [OPTIONS]
