@@ -3,8 +3,8 @@ import pickle
 import sqlite3
 import heapq
 
-from yt_fts.db_utils import * 
-from yt_fts.utils import *
+from .db_utils import * 
+from .utils import *
 from rich.console import Console
 
 

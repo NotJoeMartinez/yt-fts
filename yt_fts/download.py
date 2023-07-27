@@ -4,9 +4,9 @@ from progress.bar import Bar
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 
-from yt_fts.config import get_db_path
-from yt_fts.db_utils import add_video
-from yt_fts.utils import parse_vtt
+from .config import get_db_path
+from .db_utils import add_video
+from .utils import parse_vtt
 
 
 def handle_reject_consent_cookie(channel_url, s):

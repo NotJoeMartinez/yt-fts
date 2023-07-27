@@ -4,10 +4,10 @@ from rich.console import Console
 from rich.table import Table
 
 
-from yt_fts.db_utils import get_title_from_db 
-from yt_fts.utils import time_to_secs, get_time_delta
+from .db_utils import get_title_from_db 
+from .utils import time_to_secs, get_time_delta
 
-from yt_fts.config import get_db_path
+from .config import get_db_path
 
 def show_video_transcript(video_id):
     con = sqlite3.connect(get_db_path())

@@ -1,11 +1,11 @@
 import csv, rich, datetime
 
-from yt_fts.db_utils import (
+from .db_utils import (
     search_channel, search_video, search_all, 
     get_channel_name_from_video_id, get_title_from_db
     )
 
-from yt_fts.utils import time_to_secs, show_message
+from .utils import time_to_secs, show_message
 
 def export_fts(text, search_id="", scope=""):
     """

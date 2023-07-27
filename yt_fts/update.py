@@ -1,7 +1,7 @@
 import tempfile, os
 
-from yt_fts.download import get_videos_list, download_vtts, vtt_to_db
-from yt_fts.db_utils import add_channel_info, get_num_vids, get_vid_ids_by_channel_id
+from .download import get_videos_list, download_vtts, vtt_to_db
+from .db_utils import add_channel_info, get_num_vids, get_vid_ids_by_channel_id
 
 def update_channel(channel_id, channel_name, language, number_of_jobs, s):
     """

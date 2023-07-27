@@ -1,13 +1,13 @@
-import click, requests
+import click
+import requests
 
-from yt_fts.search import get_text, get_text_by_video_id
-from yt_fts.db_utils import * 
-from yt_fts.download import *
-from yt_fts.utils import *
-from yt_fts.update import update_channel
-from yt_fts.list import list_channels
-from yt_fts.config import get_config_path, make_config_dir, get_db_path
-
+from .config import get_config_path, get_db_path, make_config_dir
+from .db_utils import *
+from .download import *
+from .list import list_channels
+from .search import get_text, get_text_by_video_id
+from .update import update_channel
+from .utils import *
 
 YT_FTS_VERSION = "0.1.29"
 
@@ -35,7 +35,7 @@ def cli():
 
 
 # download
-@click.command( 
+@cli.command( 
     help="""
     Download subtitles from a specified YouTube channel.
 
@@ -71,7 +71,7 @@ def download(channel_url, channel_id, language, number_of_jobs):
 
 
 # update
-@click.command( 
+@cli.command( 
     help="""
     Updates a specified YouTube channel.
 
@@ -97,7 +97,7 @@ def update(channel, language, number_of_jobs):
 
 
 # search
-@click.command(
+@cli.command(
         help="""
         Search for a specified text within a channel, a specific video, or across all channels.
         """
@@ -157,7 +157,7 @@ def search(text, channel, video, all, semantic, limit, export):
 
 
 # Delete
-@click.command( 
+@cli.command( 
     help="""
     Delete a channel and all its data. 
 
@@ -185,7 +185,7 @@ def delete(channel):
 
 
 # Show
-@click.command( 
+@cli.command( 
     help="""
     View library, transcripts, channel video list and config settings.
     """
@@ -197,7 +197,7 @@ def delete(channel):
 @click.option("--config", is_flag=True, help="Show path to config directory")
 def list(transcript, channel, library, config):
 
-    from yt_fts.list import show_video_transcript, show_video_list
+    from yt_fts.list import show_video_list, show_video_transcript
 
     if transcript:
         show_video_transcript(transcript)
@@ -217,7 +217,7 @@ def list(transcript, channel, library, config):
 
 
 # Generate embeddings
-@click.command( 
+@cli.command( 
     help="""
     Generate embeddings for a channel using OpenAI's embeddings API.
 
@@ -257,10 +257,4 @@ def get_embeddings(channel, open_api_key):
     enable_ss(channel_id)
     print("Embeddings generated")
 
-
-commands = [download, update, search, delete, 
-            get_embeddings, list]
-
-for command in commands:
-    cli.add_command(command)
 

@@ -4,7 +4,7 @@ import pickle
 
 from progress.bar import Bar
 from tenacity import retry, wait_random_exponential, stop_after_attempt
-from yt_fts.config import get_db_path
+from .config import get_db_path
 
 def get_openai_embeddings(subs, api_key):
     conn = sqlite3.connect(get_db_path())

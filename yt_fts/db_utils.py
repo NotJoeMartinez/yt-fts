@@ -3,8 +3,8 @@ import sqlite3
 from sqlite_utils import Database
 from tabulate import tabulate
 
-from yt_fts.utils import show_message
-from yt_fts.config import get_db_path 
+from .utils import show_message
+from .config import get_db_path 
 
 
 def make_db(db_path):
