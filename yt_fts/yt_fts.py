@@ -49,10 +49,10 @@ def cli():
 def download(channel_url, channel_id, language, number_of_jobs):
 
     s = requests.session()
-    handle_reject_consent_cookie(channel_url, s)
 
     if channel_id is None:
-        check_channel_url_pattern(channel_url)
+        channel_url = validate_channel_url(channel_url)
+        handle_reject_consent_cookie(channel_url, s)
         channel_id = get_channel_id(channel_url, s)
     
     exists = check_if_channel_exists(channel_id)
@@ -65,6 +65,7 @@ def download(channel_url, channel_id, language, number_of_jobs):
     channel_name = get_channel_name(channel_id, s)
 
     if channel_id:
+        handle_reject_consent_cookie(channel_url, s)
         download_channel(channel_id, channel_name, language, number_of_jobs, s)
     else:
         print("Error finding channel id try --channel-id option")
