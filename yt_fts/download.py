@@ -3,11 +3,12 @@ import subprocess, re, os, sqlite3, json
 from progress.bar import Bar
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
 from .config import get_db_path
 from .db_utils import add_video
 from .utils import parse_vtt
-
+from urllib.parse import urlparse 
 
 def handle_reject_consent_cookie(channel_url, s):
     """
@@ -166,17 +167,49 @@ def get_vid_title(vid_url, s):
         return None
 
 
-def check_channel_url_pattern(channel_url):
+def validate_channel_url(channel_url):
     """
-    Check the given channel URL against the expected pattern 
+    valid patterns
+    https://www.youtube.com/channel/UCkyfe3vEArG9nY1pCDyMSBA/videos
+    https://www.youtube.com/@channelname/videos
     """
+    from rich.console import Console
+    console = Console()
 
-    from yt_fts.utils import show_message
+    channel_url = channel_url.strip('/')
+    parsed = urlparse(channel_url)
+    domain = parsed.netloc
+    path = parsed.path.split('/')
 
-    expected_url_format = "https:\/\/www.youtube.com\/@(.*)\/videos"
-    if not re.match(expected_url_format, channel_url):
-        show_message("channel_url_not_correct")
+    if not domain.endswith('youtube.com'):
+        console.print("")
+        console.print(f"[bold red]Error:[/bold red] Invalid channel domain: [blue]{domain}[/blue]")
+        console.print("")
         exit()
+    
+    if len(path) < 2:
+        console.print("")
+        console.print(f"[bold red]Error:[/bold red] Invalid channel url: [blue]{channel_url}[/blue]")
+        console.print("")
+        exit()
+
+    if path[1].startswith("@"):
+        return f"https://www.youtube.com/{path[1]}/videos"
+
+    if path[1] == "channel":
+        return f"https://www.youtube.com/channel/{path[2]}/videos"
+
+    console.print("")
+    console.print(f"[bold red]Error:[/bold red] Unknown url format: [blue]{channel_url}[/blue]")
+    console.print("")
+    console.print("Please use one of the following formats:")
+    console.print("")
+    console.print("    - https://www.youtube.com/[yellow]@channelname[/yellow]")
+    console.print("    - https://www.youtube.com/channel/[yellow]channelId[/yellow]")
+    console.print("")
+    exit()
+
+
 
 
 def download_channel(channel_id, channel_name, language, number_of_jobs, s):
