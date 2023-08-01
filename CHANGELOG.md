@@ -13,11 +13,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 - Changelog
+
   Minor: Added a changelog to the project.
 
 ### Changed
 
 - [yt-fts-67](https://github.com/NotJoeMartinez/yt-fts/issues/67)
+
   Minor: YouTube URL validation now allows for /@channelName and /channle/channelID
   instead of forcing /@channel/videos. 
 
