@@ -1,6 +1,5 @@
 import subprocess, re, os, sqlite3, json
 
-from progress.bar import Bar
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
@@ -9,6 +8,9 @@ from .config import get_db_path
 from .db_utils import add_video
 from .utils import parse_vtt
 from urllib.parse import urlparse 
+
+from rich.progress import track
+from rich.console import Console
 
 def handle_reject_consent_cookie(channel_url, s):
     """
@@ -47,6 +49,7 @@ def get_channel_name(channel_id, s):
     """
     Scrapes channel name from the channel page
     """
+    console = Console()
     res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
 
     if res.status_code == 200:
@@ -55,20 +58,21 @@ def get_channel_name(channel_id, s):
         soup = BeautifulSoup(html, 'html.parser')
         script = soup.find('script', type='application/ld+json')
 
-        # Hot fix for channels with special characters in the name
+        # "Hot fix" for channels with special characters in the name
         try:
-            print("Trying to parse json normally")
-            data = json.loads(script.string)
+            with console.status("[bold green]Parsing JSON...") as status:
+                data = json.loads(script.string)
         except:
             print("json parse failed retrying with escaped backslashes")
             script = script.string.replace('\\', '\\\\')
             data = json.loads(script)
 
         channel_name = data['itemListElement'][0]['item']['name']
-        print(channel_name)
         return channel_name 
     else:
+        print("we couldn't get the channel name")
         return None
+
 
 
 def get_videos_list(channel_url):
@@ -130,9 +134,9 @@ def vtt_to_db(channel_id, dir_path, s):
     con = sqlite3.connect(get_db_path())  
     cur = con.cursor()
 
-    bar = Bar('Adding to database', max=len(file_paths))
+    # bar = Bar('Adding to database', max=len(file_paths))
 
-    for vtt in file_paths:
+    for vtt in track(file_paths, description="Parsing vtt files"):
         base_name = os.path.basename(vtt)
         vid_id = re.match(r'^([^.]*)', base_name).group(1)
         vid_url = f"https://youtu.be/{vid_id}"
@@ -147,9 +151,7 @@ def vtt_to_db(channel_id, dir_path, s):
             cur.execute(f"INSERT INTO Subtitles (video_id, timestamp, text) VALUES (?, ?, ?)", (vid_id, start_time, text))
 
         con.commit()
-        bar.next()
 
-    bar.finish() 
     con.close()
 
 

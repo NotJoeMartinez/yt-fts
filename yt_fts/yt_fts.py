@@ -37,7 +37,7 @@ def cli():
 
 
 """
-    What the fuck was I smoking when I wrote this? 
+    What the was I smoking when I wrote this? 
 
     --channel-id littery does nothing, and there's
     no way to check if a channel actually exists 
@@ -63,13 +63,24 @@ def download(channel_url, channel_id, language, number_of_jobs):
     console = Console()
     s = requests.session()
 
+
+    """
+        If channel_id is None, that means the user didn't provide it as an argument. 
+        But why are we checking if channel_id is None? 
+        
+        I think my original logic was that channel_url and channel_id were both optional 
+        arguments and this was a way to check if the user provided either one of them.
+    """
     if channel_id is None:
         with console.status("[bold green]Getting Channel ID...") as status:
             channel_url = validate_channel_url(channel_url)
             handle_reject_consent_cookie(channel_url, s)
             channel_id = get_channel_id(channel_url, s)
-    
+   
+
+
     channel_exists = check_if_channel_exists(channel_id)
+
     if (channel_exists == True):
         list_channels(channel_id)
         error = "[bold red]Error:[/bold red] Channel already exists in database."
@@ -89,8 +100,13 @@ def download(channel_url, channel_id, language, number_of_jobs):
         DRYS was a corporate PsyOp to keep boomers employed.
         
     """
-    channel_name = get_channel_name(channel_id, s)
+
     handle_reject_consent_cookie(channel_url, s)
+    channel_name = get_channel_name(channel_id, s)
+    if channel_name is None:
+        show_message("channel_does_not_exist")
+        exit()
+
     download_channel(channel_id, channel_name, language, number_of_jobs, s)
 
 
