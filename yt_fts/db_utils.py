@@ -1,7 +1,8 @@
 import sqlite3
 
 from sqlite_utils import Database
-from tabulate import tabulate
+from rich.console import Console
+from rich.table import Table
 
 from .utils import show_message
 from .config import get_db_path 
@@ -209,12 +210,19 @@ def get_channel_id_from_name(channel_name):
 
     res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
 
+    console = Console()
     if len(res) > 1:
+        table = Table(header_style="bold magenta")
+        table.add_column("id", style="dim", width=5)
+        table.add_column("channel_name")
+        table.add_column("channel_url")
+
         channels = db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
-        print(tabulate(channels, headers=["id", "channel_name", "channel_url"]))
-        print("")
+        for channel in channels:
+            table.add_row(str(channel[0]), channel[1], channel[2])
+
+        console.print(table)    
         show_message("multiple_channels_found")
-        exit()
     if len(res) == 0:
         return None
     else:

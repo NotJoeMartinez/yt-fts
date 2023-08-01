@@ -1,6 +1,5 @@
 import click
 import requests
-from rich import console
 
 from .config import get_config_path, get_db_path, make_config_dir
 from .db_utils import *
@@ -37,10 +36,6 @@ def cli():
 
 
 
-"""
-Since we're going to have to refactor this any way let's just forget about 
-saving the 20s it takes to find out if a channel exists in the database.
-"""
 @cli.command( 
     help="""
     Download subtitles from a specified YouTube channel.
@@ -87,7 +82,7 @@ def download(channel_url, language, number_of_jobs):
     one might say that. 
 
     We are in a state of quantum entanglement with the data.
-
+ 
     """
     channel_exists = check_if_channel_exists(channel_id)
 
@@ -264,36 +259,38 @@ def list(transcript, channel, library, config):
     """
 )
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to generate embeddings for")
-@click.option("--open-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
-def get_embeddings(channel, open_api_key):
+@click.option("--api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+def get_embeddings(channel, api_key):
 
     from yt_fts.embeddings import get_openai_embeddings
     from yt_fts.search import check_ss_enabled, enable_ss
+    console = Console()
     
 
     channel_id = get_channel_id_from_input(channel)
 
     # verify that embeddings have not already been created for the channel
     if check_ss_enabled(channel_id) == True:
-        print("Error: Semantic embeddings already created for channel")
-        exit()
+        console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
+        return
 
     # get api key for openai
-    if open_api_key:
-        api_key = open_api_key
-    else:
+    if  api_key is None:
         api_key = get_api_key()
 
     if api_key is None:
-        print("Error: OPENAI_API_KEY environment variable not set")
-        print("Run export OPENAI_API_KEY=<your_key> to set the key")
-        exit()
-    
+        console.print("""
+        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+                
+                export OPENAI_API_KEY=<your_key> to set the key
+                      """)
+        return 
+
     channel_subs = get_all_subs_by_channel_id(channel_id)
     get_openai_embeddings(channel_subs, api_key)
 
     # mark the channel as enabled for semantic search 
     enable_ss(channel_id)
-    print("Embeddings generated")
+    console.print("[green]Embeddings generated[/green]")
 
 
