@@ -36,16 +36,10 @@ def cli():
 
 
 
-"""
-    What the was I smoking when I wrote this? 
 
-    --channel-id littery does nothing, and there's
-    no way to check if a channel actually exists 
-    in our own database without scraping the id from 
-    youtube.
-    
-    The only way to fix this is to refactor the database
-    to store the youtube @username with the channel ID. 
+"""
+Since we're going to have to refactor this any way let's just forget about 
+saving the 20s it takes to find out if a channel exists in the database.
 """
 @cli.command( 
     help="""
@@ -55,59 +49,68 @@ def cli():
     """
 )
 @click.argument("channel_url", required=True)
-@click.option("-id", "--channel-id", default=None, help="Optional channel id to override the one from the url")
 @click.option("-l", "--language", default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def download(channel_url, channel_id, language, number_of_jobs):
-
+def download(channel_url, language, number_of_jobs):
     console = Console()
     s = requests.session()
 
 
-    """
-        If channel_id is None, that means the user didn't provide it as an argument. 
-        But why are we checking if channel_id is None? 
-        
-        I think my original logic was that channel_url and channel_id were both optional 
-        arguments and this was a way to check if the user provided either one of them.
-    """
-    if channel_id is None:
-        with console.status("[bold green]Getting Channel ID...") as status:
-            channel_url = validate_channel_url(channel_url)
-            handle_reject_consent_cookie(channel_url, s)
-            channel_id = get_channel_id(channel_url, s)
+    # find out if the channel exists on the internet 
+    with console.status("[bold green]Getting Channel ID...") as status:
+        channel_url = validate_channel_url(channel_url)
+        handle_reject_consent_cookie(channel_url, s)
+        channel_id = get_channel_id(channel_url, s)
    
+    if channel_id is None:
+        console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
+        return
 
+    """__Schrodinger's Channel ID__
 
+    Alright, Now that we know it exists on the internet, 
+    let's find out if we had it all along to begin with! 
+    What's that you're saying? We should have checked this 
+    before making the request? 
+
+    Well, that's just because you're not thinking like a
+    10x developer.
+    
+    You see, I program in a state of quantum superposition. 
+    
+    While you might think it's more efficient to check if 
+    the data exists in the local database before wasting 
+    bandwidth making a request to the internet.
+
+    A Superpositionist, such as myself, knows that the data 
+    actually exists in both states at the same time! 
+     
+    However, it is only when we observe the data that it collapses 
+    into a single state. And because our database was designed 
+    in such brilliant way that we must first observe remote data 
+    to actually know if it exists locally, one might say that 
+
+    we are in a state of quantum entanglement with the data.
+
+    """
     channel_exists = check_if_channel_exists(channel_id)
 
-    if (channel_exists == True):
+    if channel_exists:
         list_channels(channel_id)
         error = "[bold red]Error:[/bold red] Channel already exists in database."
         error += " Use update command to update the channel"
         console.print(error)
-        console.print("")
-        exit()
-
-    """
-        If we made it this far, the channel "shouldn't" exist in the database.
-        But if the channel doesn't exist at all, `get_channel_name` will return None
-        and break the script.
-
-        We can't just exit the program like we do on `validate_channel_url` because
-        `get_channel_name` is being called in 16 other places by the script. 
-        
-        DRYS was a corporate PsyOp to keep boomers employed.
-        
-    """
+        return
 
     handle_reject_consent_cookie(channel_url, s)
     channel_name = get_channel_name(channel_id, s)
+    
     if channel_name is None:
-        show_message("channel_does_not_exist")
-        exit()
+        console.print("[bold red]Error:[/bold red] The channel does not exist.")
+        return
 
     download_channel(channel_id, channel_name, language, number_of_jobs, s)
+
 
 
 # update
