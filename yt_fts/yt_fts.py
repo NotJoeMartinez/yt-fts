@@ -9,7 +9,7 @@ from .search import get_text, get_text_by_video_id
 from .update import update_channel
 from .utils import *
 
-YT_FTS_VERSION = "0.1.29"
+YT_FTS_VERSION = "0.1.30"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
