@@ -1,5 +1,6 @@
 import click
 import requests
+from rich import console
 
 from .config import get_config_path, get_db_path, make_config_dir
 from .db_utils import *
@@ -8,6 +9,7 @@ from .list import list_channels
 from .search import get_text, get_text_by_video_id
 from .update import update_channel
 from .utils import *
+from rich.console import Console
 
 YT_FTS_VERSION = "0.1.30"
 
@@ -34,7 +36,17 @@ def cli():
 
 
 
-# download
+"""
+    What the fuck was I smoking when I wrote this? 
+
+    --channel-id littery does nothing, and there's
+    no way to check if a channel actually exists 
+    in our own database without scraping the id from 
+    youtube.
+    
+    The only way to fix this is to refactor the database
+    to store the youtube @username with the channel ID. 
+"""
 @cli.command( 
     help="""
     Download subtitles from a specified YouTube channel.
@@ -48,27 +60,38 @@ def cli():
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def download(channel_url, channel_id, language, number_of_jobs):
 
+    console = Console()
     s = requests.session()
 
     if channel_id is None:
-        channel_url = validate_channel_url(channel_url)
-        handle_reject_consent_cookie(channel_url, s)
-        channel_id = get_channel_id(channel_url, s)
+        with console.status("[bold green]Getting Channel ID...") as status:
+            channel_url = validate_channel_url(channel_url)
+            handle_reject_consent_cookie(channel_url, s)
+            channel_id = get_channel_id(channel_url, s)
     
-    exists = check_if_channel_exists(channel_id)
-    if exists:
-        print("Error: Channel already exists in database")
-        print("Use update command to update the channel")
+    channel_exists = check_if_channel_exists(channel_id)
+    if (channel_exists == True):
         list_channels(channel_id)
+        error = "[bold red]Error:[/bold red] Channel already exists in database."
+        error += " Use update command to update the channel"
+        console.print(error)
+        console.print("")
         exit()
 
-    channel_name = get_channel_name(channel_id, s)
+    """
+        If we made it this far, the channel "shouldn't" exist in the database.
+        But if the channel doesn't exist at all, `get_channel_name` will return None
+        and break the script.
 
-    if channel_id:
-        handle_reject_consent_cookie(channel_url, s)
-        download_channel(channel_id, channel_name, language, number_of_jobs, s)
-    else:
-        print("Error finding channel id try --channel-id option")
+        We can't just exit the program like we do on `validate_channel_url` because
+        `get_channel_name` is being called in 16 other places by the script. 
+        
+        DRYS was a corporate PsyOp to keep boomers employed.
+        
+    """
+    channel_name = get_channel_name(channel_id, s)
+    handle_reject_consent_cookie(channel_url, s)
+    download_channel(channel_id, channel_name, language, number_of_jobs, s)
 
 
 # update
