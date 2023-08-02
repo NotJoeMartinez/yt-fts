@@ -163,3 +163,4 @@ tests.sh
 tests/*.txt
 
 .vscode
+tests/rich_tests
