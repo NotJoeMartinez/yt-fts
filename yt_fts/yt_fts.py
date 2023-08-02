@@ -8,6 +8,7 @@ from .list import list_channels
 from .search import get_text, get_text_by_video_id
 from .update import update_channel
 from .utils import *
+from rich.console import Console
 
 YT_FTS_VERSION = "0.1.30"
 
@@ -43,32 +44,64 @@ def cli():
     """
 )
 @click.argument("channel_url", required=True)
-@click.option("-id", "--channel-id", default=None, help="Optional channel id to override the one from the url")
 @click.option("-l", "--language", default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def download(channel_url, channel_id, language, number_of_jobs):
-
+def download(channel_url, language, number_of_jobs):
+    console = Console()
     s = requests.session()
 
-    if channel_id is None:
+
+    # find out if the channel exists on the internet 
+    with console.status("[bold green]Getting Channel ID...") as status:
         channel_url = validate_channel_url(channel_url)
         handle_reject_consent_cookie(channel_url, s)
         channel_id = get_channel_id(channel_url, s)
+   
+    if channel_id is None:
+        console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
+        return
+
+    """__Schrodinger's Channel ID__
+
+    Alright, Now that we know it exists on the internet, let's find out 
+    if we had it all along to begin with! What's that you're saying? 
+    We should have checked this before making the request? Well, that's 
+    just because you're not thinking like a 10x developer.
     
-    exists = check_if_channel_exists(channel_id)
-    if exists:
-        print("Error: Channel already exists in database")
-        print("Use update command to update the channel")
+    You see, I program in a state of quantum superposition. 
+    
+    While you might think it's more efficient to check if the data exists 
+    in the local database before wasting bandwidth making a request to 
+    the internet. A Superpositionist, such as myself, knows that the data 
+    actually exists in both states at the same time! 
+     
+    However, it is only when we observe the data that it collapses into a 
+    single state. And because our database was designed in such brilliant 
+    way that we must first observe remote data to actually know if it exists,
+
+    one might say that. 
+
+    We are in a state of quantum entanglement with the data.
+ 
+    """
+    channel_exists = check_if_channel_exists(channel_id)
+
+    if channel_exists:
         list_channels(channel_id)
-        exit()
+        error = "[bold red]Error:[/bold red] Channel already exists in database."
+        error += " Use update command to update the channel"
+        console.print(error)
+        return
 
+    handle_reject_consent_cookie(channel_url, s)
     channel_name = get_channel_name(channel_id, s)
+    
+    if channel_name is None:
+        console.print("[bold red]Error:[/bold red] The channel does not exist.")
+        return
 
-    if channel_id:
-        handle_reject_consent_cookie(channel_url, s)
-        download_channel(channel_id, channel_name, language, number_of_jobs, s)
-    else:
-        print("Error finding channel id try --channel-id option")
+    download_channel(channel_id, channel_name, language, number_of_jobs, s)
+
 
 
 # update
@@ -226,36 +259,38 @@ def list(transcript, channel, library, config):
     """
 )
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to generate embeddings for")
-@click.option("--open-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
-def get_embeddings(channel, open_api_key):
+@click.option("--api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+def get_embeddings(channel, api_key):
 
     from yt_fts.embeddings import get_openai_embeddings
     from yt_fts.search import check_ss_enabled, enable_ss
+    console = Console()
     
 
     channel_id = get_channel_id_from_input(channel)
 
     # verify that embeddings have not already been created for the channel
     if check_ss_enabled(channel_id) == True:
-        print("Error: Semantic embeddings already created for channel")
-        exit()
+        console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
+        return
 
     # get api key for openai
-    if open_api_key:
-        api_key = open_api_key
-    else:
+    if  api_key is None:
         api_key = get_api_key()
 
     if api_key is None:
-        print("Error: OPENAI_API_KEY environment variable not set")
-        print("Run export OPENAI_API_KEY=<your_key> to set the key")
-        exit()
-    
+        console.print("""
+        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+                
+                export OPENAI_API_KEY=<your_key> to set the key
+                      """)
+        return 
+
     channel_subs = get_all_subs_by_channel_id(channel_id)
     get_openai_embeddings(channel_subs, api_key)
 
     # mark the channel as enabled for semantic search 
     enable_ss(channel_id)
-    print("Embeddings generated")
+    console.print("[green]Embeddings generated[/green]")
 
 

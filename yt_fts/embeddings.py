@@ -2,7 +2,9 @@ import openai
 import sqlite3 
 import pickle
 
-from progress.bar import Bar
+from rich.progress import track
+from rich.console import Console
+
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from .config import get_db_path
 
@@ -10,9 +12,7 @@ def get_openai_embeddings(subs, api_key):
     conn = sqlite3.connect(get_db_path())
     cur = conn.cursor()
 
-    bar = Bar('Generating embeddings', max=len(subs))
-    for sub in subs:
-        print(sub)
+    for sub in track(subs, description="Getting embeddings"):
         subtitle_id = sub[0]
         video_id = sub[1]
         timestamp = sub[2]
@@ -26,9 +26,7 @@ def get_openai_embeddings(subs, api_key):
             VALUES (?, ?, ?, ?, ?)
             """, [subtitle_id, video_id, timestamp, text, embeddings_blob])
         conn.commit()
-        bar.next()
 
-    bar.finish()
     conn.close()
 
 
