@@ -38,7 +38,6 @@ def show_video_transcript(video_id):
     con.close()
 
 
-
 def show_video_list(channel_id):
     con = sqlite3.connect(get_db_path())
     cur = con.cursor()
@@ -69,19 +68,30 @@ def show_video_list(channel_id):
 
 
 def list_channels(channel_id=None):
-    from tabulate import tabulate
     from yt_fts.db_utils import get_channels, get_num_vids, get_channel_list_by_id
+
+    table = Table( header_style="bold")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name",  justify="left")
+    table.add_column("Count")
+    table.add_column("Channel ID", justify="left")
 
     if channel_id != None:
         channel = list(get_channel_list_by_id(channel_id)[0])
-        channel[2] = f"https://youtube.com/channel/{channel_id}"
+        channel_url = f"https://youtube.com/channel/{channel_id}"
         count = get_num_vids(channel_id)
         channel.insert(1, count)
-        print(tabulate([channel], headers=["id", "count", "channel_name", "channel_url"]))
-        exit()
+        
+        id_link = f"[link={channel_url}]{channel_id}[/link]"
+        table.add_row(str(channel[0]), channel[2], str(channel[1]), id_link)
+
+        console = Console()
+        console.print("")
+        console.print(table, justify="left")
+        console.print("")
+        return 
 
     raw_channels = get_channels()
-    channels = []
     for i in raw_channels:
         row_id = i[0]
         channel_id = i[1]
@@ -92,9 +102,14 @@ def list_channels(channel_id=None):
 
         channel_url = f"https://youtube.com/channel/{channel_id}"
         count = get_num_vids(channel_id)
-        channels.append([row_id, count, channel_name, channel_url])
+        id_link = f"[link={channel_url}]{channel_id}[/link]"
 
-    print(tabulate(channels, headers=["id", "count", "channel_name", "channel_url"]))
+        table.add_row(str(row_id), channel_name, str(count), id_link)
+
+    console = Console()
+    console.print("")
+    console.print(table, justify="left")
+    console.print("")
 
 
 #  not dry but for some reason importing from embeddings.py causes slow down 

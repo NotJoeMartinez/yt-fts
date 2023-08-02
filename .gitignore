@@ -161,5 +161,7 @@ make_dist.sh
 *.sql
 tests.sh
 tests/*.txt
+tests/rich_tests
+
 
 .vscode
