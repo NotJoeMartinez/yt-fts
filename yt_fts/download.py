@@ -79,15 +79,19 @@ def get_videos_list(channel_url):
     """
     Scrapes list of all video urls from the channel
     """
-    cmd = [
-        "yt-dlp",
-        "--flat-playlist",
-        "--print",
-        "id",
-        f"{channel_url}"
-    ]
-    res = subprocess.run(cmd, capture_output=True, check=True)
-    list_of_videos_urls = res.stdout.decode().splitlines()
+    console = Console()
+
+    with console.status("[bold green]Scraping video urls, this might take a little...") as status:
+        cmd = [
+            "yt-dlp",
+            "--flat-playlist",
+            "--print",
+            "id",
+            f"{channel_url}"
+        ]
+        res = subprocess.run(cmd, capture_output=True, check=True)
+        list_of_videos_urls = res.stdout.decode().splitlines()
+
     return list_of_videos_urls 
 
 
@@ -95,8 +99,13 @@ def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
     """
     Multi-threaded download of vtt files
     """
+
+    # showing progress on a multi-threaded task might be more trouble than it's worth
+    # console = Console()
+
     executor = ThreadPoolExecutor(number_of_jobs)
     futures = []
+
     for video_id in list_of_videos_urls:
         video_url = f'https://www.youtube.com/watch?v={video_id}'
         future = executor.submit(get_vtt, tmp_dir, video_url, language)
@@ -136,7 +145,7 @@ def vtt_to_db(channel_id, dir_path, s):
 
     # bar = Bar('Adding to database', max=len(file_paths))
 
-    for vtt in track(file_paths, description="Parsing vtt files"):
+    for vtt in track(file_paths, description="Adding subtitles to database..."):
         base_name = os.path.basename(vtt)
         vid_id = re.match(r'^([^.]*)', base_name).group(1)
         vid_url = f"https://youtu.be/{vid_id}"
@@ -172,8 +181,11 @@ def get_vid_title(vid_url, s):
 def validate_channel_url(channel_url):
     """
     valid patterns
-    https://www.youtube.com/channel/UCkyfe3vEArG9nY1pCDyMSBA/videos
-    https://www.youtube.com/@channelname/videos
+    https://www.youtube.com/channel/channelID
+    https://www.youtube.com/@channelname
+
+    https://www.youtube.com/@channelname/*
+    https://www.youtube.com/channel/channelID/*
     """
     from rich.console import Console
     console = Console()
@@ -212,8 +224,6 @@ def validate_channel_url(channel_url):
     exit()
 
 
-
-
 def download_channel(channel_id, channel_name, language, number_of_jobs, s):
     """
     Downloads all the videos from a channel to a tmp directory
@@ -222,9 +232,15 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):
     import tempfile
     from yt_fts.db_utils import add_channel_info
 
+    console = Console() 
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         list_of_videos_urls = get_videos_list(channel_url)
+
+        console.print(f"[green][bold]Downloading [red]{len(list_of_videos_urls)}[/red] vtt files[/bold][/green]\n")
+        console.print("[green]I would normally show a progress bar here, but multithreading and progress bars don't play nice.[/green]\n")
+
         download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
         vtt_to_db(channel_id, tmp_dir, s)
