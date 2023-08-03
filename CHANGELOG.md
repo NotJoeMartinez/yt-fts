@@ -6,7 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
  
 ## [Unreleased] - 2023-31-07
 
--  
+- Error message printing consolidation module
+
+## [0.1.31] - 2023-02-08
+
+### Added
+
+-   
+
+### Changed
+
+- [yt-fts-85](https://github.com/NotJoeMartinez/yt-fts/pull/85)
+
+  Minor: Moved all ASCII message printing to the [rich](https://github.com/Textualize/rich) python library 
+  to consolidate all warning, status, progress and error message formating to one library. This removes
+  `tabulate` and `progress` dependencies. 
+
+### Fixed
+
+- 
+
 
 ## [0.1.30] - 2023-31-07
 
