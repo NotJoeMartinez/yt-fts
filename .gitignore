@@ -166,3 +166,5 @@ tests/rich_tests
 
 .vscode
 tests/rich_tests
+
+DEVLOG.md
