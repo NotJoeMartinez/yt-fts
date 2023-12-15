@@ -10,29 +10,13 @@ from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.32"
+YT_FTS_VERSION = "0.1.33"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
 def cli():
-
     config_path = get_config_path()
-    if config_path is None:
-        new_config_path = make_config_dir()
-        if new_config_path is None:
-            print("Error: Could not create config directory, database will be saved in current directory")
-            make_db("subtitles.db")
-        else:
-            new_db_path = os.path.join(new_config_path, "subtitles.db") 
-            make_db(new_db_path)
-            print(f"Your subtitles database has been saved to: {new_db_path}")
-    else:
-        db_path = get_db_path()
-        make_db(db_path)
-
     db_path = get_db_path()
-    make_db(db_path)
-
 
 
 # download
@@ -296,6 +280,9 @@ def get_embeddings(channel, api_key):
     """
 )
 def config():
+    config_path = get_config_path()
+    db_path = get_db_path()
     console = Console()
     config_path = get_config_path()
     console.print(f"\nConfig directory: {config_path}\n")
+    console.print(f"Database path: {db_path}\n")
