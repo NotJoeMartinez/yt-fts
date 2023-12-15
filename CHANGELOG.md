@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
  
+## [0.1.33] - 2023-12-14
+
+### Added
+
+- 
+
+### Changed
+
+- 
+
+### Fixed
+
+- [yt-fts-91](https://github.com/NotJoeMartinez/yt-fts/pull/91)
+
+  Major: Fixed bootstrapping where `subtitles.db` was allowed to be created in the current working directory
+
 ## [0.1.32] - 2023-12-14
 
 ### Added
