@@ -112,13 +112,12 @@ yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos"
 ```
 Usage: yt-fts list [OPTIONS]
 
-  View library, transcripts, channel video list and config settings.
+  View library, transcripts and channel video list 
 
 Options:
   -t, --transcript TEXT  Show transcript for a video
   -c, --channel TEXT     Show list of videos for a channel
   -l, --library          Show list of channels in library
-  --config               Show path to config directory
 ```
 
 ```
