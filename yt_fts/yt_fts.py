@@ -10,7 +10,7 @@ from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.31"
+YT_FTS_VERSION = "0.1.32"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -221,15 +221,14 @@ def delete(channel):
 # Show
 @cli.command( 
     help="""
-    View library, transcripts, channel video list and config settings.
+    View library, transcripts and channel video list 
     """
 )
 
 @click.option("-t", "--transcript", default=None, help="Show transcript for a video")
 @click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
 @click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
-@click.option("--config", is_flag=True, help="Show path to config directory")
-def list(transcript, channel, library, config):
+def list(transcript, channel, library):
 
     from yt_fts.list import show_video_list, show_video_transcript
 
@@ -241,10 +240,6 @@ def list(transcript, channel, library, config):
         show_video_list(channel_id)
     elif library:
         list_channels()
-    elif config:
-        config_path = get_config_path()
-        print(f"Config path: {config_path}")
-        exit()
     else:
         list_channels()
 
@@ -294,3 +289,13 @@ def get_embeddings(channel, api_key):
     console.print("[green]Embeddings generated[/green]")
 
 
+
+@cli.command(
+    help = """
+    Show config settings
+    """
+)
+def config():
+    console = Console()
+    config_path = get_config_path()
+    console.print(f"\nConfig directory: {config_path}\n")
