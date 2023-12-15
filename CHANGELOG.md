@@ -4,9 +4,22 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
  
-## [Unreleased] - 2023-31-07
+## [0.1.32] - 2023-12-14
 
-- Error message printing consolidation module
+### Added
+
+- 
+
+### Changed 
+
+- [yt-fts-87](https://github.com/NotJoeMartinez/yt-fts/issues/87)
+
+  Minor: Moved `--list config` to its own command `list config` to make it more discoverable.
+
+### Fixed
+
+- 
+
 
 ## [0.1.31] - 2023-02-08
 
