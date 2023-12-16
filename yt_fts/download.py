@@ -156,8 +156,10 @@ def vtt_to_db(channel_id, dir_path, s):
 
         for sub in vtt_json:
             start_time = sub['start_time']
+            stop_time = sub['stop_time']
             text = sub['text']
-            cur.execute(f"INSERT INTO Subtitles (video_id, timestamp, text) VALUES (?, ?, ?)", (vid_id, start_time, text))
+            cur.execute(f"INSERT INTO Subtitles (video_id, start_time, stop_time, text) VALUES (?, ?, ?, ?)", 
+                        (vid_id, start_time, stop_time, text))
 
         con.commit()
 

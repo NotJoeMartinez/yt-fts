@@ -46,6 +46,10 @@ def parse_vtt(file_path):
         if time_match:
             start = re.search("^(.*) -->",time_match.group(1))
             start_time = start.group(1)
+
+            stop = re.search("--> (.*)",time_match.group(1))
+            stop_time = stop.group(1)
+
             sub_titles = lines[count + 1]
 
             # prevent duplicate entries
@@ -54,6 +58,7 @@ def parse_vtt(file_path):
             else:   
                 result.append({
                     'start_time': start_time,
+                    'stop_time': stop_time,
                     'text': sub_titles.strip('\n'),
                 })
 

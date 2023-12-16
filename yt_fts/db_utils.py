@@ -39,11 +39,12 @@ def make_db(db_path):
         {
             "subtitle_id": int,
             "video_id": str,
-            "timestamp": str,
+            "start_time": str,
+            "stop_time": str,
             "text": str
         }, 
         pk="subtitle_id", 
-        not_null={"timestamp", "text"}, 
+        not_null={"start_time", "text"}, 
         if_not_exists=True, 
         foreign_keys=[
             ("video_id", "Videos")
@@ -245,14 +246,14 @@ def get_all_subs_by_channel_id(channel_id):
 
     parsed_subs = []
     subs = db.execute("""
-        SELECT s.subtitle_id, s.video_id, s.timestamp, s.text, v.channel_id
+        SELECT s.subtitle_id, s.video_id, s.start_time, s.stop_time, s.text, v.channel_id
         FROM Subtitles s
         JOIN Videos v ON s.video_id = v.video_id
         WHERE v.channel_id = ?
         """, [channel_id]).fetchall()
     
     for sub in subs:
-        split_subs = sub[3].strip().split(" ")
+        split_subs = sub[4].strip().split(" ")
         if len(split_subs) > 0: 
             parsed_subs.append(sub)
 

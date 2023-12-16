@@ -48,8 +48,9 @@ def search_chroma_db(
         text = documents[i]
         video_id = metadata[i]["video_id"]
         subtitle_id = metadata[i]["subtitle_id"] 
-        time_stamp = metadata[i]["timestamp"]
-        link = f"https://youtu.be/{video_id}?t={time_to_secs(time_stamp)}"
+        start_time = metadata[i]["start_time"]
+        stop_time = metadata[i]["stop_time"]
+        link = f"https://youtu.be/{video_id}?t={time_to_secs(start_time)}"
         channel_name = get_channel_name_from_video_id(video_id)
         channel_id = metadata[i]["channel_id"]
         title = get_title_from_db(video_id)
@@ -61,7 +62,8 @@ def search_chroma_db(
             "channel_id": channel_id, 
             "video_title": title,
             "subs": text,
-            "time_stamp": time_stamp,
+            "start_time": start_time,
+            "stop_time": stop_time,
             "video_id": video_id,
             "link": link,
         }
@@ -85,7 +87,7 @@ def print_vector_search_results(res):
     for match in res:
         link = match["link"]
         text = match["subs"]
-        time_stamp = match["time_stamp"]    
+        time_stamp = match["start_time"]    
         channel_id = match["channel_id"]
         video_id = match["video_id"]
         title = match["video_title"]

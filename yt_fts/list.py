@@ -21,7 +21,7 @@ def show_video_transcript(video_id):
         timestamp = row[2]
         time = time_to_secs(timestamp)
         url = f"https://www.youtube.com/watch?v={video_id}&t={time}s"
-        text = row[3]
+        text = row[4]
         word_count += len(text.split())
         console.print(f"[link={url}]{timestamp[:-4]}[/link] - {text}")
 
