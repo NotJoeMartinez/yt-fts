@@ -266,7 +266,7 @@ def get_all_subs_by_channel_id(channel_id):
 
     parsed_subs = []
     subs = db.execute("""
-        SELECT s.subtitle_id, s.video_id, s.timestamp, s.text 
+        SELECT s.subtitle_id, s.video_id, s.timestamp, s.text, v.channel_id
         FROM Subtitles s
         JOIN Videos v ON s.video_id = v.video_id
         WHERE v.channel_id = ?

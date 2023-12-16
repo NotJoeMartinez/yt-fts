@@ -51,11 +51,14 @@ def search_chroma_db(
         time_stamp = metadata[i]["timestamp"]
         link = f"https://youtu.be/{video_id}?t={time_to_secs(time_stamp)}"
         channel_name = get_channel_name_from_video_id(video_id)
+        channel_id = metadata[i]["channel_id"]
         title = get_title_from_db(video_id)
+
 
         match = {
             "subtitle_id": subtitle_id,
             "channel_name": channel_name,
+            "channel_id": channel_id, 
             "video_title": title,
             "subs": text,
             "time_stamp": time_stamp,
@@ -65,6 +68,7 @@ def search_chroma_db(
         res.append(match)
 
     return res
+
 
 def print_vector_search_results(res):
     """
@@ -82,6 +86,7 @@ def print_vector_search_results(res):
         link = match["link"]
         text = match["subs"]
         time_stamp = match["time_stamp"]    
+        channel_id = match["channel_id"]
         video_id = match["video_id"]
         title = match["video_title"]
         channel_name = match["channel_name"]
@@ -89,45 +94,10 @@ def print_vector_search_results(res):
 
         console.print(f"[magenta][italic]\"[bold][link={link}]{text}[/link][/bold]\"[/italic][/magenta]", style="magenta")
         print("")
-        console.print(f"    Channel: {channel_name}",style="none")
+        console.print(f"    Channel: {channel_name} - ({channel_id})",style="none")
         print(f"    Title: {title}")
         print(f"    Time Stamp: {time_stamp}")
         console.print(f"    Video ID: {video_id}")
         console.print(f"    Link: {link}")
         console.print("")
-
-
-# save embedding string 
-# should take a string for search_string and array of embeddings for search_embedding
-# def save_search_embedding(search_string, search_embedding):
-
-#     search_embedding_blob = pickle.dumps(search_embedding)
-#     con = sqlite3.connect(get_db_path())
-#     cur = con.cursor()
-
-#     cur.execute(""" 
-#         INSERT INTO SemanticSearchHist (search_str, embeddings)
-#         VALUES (?, ?)
-#         """, [search_string, search_embedding_blob])
-#     con.commit()
-#     con.close()
-
-
-# get embedding blob if exists 
-# should return an array of embeddings
-# def search_semantic_search_hist(search_string):
-#     con = sqlite3.connect(get_db_path())
-#     cur = con.cursor()
-
-#     cur.execute(""" 
-#         SELECT embeddings FROM SemanticSearchHist 
-#         WHERE search_str = ?
-#         """, [search_string])
-#     res = cur.fetchone()
-#     if res is None:
-#         return None
-#     else:
-#         return pickle.loads(res[0])
-
-
 

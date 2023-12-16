@@ -18,13 +18,15 @@ def add_embeddings_to_chroma(subs, openai_client):
         video_id = sub[1]
         timestamp = sub[2]
         text = sub[3]
+        channel_id = sub[4]
 
         embedding = get_embedding(text, "text-embedding-ada-002", openai_client)
 
         meta_data = {
             "subtitle_id": subtitle_id,
             "video_id": video_id,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "channel_id": channel_id
         }
 
         collection.add(

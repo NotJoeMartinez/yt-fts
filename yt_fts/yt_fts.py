@@ -218,6 +218,7 @@ def search(text, channel, video, export):
 def vsearch(text, channel, video, limit, export, openai_api_key): 
     from openai import OpenAI
     from yt_fts.vector_search import search_chroma_db, print_vector_search_results
+    from yt_fts.export import export_vector_search
 
     console = Console()
 
@@ -255,6 +256,9 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
                            openai_client=openai_client)
     
     print_vector_search_results(res)
+
+    if export:    
+        export_vector_search(res, text, scope)
 
 
 
