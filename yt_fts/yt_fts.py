@@ -5,7 +5,6 @@ from .config import get_config_path, get_db_path, get_or_make_chroma_path
 from .db_utils import *
 from .download import *
 from .list import list_channels
-from .search import get_text, get_text_by_video_id
 from .update import update_channel
 from .utils import *
 from rich.console import Console
@@ -123,13 +122,14 @@ def update(channel, language, number_of_jobs):
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
 @click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
-@click.option("-a", "--all", is_flag=True, help="Search in all channels.")
-@click.option("-s", "--semantic", is_flag=True, help="Use Semantic Search")
 @click.option("-l", "--limit", default=5, help="Max number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-def search(text, channel, video, all, semantic, limit, export):
+def search(text, channel, video, limit, export):
 
-    from yt_fts.export import export_fts, export_semantic 
+    from yt_fts.search import fts_search, print_fts_res  
+    from yt_fts.export import export_fts 
+
+    console = Console()
 
     if len(text) > 40:
         show_message("search_too_long")
@@ -137,41 +137,26 @@ def search(text, channel, video, all, semantic, limit, export):
 
     if channel:
         scope = "channel"
-        search_id = get_channel_id_from_input(channel)
     elif video:
         scope = "video"
         search_id = video 
-    elif all:
-        scope = "all"
-        search_id = ""
-    
-    
-    if export:
-        if semantic:
-            export_semantic(text, search_id, scope, limit)
-        else:
-            export_fts(text, search_id, scope)
-        exit()
-
-
-    if semantic:
-        from yt_fts.search import semantic_search
-        semantic_search(text, search_id, scope, limit)
-        exit()
-
-
-    if all:
-        print('Searching in all channels')
-        get_text("all", text)
-    elif video:
-        print(f"Searching in video {video}")
-        get_text_by_video_id(video, text)
-    elif channel:
-        channel_id = get_channel_id_from_input(channel)
-        get_text(channel_id, text)
     else:
-        print("Error: Either --channel, --video, or --all option must be provided")
-        exit()
+        scope = "all"
+
+
+    res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
+
+    print_fts_res(res)
+
+    if export:
+        # broken
+        export_fts(text, search_id, scope)
+
+
+    console.print(f"Query '{text}' ")
+    console.print(f"Scope: {scope}")
+
+
 
 
 # Delete
@@ -257,7 +242,7 @@ def get_embeddings(channel, openai_api_key):
 
     # get api key for openai
     if  openai_api_key is None:
-        openai_api_key = get_api_key()
+        openai_api_key = os.environ.get("OPENAI_API_KEY") 
 
     if openai_api_key is None:
         console.print("""
