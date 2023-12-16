@@ -266,6 +266,7 @@ def get_embeddings(channel, api_key):
         return 
 
     channel_subs = get_all_subs_by_channel_id(channel_id)
+    
     get_openai_embeddings(channel_subs, api_key)
 
     # mark the channel as enabled for semantic search 

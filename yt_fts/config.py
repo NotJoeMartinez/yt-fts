@@ -23,6 +23,28 @@ def get_config_path():
     return None
 
 
+def make_config_dir():
+    platform = sys.platform
+
+    try:
+        if platform == 'win32':
+            config_path = os.path.join(os.getenv('APPDATA'), 'yt-fts')
+            # check if config dir exists
+            if not os.path.exists(config_path):
+                os.mkdir(config_path)
+                return config_path
+        
+        if platform == 'darwin' or platform == 'linux':
+            config_path = os.path.join(os.getenv('HOME'), '.config', 'yt-fts')
+            # check if config dir exists
+            if not os.path.exists(config_path):
+                os.mkdir(config_path)
+                return config_path
+    except Exception as e:
+        print(e)
+        return None
+
+
 def get_db_path():
     from .db_utils import make_db
     # make sure config path exists
@@ -65,29 +87,3 @@ def get_db_path():
     
     print("db path not found, using current directory")
     return "subtitles.db" 
-
-
-def make_config_dir():
-    platform = sys.platform
-
-    try:
-        if platform == 'win32':
-            config_path = os.path.join(os.getenv('APPDATA'), 'yt-fts')
-            # check if config dir exists
-            if not os.path.exists(config_path):
-                os.mkdir(config_path)
-                return config_path
-        
-        if platform == 'darwin' or platform == 'linux':
-            config_path = os.path.join(os.getenv('HOME'), '.config', 'yt-fts')
-            # check if config dir exists
-            if not os.path.exists(config_path):
-                os.mkdir(config_path)
-                return config_path
-    except Exception as e:
-        print(e)
-        return None
-
-
-
-
