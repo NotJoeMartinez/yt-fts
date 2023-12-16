@@ -122,9 +122,8 @@ def update(channel, language, number_of_jobs):
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
 @click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
-@click.option("-l", "--limit", default=5, help="Max number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-def search(text, channel, video, limit, export):
+def search(text, channel, video, export):
 
     from yt_fts.search import fts_search, print_fts_res  
     from yt_fts.export import export_fts 
@@ -142,7 +141,7 @@ def search(text, channel, video, limit, export):
     else:
         scope = "all"
 
-    res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
+    res = fts_search(text, scope, channel_id=channel, video_id=video)
     print_fts_res(res)
 
     if export:

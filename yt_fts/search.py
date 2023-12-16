@@ -9,7 +9,7 @@ from rich.console import Console
 
 
 # full text search
-def fts_search(text, scope, channel_id=None, video_id=None, limit=5):
+def fts_search(text, scope, channel_id=None, video_id=None):
     """
     Calls search functions and prints the results 
     """
