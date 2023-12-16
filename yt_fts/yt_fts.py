@@ -1,7 +1,7 @@
 import click
 import requests
 
-from .config import get_config_path, get_db_path, make_config_dir
+from .config import get_config_path, get_db_path, get_or_make_chroma_path 
 from .db_utils import *
 from .download import *
 from .list import list_channels
@@ -10,7 +10,7 @@ from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.33"
+YT_FTS_VERSION = "0.1.34"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -238,11 +238,12 @@ def list(transcript, channel, library):
     """
 )
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to generate embeddings for")
-@click.option("--api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
-def get_embeddings(channel, api_key):
+@click.option("--openai-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+def get_embeddings(channel, openai_api_key):
 
-    from yt_fts.embeddings import get_openai_embeddings
+    from yt_fts.embeddings import add_embeddings_to_chroma 
     from yt_fts.search import check_ss_enabled, enable_ss
+    from openai import OpenAI
     console = Console()
     
 
@@ -253,11 +254,12 @@ def get_embeddings(channel, api_key):
         console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
         return
 
-    # get api key for openai
-    if  api_key is None:
-        api_key = get_api_key()
 
-    if api_key is None:
+    # get api key for openai
+    if  openai_api_key is None:
+        openai_api_key = get_api_key()
+
+    if openai_api_key is None:
         console.print("""
         [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
                 
@@ -265,9 +267,11 @@ def get_embeddings(channel, api_key):
                       """)
         return 
 
+    openai_client = OpenAI(api_key=openai_api_key)
+
     channel_subs = get_all_subs_by_channel_id(channel_id)
-    
-    get_openai_embeddings(channel_subs, api_key)
+
+    add_embeddings_to_chroma(channel_subs, openai_client)
 
     # mark the channel as enabled for semantic search 
     enable_ss(channel_id)
@@ -283,7 +287,12 @@ def get_embeddings(channel, api_key):
 def config():
     config_path = get_config_path()
     db_path = get_db_path()
+    chroma_path = get_or_make_chroma_path()
+
     console = Console()
+
     config_path = get_config_path()
+
     console.print(f"\nConfig directory: {config_path}\n")
     console.print(f"Database path: {db_path}\n")
+    console.print(f"Chroma path: {chroma_path}\n")

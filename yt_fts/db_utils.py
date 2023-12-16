@@ -273,8 +273,10 @@ def get_all_subs_by_channel_id(channel_id):
         """, [channel_id]).fetchall()
     
     for sub in subs:
-        if len(sub[3].strip()) > 0:
+        split_subs = sub[3].strip().split(" ")
+        if len(split_subs) > 0: 
             parsed_subs.append(sub)
+
     return parsed_subs
 
 # get all subs where semantic search is enabled

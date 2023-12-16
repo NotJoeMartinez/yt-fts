@@ -87,3 +87,24 @@ def get_db_path():
     
     print("db path not found, using current directory")
     return "subtitles.db" 
+
+
+def get_or_make_chroma_path():
+
+    config_path = get_config_path()
+
+    if config_path is None:
+        config_path = make_config_dir()
+
+        if config_path is None:
+            print("unable to make config path, using current directory")
+            return os.path.join(os.getcwd(), "chroma")
+    
+    chroma_path = os.path.join(config_path, "chroma")
+
+    if not os.path.exists(chroma_path):
+        os.mkdir(chroma_path)
+        return chroma_path
+    else:
+        return chroma_path
+    

@@ -1,36 +1,16 @@
 import chromadb
+
+from .config import get_or_make_chroma_path
+
 from openai import OpenAI
-from sqlite_utils import Database
 from rich.progress import track
 from rich.console import Console
 
-from tenacity import retry, wait_random_exponential, stop_after_attempt
-from .config import get_db_path
 
+def add_embeddings_to_chroma(subs, openai_client):
 
-def get_all_subs_by_channel_id(channel_id):
-    
-    db = Database("subtitles.db")
-
-    parsed_subs = []
-    subs = db.execute("""
-        SELECT s.subtitle_id, s.video_id, s.timestamp, s.text 
-        FROM Subtitles s
-        JOIN Videos v ON s.video_id = v.video_id
-        WHERE v.channel_id = ?
-        """, [channel_id]).fetchall()
-    
-    for sub in subs:
-        split_subs = sub[3].strip().split(" ")
-        if len(split_subs) > 1: 
-            parsed_subs.append(sub)
-
-    return parsed_subs
-
-
-def add_embeddings_to_chroma(subs):
-
-    chroma_client = make_chroma_db()
+    chroma_path = get_or_make_chroma_path()
+    chroma_client = chroma_client = chromadb.PersistentClient(path=chroma_path) 
     collection = chroma_client.get_or_create_collection(name="subEmbeddings")
 
     for sub in track(subs, description="Getting embeddings"):
@@ -39,9 +19,7 @@ def add_embeddings_to_chroma(subs):
         timestamp = sub[2]
         text = sub[3]
 
-        print(f"subtitle_id: {subtitle_id}, video_id: {video_id}, timestamp: {timestamp}, text: {text}")
-
-        embedding = get_embedding(text)
+        embedding = get_embedding(text, "text-embedding-ada-002", openai_client)
 
         meta_data = {
             "subtitle_id": subtitle_id,
@@ -62,14 +40,14 @@ def make_chroma_db():
     return chroma_client
 
 
-def search_chroma_db(query):
+def search_chroma_db(text, openai_client):
 
     console = Console()
 
-    client = chromadb.PersistentClient(path="./persist")
-    collection = client.get_collection(name="subEmbeddings")
+    chroma_client = chromadb.PersistentClient(path="./persist")
+    collection = chroma_client.get_collection(name="subEmbeddings")
 
-    search_embedding = get_embedding(query)
+    search_embedding = get_embedding(text, "text-embedding-ada-002", openai_client)
 
     res = collection.query(
         query_embeddings=[search_embedding],
