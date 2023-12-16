@@ -4,6 +4,7 @@ from .download import get_videos_list, download_vtts, vtt_to_db
 from .db_utils import add_channel_info, get_num_vids, get_vid_ids_by_channel_id
 
 def update_channel(channel_id, channel_name, language, number_of_jobs, s):
+    # test
     """
     Downloads all the videos from a channel to a tmp directory
     """
