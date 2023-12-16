@@ -139,19 +139,14 @@ def search(text, channel, video, limit, export):
         scope = "channel"
     elif video:
         scope = "video"
-        search_id = video 
     else:
         scope = "all"
 
-
     res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
-
     print_fts_res(res)
 
     if export:
-        # broken
-        export_fts(text, search_id, scope)
-
+        export_fts(text, scope, channel_id=channel, video_id=video)
 
     console.print(f"Query '{text}' ")
     console.print(f"Scope: {scope}")

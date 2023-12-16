@@ -7,22 +7,23 @@ from .db_utils import (
 
 from .utils import time_to_secs, show_message
 
-def export_fts(text, search_id="", scope=""):
+def export_fts(text, scope, channel_id=None, video_id=None):
     """
     Calls search functions and exports the results to a csv file
     """
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if scope == "all":
         file_name = f"all_{timestamp}.csv"
         res = search_all(text)
     if scope == "video":
-        file_name = f"video_{search_id}_{timestamp}.csv"
-        res = search_video(search_id, text)
-
+        file_name = f"video_{video_id}_{timestamp}.csv"
+        res = search_video(video_id, text)
     if scope == "channel":
-        file_name = f"channel_{search_id}_{timestamp}.csv"
-        res = search_channel(search_id, text)
+        file_name = f"channel_{channel_id}_{timestamp}.csv"
+        res = search_channel(channel_id, text)
+
 
     if len(res) == 0:
         show_message("no_matches_found")
