@@ -41,7 +41,7 @@ def export_fts(text, scope, channel_id=None, video_id=None):
             video_id = quote["video_id"]
             channel_name = get_channel_name_from_video_id(video_id)
             video_title = get_title_from_db(video_id)
-            time_stamp = quote["timestamp"]
+            time_stamp = quote["start_time"]
             subs = quote["text"]
             time = time_to_secs(time_stamp) 
 
@@ -73,7 +73,7 @@ def export_vector_search(res, search, scope):
         for quote in res:
             channel_name = quote["channel_name"] 
             video_title = quote["video_title"] 
-            time_stamp = quote["time_stamp"]
+            time_stamp = quote["start_time"]
             subs = quote["subs"]
             link = quote["link"]
 

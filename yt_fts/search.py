@@ -39,7 +39,7 @@ def print_fts_res(res):
     for quote in res:
         quote_match = {}
         video_id = quote["video_id"]
-        time_stamp = quote["timestamp"]
+        time_stamp = quote["start_time"]
         time = time_to_secs(time_stamp)
         link = f"https://youtu.be/{video_id}?t={time}"
 
