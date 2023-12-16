@@ -37,10 +37,6 @@ def add_embeddings_to_chroma(subs, openai_client):
         )
 
 
-def make_chroma_db():
-    chroma_client = chromadb.PersistentClient(path="./persist")
-    return chroma_client
-
 
 def get_embedding(text, model="text-embedding-ada-002", client=OpenAI()):
    text = text.replace("\n", " ")
