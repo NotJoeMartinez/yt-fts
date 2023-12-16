@@ -2,6 +2,7 @@
 This is where I'm putting all the functions that don't belong anywhere else
 """
 import re
+import sqlite3
 
 def show_message(code):
     error_dict = {
@@ -78,3 +79,43 @@ def get_time_delta(timestamp1, timestamp2):
     diff = str(diff).split(".")[0]
 
     return diff 
+
+
+# check if semantic search has been enabled for channel
+def check_ss_enabled(channel_id=None):
+
+    from yt_fts.config import get_db_path
+
+    con = sqlite3.connect(get_db_path())
+    cur = con.cursor()
+
+    if channel_id is None:
+        cur.execute(""" 
+            SELECT channel_id FROM SemanticSearchEnabled 
+            """)
+    else:
+        cur.execute(""" 
+            SELECT channel_id FROM SemanticSearchEnabled 
+            WHERE channel_id = ?
+            """, [channel_id])
+
+    res = cur.fetchone()
+    if res is None:
+        return False 
+    else:
+        return True 
+
+
+# enable semantic search for channel
+def enable_ss(channel_id):
+    from yt_fts.config import get_db_path
+
+    con = sqlite3.connect(get_db_path())
+    cur = con.cursor()
+
+    cur.execute(""" 
+        INSERT INTO SemanticSearchEnabled (channel_id)
+        VALUES (?)
+        """, [channel_id])
+    con.commit()
+    con.close() 

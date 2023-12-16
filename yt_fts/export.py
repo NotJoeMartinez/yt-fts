@@ -1,4 +1,6 @@
-import csv, rich, datetime
+import csv, datetime
+
+from rich.console import Console
 
 from .db_utils import (
     search_channel, search_video, search_all, 
@@ -7,22 +9,25 @@ from .db_utils import (
 
 from .utils import time_to_secs, show_message
 
-def export_fts(text, search_id="", scope=""):
+def export_fts(text, scope, channel_id=None, video_id=None):
     """
     Calls search functions and exports the results to a csv file
     """
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if scope == "all":
         file_name = f"all_{timestamp}.csv"
         res = search_all(text)
     if scope == "video":
-        file_name = f"video_{search_id}_{timestamp}.csv"
-        res = search_video(search_id, text)
-
+        file_name = f"video_{video_id}_{timestamp}.csv"
+        res = search_video(video_id, text)
     if scope == "channel":
-        file_name = f"channel_{search_id}_{timestamp}.csv"
-        res = search_channel(search_id, text)
+        from .download import get_channel_id_from_input
+        channel_id = get_channel_id_from_input(channel_id)
+        file_name = f"channel_{channel_id}_{timestamp}.csv"
+        res = search_channel(channel_id, text)
+
 
     if len(res) == 0:
         show_message("no_matches_found")
@@ -42,15 +47,13 @@ def export_fts(text, search_id="", scope=""):
 
             writer.writerow([channel_name,video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
     
-    console = rich.console.Console()
+    console = Console()
 
     console.print(f"[bold]{len(res)}[/bold] matches found for text: \"[italic]{text}[/italic]\"")
     console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")
 
 
-def export_semantic(text, search_id="", scope="", limit=10):
-
-    from yt_fts.search import semantic_search
+def export_vector_search(res, search, scope):
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -58,16 +61,10 @@ def export_semantic(text, search_id="", scope="", limit=10):
     if scope == "all":
         file_name = f"all_{timestamp}.csv"
     if scope == "video":
-        file_name = f"video_{search_id}_{timestamp}.csv"
+        file_name = f"video_{timestamp}.csv"
     if scope == "channel":
-        file_name = f"channel_{search_id}_{timestamp}.csv"
-    
-    res = semantic_search(text, search_id, scope, limit=limit, export=True) 
-
-
-    if len(res) == 0:
-        show_message("no_matches_found")
-        exit()
+        channel_id = res[0]["channel_id"]
+        file_name = f"channel_{channel_id}_{timestamp}.csv"
 
     with open(file_name, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -82,7 +79,7 @@ def export_semantic(text, search_id="", scope="", limit=10):
 
             writer.writerow([channel_name,video_title, subs.strip(), time_stamp, link])
     
-    console = rich.console.Console()
+    console = Console()
 
-    console.print(f"[bold]{len(res)}[/bold] matches found for text: \"[italic]{text}[/italic]\"")
+    console.print(f"[bold]{len(res)}[/bold] matches found for text: \"[italic]{search}[/italic]\"")
     console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")

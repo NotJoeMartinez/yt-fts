@@ -23,6 +23,28 @@ def get_config_path():
     return None
 
 
+def make_config_dir():
+    platform = sys.platform
+
+    try:
+        if platform == 'win32':
+            config_path = os.path.join(os.getenv('APPDATA'), 'yt-fts')
+            # check if config dir exists
+            if not os.path.exists(config_path):
+                os.mkdir(config_path)
+                return config_path
+        
+        if platform == 'darwin' or platform == 'linux':
+            config_path = os.path.join(os.getenv('HOME'), '.config', 'yt-fts')
+            # check if config dir exists
+            if not os.path.exists(config_path):
+                os.mkdir(config_path)
+                return config_path
+    except Exception as e:
+        print(e)
+        return None
+
+
 def get_db_path():
     from .db_utils import make_db
     # make sure config path exists
@@ -67,27 +89,22 @@ def get_db_path():
     return "subtitles.db" 
 
 
-def make_config_dir():
-    platform = sys.platform
+def get_or_make_chroma_path():
 
-    try:
-        if platform == 'win32':
-            config_path = os.path.join(os.getenv('APPDATA'), 'yt-fts')
-            # check if config dir exists
-            if not os.path.exists(config_path):
-                os.mkdir(config_path)
-                return config_path
-        
-        if platform == 'darwin' or platform == 'linux':
-            config_path = os.path.join(os.getenv('HOME'), '.config', 'yt-fts')
-            # check if config dir exists
-            if not os.path.exists(config_path):
-                os.mkdir(config_path)
-                return config_path
-    except Exception as e:
-        print(e)
-        return None
+    config_path = get_config_path()
 
+    if config_path is None:
+        config_path = make_config_dir()
 
+        if config_path is None:
+            print("unable to make config path, using current directory")
+            return os.path.join(os.getcwd(), "chroma")
+    
+    chroma_path = os.path.join(config_path, "chroma")
 
-
+    if not os.path.exists(chroma_path):
+        os.mkdir(chroma_path)
+        return chroma_path
+    else:
+        return chroma_path
+    

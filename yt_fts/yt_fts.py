@@ -1,16 +1,15 @@
 import click
 import requests
 
-from .config import get_config_path, get_db_path, make_config_dir
+from .config import get_config_path, get_db_path, get_or_make_chroma_path 
 from .db_utils import *
 from .download import *
 from .list import list_channels
-from .search import get_text, get_text_by_video_id
 from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.33"
+YT_FTS_VERSION = "0.1.34"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -87,6 +86,30 @@ def download(channel_url, language, number_of_jobs):
     download_channel(channel_id, channel_name, language, number_of_jobs, s)
 
 
+# list 
+@cli.command( 
+    help="""
+    View library, transcripts and channel video list 
+    """
+)
+@click.option("-t", "--transcript", default=None, help="Show transcript for a video")
+@click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
+@click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
+def list(transcript, channel, library):
+
+    from yt_fts.list import show_video_list, show_video_transcript
+
+    if transcript:
+        show_video_transcript(transcript)
+        exit()
+    elif channel:
+        channel_id = get_channel_id_from_input(channel)
+        show_video_list(channel_id)
+    elif library:
+        list_channels()
+    else:
+        list_channels()
+
 
 # update
 @cli.command( 
@@ -112,66 +135,6 @@ def update(channel, language, number_of_jobs):
     channel_name = get_channel_name(channel_id, s)
 
     update_channel(channel_id, channel_name, language, number_of_jobs, s)
-
-
-# search
-@cli.command(
-        help="""
-        Search for a specified text within a channel, a specific video, or across all channels.
-        """
-)
-@click.argument("text", required=True)
-@click.option("-c", "--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
-@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
-@click.option("-a", "--all", is_flag=True, help="Search in all channels.")
-@click.option("-s", "--semantic", is_flag=True, help="Use Semantic Search")
-@click.option("-l", "--limit", default=5, help="Max number of results to return")
-@click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-def search(text, channel, video, all, semantic, limit, export):
-
-    from yt_fts.export import export_fts, export_semantic 
-
-    if len(text) > 40:
-        show_message("search_too_long")
-        exit()
-
-    if channel:
-        scope = "channel"
-        search_id = get_channel_id_from_input(channel)
-    elif video:
-        scope = "video"
-        search_id = video 
-    elif all:
-        scope = "all"
-        search_id = ""
-    
-    
-    if export:
-        if semantic:
-            export_semantic(text, search_id, scope, limit)
-        else:
-            export_fts(text, search_id, scope)
-        exit()
-
-
-    if semantic:
-        from yt_fts.search import semantic_search
-        semantic_search(text, search_id, scope, limit)
-        exit()
-
-
-    if all:
-        print('Searching in all channels')
-        get_text("all", text)
-    elif video:
-        print(f"Searching in video {video}")
-        get_text_by_video_id(video, text)
-    elif channel:
-        channel_id = get_channel_id_from_input(channel)
-        get_text(channel_id, text)
-    else:
-        print("Error: Either --channel, --video, or --all option must be provided")
-        exit()
 
 
 # Delete
@@ -202,34 +165,104 @@ def delete(channel):
         print("Exiting")
 
 
-# Show
-@cli.command( 
-    help="""
-    View library, transcripts and channel video list 
-    """
+# search
+@cli.command(
+        help="""
+        Search for a specified text within a channel, a specific video, or across all channels.
+        """
 )
+@click.argument("text", required=True)
+@click.option("-c", "--channel", default=None, help="The name or id of the channel to search in.")
+@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
+def search(text, channel, video, export):
 
-@click.option("-t", "--transcript", default=None, help="Show transcript for a video")
-@click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
-@click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
-def list(transcript, channel, library):
+    from yt_fts.search import fts_search, print_fts_res  
+    from yt_fts.export import export_fts 
 
-    from yt_fts.list import show_video_list, show_video_transcript
+    console = Console()
 
-    if transcript:
-        show_video_transcript(transcript)
+    if len(text) > 40:
+        show_message("search_too_long")
         exit()
-    elif channel:
-        channel_id = get_channel_id_from_input(channel)
-        show_video_list(channel_id)
-    elif library:
-        list_channels()
+
+    if channel:
+        scope = "channel"
+    elif video:
+        scope = "video"
     else:
-        list_channels()
+        scope = "all"
+
+    res = fts_search(text, scope, channel_id=channel, video_id=video)
+    print_fts_res(res)
+
+    if export:
+        export_fts(text, scope, channel_id=channel, video_id=video)
+
+    console.print(f"Query '{text}' ")
+    console.print(f"Scope: {scope}")
+
+
+# vsearch
+@cli.command(
+        help="""
+            Vector search. Requires embeddings to be generated for the channel and environment variable OPENAI_API_KEY to be set.
+        """
+)
+@click.argument("text", required=True)
+@click.option("-c", "--channel", default=None, help="The name or id of the channel to search in")
+@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("-l", "--limit", default=10, help="Number of results to return")
+@click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
+@click.option("--openai-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+def vsearch(text, channel, video, limit, export, openai_api_key): 
+    from openai import OpenAI
+    from yt_fts.vector_search import search_chroma_db, print_vector_search_results
+    from yt_fts.export import export_vector_search
+
+    console = Console()
+
+    if len(text) > 80:
+        show_message("search_too_long")
+        exit()
+
+    # get api key for openai
+    if  openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY") 
+
+    if openai_api_key is None:
+        console.print("""
+        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+                
+                export OPENAI_API_KEY=<your_key> to set the key
+                      """)
+        return 
+
+    openai_client = OpenAI(api_key=openai_api_key)
+
+
+    if channel:
+        scope = "channel"
+    elif video:
+        scope = "video"
+    else:
+        scope = "all"
+    
+    res = search_chroma_db(text, 
+                           scope, 
+                           channel_id=channel, 
+                           video_id=video, 
+                           limit=limit, 
+                           openai_client=openai_client)
+    
+    print_vector_search_results(res)
+
+    if export:    
+        export_vector_search(res, text, scope)
 
 
 
-# Generate embeddings
+# get-embeddings 
 @cli.command( 
     help="""
     Generate embeddings for a channel using OpenAI's embeddings API.
@@ -238,13 +271,14 @@ def list(transcript, channel, library):
     """
 )
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to generate embeddings for")
-@click.option("--api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
-def get_embeddings(channel, api_key):
+@click.option("--openai-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+def get_embeddings(channel, openai_api_key):
 
-    from yt_fts.embeddings import get_openai_embeddings
-    from yt_fts.search import check_ss_enabled, enable_ss
+    from yt_fts.embeddings import add_embeddings_to_chroma 
+    from yt_fts.utils import check_ss_enabled, enable_ss
+    from openai import OpenAI
+
     console = Console()
-    
 
     channel_id = get_channel_id_from_input(channel)
 
@@ -253,11 +287,12 @@ def get_embeddings(channel, api_key):
         console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
         return
 
-    # get api key for openai
-    if  api_key is None:
-        api_key = get_api_key()
 
-    if api_key is None:
+    # get api key for openai
+    if  openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY") 
+
+    if openai_api_key is None:
         console.print("""
         [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
                 
@@ -265,15 +300,18 @@ def get_embeddings(channel, api_key):
                       """)
         return 
 
+    openai_client = OpenAI(api_key=openai_api_key)
+
     channel_subs = get_all_subs_by_channel_id(channel_id)
-    get_openai_embeddings(channel_subs, api_key)
+
+    add_embeddings_to_chroma(channel_subs, openai_client)
 
     # mark the channel as enabled for semantic search 
     enable_ss(channel_id)
     console.print("[green]Embeddings generated[/green]")
 
 
-
+# connfig
 @cli.command(
     help = """
     Show config settings
@@ -282,7 +320,12 @@ def get_embeddings(channel, api_key):
 def config():
     config_path = get_config_path()
     db_path = get_db_path()
+    chroma_path = get_or_make_chroma_path()
+
     console = Console()
+
     config_path = get_config_path()
+
     console.print(f"\nConfig directory: {config_path}\n")
     console.print(f"Database path: {db_path}\n")
+    console.print(f"Chroma path: {chroma_path}\n")

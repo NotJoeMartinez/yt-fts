@@ -176,6 +176,9 @@ def get_channel_name_from_video_id(video_id):
 # delete all videos, subtitles, and embeddings associated with channel
 def delete_channel(channel_id):
     
+    from .utils import check_ss_enabled
+    from .vector_search import delte_channel_from_chroma_db 
+
     conn = sqlite3.connect(get_db_path())
     cur = conn.cursor()
 
@@ -190,6 +193,9 @@ def delete_channel(channel_id):
 
     conn.commit()
     conn.close()
+
+    if check_ss_enabled(channel_id):
+        delte_channel_from_chroma_db(channel_id)
 
 
 def get_channel_id_from_rowid(rowid):
@@ -266,15 +272,17 @@ def get_all_subs_by_channel_id(channel_id):
 
     parsed_subs = []
     subs = db.execute("""
-        SELECT s.subtitle_id, s.video_id, s.timestamp, s.text 
+        SELECT s.subtitle_id, s.video_id, s.timestamp, s.text, v.channel_id
         FROM Subtitles s
         JOIN Videos v ON s.video_id = v.video_id
         WHERE v.channel_id = ?
         """, [channel_id]).fetchall()
     
     for sub in subs:
-        if len(sub[3].strip()) > 0:
+        split_subs = sub[3].strip().split(" ")
+        if len(split_subs) > 0: 
             parsed_subs.append(sub)
+
     return parsed_subs
 
 # get all subs where semantic search is enabled

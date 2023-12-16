@@ -1,37 +1,48 @@
-import openai
-import sqlite3 
-import pickle
+import chromadb
 
+from .config import get_or_make_chroma_path
+
+from openai import OpenAI
 from rich.progress import track
 from rich.console import Console
 
-from tenacity import retry, wait_random_exponential, stop_after_attempt
-from .config import get_db_path
 
-def get_openai_embeddings(subs, api_key):
-    conn = sqlite3.connect(get_db_path())
-    cur = conn.cursor()
+def add_embeddings_to_chroma(subs, openai_client):
+
+    chroma_path = get_or_make_chroma_path()
+    chroma_client = chroma_client = chromadb.PersistentClient(path=chroma_path) 
+    collection = chroma_client.get_or_create_collection(name="subEmbeddings")
 
     for sub in track(subs, description="Getting embeddings"):
-        subtitle_id = sub[0]
+        subtitle_id = str(sub[0])
         video_id = sub[1]
         timestamp = sub[2]
         text = sub[3]
+        channel_id = sub[4]
 
-        embedding = get_embedding(api_key, text)
-        embeddings_blob = pickle.dumps(embedding)
+        embedding = get_embedding(text, "text-embedding-ada-002", openai_client)
 
-        cur.execute(""" 
-            INSERT INTO Embeddings (subtitle_id, video_id, timestamp, text, embeddings)
-            VALUES (?, ?, ?, ?, ?)
-            """, [subtitle_id, video_id, timestamp, text, embeddings_blob])
-        conn.commit()
+        meta_data = {
+            "subtitle_id": subtitle_id,
+            "video_id": video_id,
+            "timestamp": timestamp,
+            "channel_id": channel_id
+        }
 
-    conn.close()
+        collection.add(
+            documents=[text],
+            embeddings=[embedding],
+            metadatas=[meta_data],
+            ids=[subtitle_id]
+        )
 
 
-@retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
-def get_embedding(api_key, text: str, model="text-embedding-ada-002") -> list[float]:
-    openai.api_key = api_key
-    return openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
+def make_chroma_db():
+    chroma_client = chromadb.PersistentClient(path="./persist")
+    return chroma_client
+
+
+def get_embedding(text, model="text-embedding-ada-002", client=OpenAI()):
+   text = text.replace("\n", " ")
+   return client.embeddings.create(input = [text], model=model).data[0].embedding
 
