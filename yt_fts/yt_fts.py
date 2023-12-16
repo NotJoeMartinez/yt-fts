@@ -86,6 +86,30 @@ def download(channel_url, language, number_of_jobs):
     download_channel(channel_id, channel_name, language, number_of_jobs, s)
 
 
+# list 
+@cli.command( 
+    help="""
+    View library, transcripts and channel video list 
+    """
+)
+@click.option("-t", "--transcript", default=None, help="Show transcript for a video")
+@click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
+@click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
+def list(transcript, channel, library):
+
+    from yt_fts.list import show_video_list, show_video_transcript
+
+    if transcript:
+        show_video_transcript(transcript)
+        exit()
+    elif channel:
+        channel_id = get_channel_id_from_input(channel)
+        show_video_list(channel_id)
+    elif library:
+        list_channels()
+    else:
+        list_channels()
+
 
 # update
 @cli.command( 
@@ -111,46 +135,6 @@ def update(channel, language, number_of_jobs):
     channel_name = get_channel_name(channel_id, s)
 
     update_channel(channel_id, channel_name, language, number_of_jobs, s)
-
-
-# search
-@cli.command(
-        help="""
-        Search for a specified text within a channel, a specific video, or across all channels.
-        """
-)
-@click.argument("text", required=True)
-@click.option("-c", "--channel", default=None, help="The name or id of the channel to search in. This is required unless the --all or --video options are used.")
-@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
-@click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-def search(text, channel, video, export):
-
-    from yt_fts.search import fts_search, print_fts_res  
-    from yt_fts.export import export_fts 
-
-    console = Console()
-
-    if len(text) > 40:
-        show_message("search_too_long")
-        exit()
-
-    if channel:
-        scope = "channel"
-    elif video:
-        scope = "video"
-    else:
-        scope = "all"
-
-    res = fts_search(text, scope, channel_id=channel, video_id=video)
-    print_fts_res(res)
-
-    if export:
-        export_fts(text, scope, channel_id=channel, video_id=video)
-
-    console.print(f"Query '{text}' ")
-    console.print(f"Scope: {scope}")
-
-
 
 
 # Delete
@@ -181,34 +165,100 @@ def delete(channel):
         print("Exiting")
 
 
-# Show
-@cli.command( 
-    help="""
-    View library, transcripts and channel video list 
-    """
+# search
+@cli.command(
+        help="""
+        Search for a specified text within a channel, a specific video, or across all channels.
+        """
 )
+@click.argument("text", required=True)
+@click.option("-c", "--channel", default=None, help="The name or id of the channel to search in.")
+@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
+def search(text, channel, video, export):
 
-@click.option("-t", "--transcript", default=None, help="Show transcript for a video")
-@click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
-@click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
-def list(transcript, channel, library):
+    from yt_fts.search import fts_search, print_fts_res  
+    from yt_fts.export import export_fts 
 
-    from yt_fts.list import show_video_list, show_video_transcript
+    console = Console()
 
-    if transcript:
-        show_video_transcript(transcript)
+    if len(text) > 40:
+        show_message("search_too_long")
         exit()
-    elif channel:
-        channel_id = get_channel_id_from_input(channel)
-        show_video_list(channel_id)
-    elif library:
-        list_channels()
+
+    if channel:
+        scope = "channel"
+    elif video:
+        scope = "video"
     else:
-        list_channels()
+        scope = "all"
+
+    res = fts_search(text, scope, channel_id=channel, video_id=video)
+    print_fts_res(res)
+
+    if export:
+        export_fts(text, scope, channel_id=channel, video_id=video)
+
+    console.print(f"Query '{text}' ")
+    console.print(f"Scope: {scope}")
+
+
+# vsearch
+@cli.command(
+        help="""
+            Vector search. Requires embeddings to be generated for the channel and environment variable OPENAI_API_KEY to be set.
+        """
+)
+@click.argument("text", required=True)
+@click.option("-c", "--channel", default=None, help="The name or id of the channel to search in")
+@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("-l", "--limit", default=10, help="Number of results to return")
+@click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
+@click.option("--openai-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+def vsearch(text, channel, video, limit, export, openai_api_key): 
+    from openai import OpenAI
+    from yt_fts.vector_search import search_chroma_db, print_vector_search_results
+
+    console = Console()
+
+    if len(text) > 80:
+        show_message("search_too_long")
+        exit()
+
+    # get api key for openai
+    if  openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY") 
+
+    if openai_api_key is None:
+        console.print("""
+        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+                
+                export OPENAI_API_KEY=<your_key> to set the key
+                      """)
+        return 
+
+    openai_client = OpenAI(api_key=openai_api_key)
+
+
+    if channel:
+        scope = "channel"
+    elif video:
+        scope = "video"
+    else:
+        scope = "all"
+    
+    res = search_chroma_db(text, 
+                           scope, 
+                           channel_id=channel, 
+                           video_id=video, 
+                           limit=limit, 
+                           openai_client=openai_client)
+    
+    print_vector_search_results(res)
 
 
 
-# Generate embeddings
+# get-embeddings 
 @cli.command( 
     help="""
     Generate embeddings for a channel using OpenAI's embeddings API.
@@ -221,10 +271,10 @@ def list(transcript, channel, library):
 def get_embeddings(channel, openai_api_key):
 
     from yt_fts.embeddings import add_embeddings_to_chroma 
-    from yt_fts.search import check_ss_enabled, enable_ss
+    from yt_fts.utils import check_ss_enabled, enable_ss
     from openai import OpenAI
+
     console = Console()
-    
 
     channel_id = get_channel_id_from_input(channel)
 
@@ -257,7 +307,7 @@ def get_embeddings(channel, openai_api_key):
     console.print("[green]Embeddings generated[/green]")
 
 
-
+# connfig
 @cli.command(
     help = """
     Show config settings

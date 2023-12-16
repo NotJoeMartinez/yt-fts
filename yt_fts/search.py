@@ -1,7 +1,4 @@
 
-import pickle
-import sqlite3
-
 from .download import get_channel_id_from_input
 from .db_utils import * 
 from .utils import *
@@ -93,78 +90,3 @@ def print_summary(summary_data):
     console.print("")
     console.print(f"Found [bold]{summary_data['num_matches']}[/bold] matches in [bold]{summary_data['num_videos']}[/bold] videos from [bold]{summary_data['num_channels']}[/bold] channels")
     pass
-
-
-
-# semantic search
-def semantic_search(text, search_id, scope, limit, export=False):
-    pass
-
-# save embedding string 
-# should take a string for search_string and array of embeddings for search_embedding
-def save_search_embedding(search_string, search_embedding):
-
-    search_embedding_blob = pickle.dumps(search_embedding)
-    con = sqlite3.connect(get_db_path())
-    cur = con.cursor()
-
-    cur.execute(""" 
-        INSERT INTO SemanticSearchHist (search_str, embeddings)
-        VALUES (?, ?)
-        """, [search_string, search_embedding_blob])
-    con.commit()
-    con.close()
-
-
-# get embedding blob if exists 
-# should return an array of embeddings
-def search_semantic_search_hist(search_string):
-    con = sqlite3.connect(get_db_path())
-    cur = con.cursor()
-
-    cur.execute(""" 
-        SELECT embeddings FROM SemanticSearchHist 
-        WHERE search_str = ?
-        """, [search_string])
-    res = cur.fetchone()
-    if res is None:
-        return None
-    else:
-        return pickle.loads(res[0])
-
-
-# check if semantic search has been enabled for channel
-def check_ss_enabled(channel_id=None):
-    con = sqlite3.connect(get_db_path())
-    cur = con.cursor()
-
-    if channel_id is None:
-        cur.execute(""" 
-            SELECT channel_id FROM SemanticSearchEnabled 
-            """)
-    else:
-        cur.execute(""" 
-            SELECT channel_id FROM SemanticSearchEnabled 
-            WHERE channel_id = ?
-            """, [channel_id])
-
-    res = cur.fetchone()
-    if res is None:
-        return False 
-    else:
-        return True 
-
-
-# enable semantic search for channel
-def enable_ss(channel_id):
-    con = sqlite3.connect(get_db_path())
-    cur = con.cursor()
-
-    cur.execute(""" 
-        INSERT INTO SemanticSearchEnabled (channel_id)
-        VALUES (?)
-        """, [channel_id])
-    con.commit()
-    con.close() 
-
-
