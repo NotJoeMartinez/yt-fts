@@ -54,32 +54,6 @@ def make_db(db_path):
         replace=True
     )
 
-    db["Embeddings"].create(
-        {
-            "subtitle_id": int,
-            "video_id": str,
-            "timestamp": str,
-            "text": str,
-            "embeddings": bytes
-        },
-        pk="subtitle_id", 
-        not_null={"timestamp", "text"}, 
-        if_not_exists=True, 
-        foreign_keys=[
-            ("video_id", "Videos")
-        ]
-    )
-
-    db["SemanticSearchHist"].create(
-        {
-            "search_str": str,
-            "embeddings": bytes
-        },
-        pk="search_str",
-        not_null={"embeddings"},
-        if_not_exists=True
-    )
-
     db["SemanticSearchEnabled"].create(
         {
             "channel_id": str,
@@ -186,7 +160,6 @@ def delete_channel(channel_id):
 
     # make sure to delete all subtitles and embeddings before videos  
     cur.execute("DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
-    cur.execute("DELETE FROM Embeddings WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
 
     cur.execute("DELETE FROM Videos WHERE channel_id = ?", (channel_id,))
     cur.execute("DELETE FROM SemanticSearchEnabled WHERE channel_id = ?", (channel_id,))
