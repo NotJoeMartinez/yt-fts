@@ -176,6 +176,9 @@ def get_channel_name_from_video_id(video_id):
 # delete all videos, subtitles, and embeddings associated with channel
 def delete_channel(channel_id):
     
+    from .utils import check_ss_enabled
+    from .vector_search import delte_channel_from_chroma_db 
+
     conn = sqlite3.connect(get_db_path())
     cur = conn.cursor()
 
@@ -190,6 +193,9 @@ def delete_channel(channel_id):
 
     conn.commit()
     conn.close()
+
+    if check_ss_enabled(channel_id):
+        delte_channel_from_chroma_db(channel_id)
 
 
 def get_channel_id_from_rowid(rowid):
