@@ -101,3 +101,10 @@ def print_vector_search_results(res):
         console.print(f"    Link: {link}")
         console.print("")
 
+
+
+def delte_channel_from_chroma_db(channel_id):
+    chroma_path = get_or_make_chroma_path()
+    chroma_client = chromadb.PersistentClient(path=chroma_path)
+    collection = chroma_client.get_collection(name="subEmbeddings")
+    collection.delete(where={"channel_id": channel_id})
