@@ -31,7 +31,7 @@ def export_fts(text, scope, channel_id=None, video_id=None):
 
     if len(res) == 0:
         show_message("no_matches_found")
-        exit()
+        return None
 
     with open(file_name, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
