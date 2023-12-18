@@ -41,6 +41,7 @@ def search_chroma_db(
 
     documents = chroma_res["documents"][0]
     metadata = chroma_res["metadatas"][0]
+    distances = chroma_res["distances"][0]  
 
     res = []
 
@@ -55,6 +56,7 @@ def search_chroma_db(
 
 
         match = {
+            "distance": distances[i],
             "channel_name": channel_name,
             "channel_id": channel_id, 
             "video_title": title,
@@ -80,7 +82,9 @@ def print_vector_search_results(res):
     """
     console = Console()
 
-    for match in res:
+    
+    for match in reversed(res):
+        distance = match["distance"]
         link = match["link"]
         text = match["subs"]
         time_stamp = match["start_time"]    
@@ -92,6 +96,7 @@ def print_vector_search_results(res):
 
         console.print(f"[magenta][italic]\"[bold][link={link}]{text}[/link][/bold]\"[/italic][/magenta]", style="magenta")
         print("")
+        console.print(f"    Distance: {distance}",style="none")
         console.print(f"    Channel: {channel_name} - ({channel_id})",style="none")
         print(f"    Title: {title}")
         print(f"    Time Stamp: {time_stamp}")
