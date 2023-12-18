@@ -83,3 +83,35 @@ def export_vector_search(res, search, scope):
 
     console.print(f"[bold]{len(res)}[/bold] matches found for text: \"[italic]{search}[/italic]\"")
     console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")
+
+
+
+def export_transcripts(channel_id):
+    """
+    Exports video transcripts from a channel to a text file 
+    """
+
+    console = Console()
+
+    from .download import get_channel_id_from_input
+    channel_id = get_channel_id_from_input(channel_id)
+
+    from .db_utils import get_vid_ids_by_channel_id, get_transcript_by_video_id 
+    videos = get_vid_ids_by_channel_id(channel_id)
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"channel_{channel_id}_{timestamp}.csv"
+
+    for video in videos:
+
+        video_id = video[0]
+        transcript = get_transcript_by_video_id(video_id)
+        str_transcript = ""
+        for i in transcript:
+            str_transcript += i[0] + "\n"
+        with open(f"{video_id}.txt", "w") as f:
+            f.write(str_transcript)
+
+
+   
+

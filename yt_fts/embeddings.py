@@ -14,28 +14,27 @@ def add_embeddings_to_chroma(subs, openai_client):
     collection = chroma_client.get_or_create_collection(name="subEmbeddings")
 
     for sub in track(subs, description="Getting embeddings"):
-        subtitle_id = str(sub[0])
+        channel_id = sub[0]
         video_id = sub[1]
         start_time = sub[2]
-        stop_time = sub[3]
-        text = sub[4]
-        channel_id = sub[5]
+        text = sub[3]
+
+        if text == '':
+            continue
 
         embedding = get_embedding(text, "text-embedding-ada-002", openai_client)
 
         meta_data = {
-            "subtitle_id": subtitle_id,
+            "channel_id": channel_id,
             "video_id": video_id,
             "start_time": start_time,
-            "stop_time": stop_time,
-            "channel_id": channel_id
         }
 
         collection.add(
             documents=[text],
             embeddings=[embedding],
             metadatas=[meta_data],
-            ids=[subtitle_id]
+            ids=[video_id + "_" + str(start_time)],
         )
 
 

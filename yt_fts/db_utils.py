@@ -276,3 +276,19 @@ def get_all_subs_by_channel_id_ss(channel_id):
         if len(sub[3].strip()) > 0:
             parsed_subs.append(sub)
     return parsed_subs
+
+
+def get_transcript_by_video_id(video_id):
+    
+    db = Database(get_db_path())
+
+    return db.execute(f"SELECT text FROM Subtitles WHERE video_id = ?", [video_id]).fetchall()
+
+
+def get_subs_by_video_id(video_id):
+
+    db = Database(get_db_path())
+
+    return db.execute(f"SELECT start_time, stop_time, text FROM Subtitles WHERE video_id = ?", 
+                      [video_id]).fetchall()
+    

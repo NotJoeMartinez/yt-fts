@@ -44,29 +44,6 @@ def download(channel_url, language, number_of_jobs):
         console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
         return
 
-    """__Schrodinger's Channel ID__
-
-    Alright, Now that we know it exists on the internet, let's find out 
-    if we had it all along to begin with! What's that you're saying? 
-    We should have checked this before making the request? Well, that's 
-    just because you're not thinking like a 10x developer.
-    
-    You see, I program in a state of quantum superposition. 
-    
-    While you might think it's more efficient to check if the data exists 
-    in the local database before wasting bandwidth making a request to 
-    the internet. A Superpositionist, such as myself, knows that the data 
-    actually exists in both states at the same time! 
-     
-    However, it is only when we observe the data that it collapses into a 
-    single state. And because our database was designed in such brilliant 
-    way that we must first observe remote data to actually know if it exists,
-
-    one might say that. 
-
-    We are in a state of quantum entanglement with the data.
- 
-    """
     channel_exists = check_if_channel_exists(channel_id)
 
     if channel_exists:
@@ -83,7 +60,12 @@ def download(channel_url, language, number_of_jobs):
         console.print("[bold red]Error:[/bold red] The channel does not exist.")
         return
 
-    download_channel(channel_id, channel_name, language, number_of_jobs, s)
+    foo = download_channel(channel_id, channel_name, language, number_of_jobs, s)
+    if foo is None:
+        console.print("[bold red]Error:[/bold red] Unable to download channel.")
+        return
+    else:
+        console.print("[green]Download complete[/green]")
 
 
 # list 
@@ -274,8 +256,9 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
 @click.option("--openai-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
 def get_embeddings(channel, openai_api_key):
 
+    from yt_fts.db_utils import get_vid_ids_by_channel_id
     from yt_fts.embeddings import add_embeddings_to_chroma 
-    from yt_fts.utils import check_ss_enabled, enable_ss
+    from yt_fts.utils import split_subtitles, check_ss_enabled, enable_ss
     from openai import OpenAI
 
     console = Console()
@@ -302,7 +285,19 @@ def get_embeddings(channel, openai_api_key):
 
     openai_client = OpenAI(api_key=openai_api_key)
 
-    channel_subs = get_all_subs_by_channel_id(channel_id)
+    channel_video_ids = get_vid_ids_by_channel_id(channel_id) 
+
+    channel_subs = []
+    for vid_id in channel_video_ids:
+        # (channel_id, video_id, start_time, text)
+        split_subs = split_subtitles(vid_id[0])
+        for sub in split_subs:
+            start_time = sub[0]
+            text = sub[1]
+            embedding_subs = (channel_id, vid_id[0], start_time, text)
+            channel_subs.append(embedding_subs)
+
+
 
     add_embeddings_to_chroma(channel_subs, openai_client)
 
