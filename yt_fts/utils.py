@@ -141,6 +141,10 @@ def split_subtitles(video_id):
 
     subs = get_subs_by_video_id(video_id)
 
+    if len(subs) == 0:
+        print("Video is too short to split")
+        return None
+
     total_seconds = time_to_secs(subs[-1][1])
 
     if (total_seconds < 10):
@@ -153,8 +157,7 @@ def split_subtitles(video_id):
 
     interval_texts = {}
     for start, start_time_str, text in converted_data:
-        interval = int(start // 10) * 10  # Find the 10-second interval
-        # Use the start time of the first sentence in each interval as the key
+        interval = int(start // 10) * 10  
         key = interval_texts.setdefault(interval, {'start_time': start_time_str, 'texts': []})
         key['texts'].append(text)
 

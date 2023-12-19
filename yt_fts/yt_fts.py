@@ -155,7 +155,7 @@ def delete(channel):
 )
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in.")
-@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("-v", "--video", default=None, help="The id of the video to search in.")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 def search(text, channel, video, export):
 
@@ -193,7 +193,7 @@ def search(text, channel, video, export):
 )
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in")
-@click.option("-v", "--video", default=None, help="The id of the video to search in. This is used instead of the channel option.")
+@click.option("-v", "--video", default=None, help="The id of the video to search in.")
 @click.option("-l", "--limit", default=10, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 @click.option("--openai-api-key", default=None, help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
@@ -289,8 +289,9 @@ def get_embeddings(channel, openai_api_key):
 
     channel_subs = []
     for vid_id in channel_video_ids:
-        # (channel_id, video_id, start_time, text)
         split_subs = split_subtitles(vid_id[0])
+        if split_subs is None:
+            continue
         for sub in split_subs:
             start_time = sub[0]
             text = sub[1]

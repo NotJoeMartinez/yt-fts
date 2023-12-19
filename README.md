@@ -1,12 +1,12 @@
 
 # yt-fts - Youtube Full Text Search 
-`yt-fts` is a command line program that uses yt-dlp to scrape all of a youtube channels subtitles
-and load them into an sqlite database that is searchable from the command line. It allows you to
-query a channel for specific key word or phrase and will generate time stamped youtube urls to
+`yt-fts` is a command line program that uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to scrape all of a youtube channels subtitles and load them into an sqlite database that is searchable from the command line. It allows you to query a channel for specific key word or phrase and will generate time stamped youtube urls to
 the video containing the keyword. 
 
+It also supports semantic search via the [OpenAI embeddings API](https://beta.openai.com/docs/api-reference/) using [chromadb](https://github.com/chroma-core/chroma).
+
 - [Blog Post](https://notjoemartinez.com/blog/youtube_full_text_search/)
-- [Semantic Search](#Semantic-Search-via-OpenAI-embeddings-API) (Experimental)
+- [Semantic Search](#Semantic-Search-via-OpenAI-embeddings-API) 
 - [CHANGELOG](CHANGELOG.md)
 
 https://github.com/NotJoeMartinez/yt-fts/assets/39905973/6ffd8962-d060-490f-9e73-9ab179402f14
@@ -16,15 +16,6 @@ https://github.com/NotJoeMartinez/yt-fts/assets/39905973/6ffd8962-d060-490f-9e73
 **pip**
 ```bash
 pip install yt-fts
-```
-
-**from source**
-```bash
-git clone https://github.com/NotJoeMartinez/yt-fts
-python3 -m venv .env
-source .env/bin/activate
-pip install -r requirements.txt
-python3 -m yt-fts
 ```
 
 ## Dependencies 
@@ -43,128 +34,52 @@ brew install yt-dlp
 winget install yt-dlp
 ```
 
-## Usage 
-```
-Usage: yt-fts [OPTIONS] COMMAND [ARGS]...
-
-Options:
-  --version  Show the version and exit.
-  --help     Show this message and exit.
-
-Commands:
-  delete          Delete a channel and all its data.
-  download        Download subtitles from a specified YouTube channel.
-  get-embeddings  Generate embeddings for a channel using OpenAI's...
-  search          Search for a specified text within a channel, a...
-  list View library, transcripts, channel video list and...
-  update          Updates a specified YouTube channel.
-```
 
 ## `download`
-Download subtitles 
-```
-Usage: yt-fts download [OPTIONS] CHANNEL_URL
+Download subtitles for a channel. 
 
-  Download subtitles from a specified YouTube channel.
+Takes a channel url or id as an argument. Specify the number of jobs to parallelize the download with the `--number-of-jobs` option. 
 
-  You must provide the URL of the channel as an argument. The script will
-  automatically extract the channel id from the URL.
-
-Options:
-  -id, --channel-id TEXT        Optional channel id to override the one from
-                                the url
-  -l, --language TEXT           Language of the subtitles to download
-  -j, --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
-```
-
-### Examples:
-
-**Basic download by url**
-
-```bash
-yt-fts download "https://www.youtube.com/@TimDillonShow/videos"
-```
-
-**Multithreaded download**
-
-```bash
-yt-fts download --number-of-jobs 6 "https://www.youtube.com/@TimDillonShow/videos"
-```
-
-**specify channel id**
-
-If `download` fails you can manually input the channel id with the `--channel-id` flag.
-The channel url should still be an argument 
-
-```bash
-yt-fts download --channel-id "UC4woSp8ITBoYDmjkukhEhxg" "https://www.youtube.com/@TimDillonShow/videos" 
-```
-
-**specify language**
-
-Languages are represented using [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) language codes 
-
-```bash
-yt-fts download --language de "https://www.youtube.com/@TimDillonShow/videos" 
+```shell
+yt-fts download --number-of-jobs 5 "https://www.youtube.com/@3blue1brown"
 ```
 
 ## `list`
-```
-Usage: yt-fts list [OPTIONS]
+List saved channels.
 
-  View library, transcripts and channel video list 
+The (ss) next to the channel name indicates that the channel has semantic search enabled. 
+`yt-fts list`
+```
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID ┃ Name                  ┃ Count ┃ Channel ID               ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 1  │ ChessPage1 (ss)       │ 19    │ UCO2QPmnJFjdvJ6ch-pe27dQ │
+│ 2  │ 3Blue1Brown           │ 127   │ UCYO_jab_esuFRV4b17AJtAw │
+│ 3  │ george hotz archive   │ 410   │ UCwgKmJM4ZJQRJ-U5NjvR2dg │
+│ 4  │ The Tim Dillon Show   │ 288   │ UC4woSp8ITBoYDmjkukhEhxg │
+│ 5  │ Academy of Ideas (ss) │ 190   │ UCiRiQGCHGjDLT9FQXFW0I3A │
+└────┴───────────────────────┴───────┴──────────────────────────┘
 
-Options:
-  -t, --transcript TEXT  Show transcript for a video
-  -c, --channel TEXT     Show list of videos for a channel
-  -l, --library          Show list of channels in library
-```
-
-```
-yt-fts show -l
-```
-output:
-```
-  id    count  channel_name         channel_url
-----  -------  -------------------  ----------------------------------------------------
-   1      265  The Tim Dillon Show  https://youtube.com/channel/UC4woSp8ITBoYDmjkukhEhxg
-   2      688  Lex Fridman (ss)     https://youtube.com/channel/UCSHZKyawb77ixDdsGog4iWA
-   3      434  Traversy Media       https://youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA
 ```
 
 ## `search`
-Search saved subtitles 
-```
-Usage: yt-fts search [OPTIONS] TEXT
-
-  Search for a specified text within a channel, a specific video, or across
-  all channels.
-
-Options:
-  -c, --channel TEXT   The name or id of the channel to search in. This is
-                       required unless the --all or --video options are used.
-  -v, --video TEXT     The id of the video to search in. This is used instead
-                       of the channel option.
-  -a, --all            Search in all channels.
-  -s, --semantic       Use Semantic Search
-  -l, --limit INTEGER  Max number of results to return
-  -e, --export         Export search results to a CSV file.
-```
+Full text search for string in saved channels.
 
 - The search string does not have to be a word for word and match 
 - Use Id if you have channels with the same name or channels that have special characters in their name 
 - Search strings are limited to 40 characters. 
 
-### Examples:
-
-**Search by channel**
-
 ```bash
-yt-fts search "life in the big city" --channel "The Tim Dillon Show"
-# or 
-yt-fts search "life in the big city" --channel 1  # assuming 1 is id of channel
+# search in all channels
+yt-fts search "life in the big city" 
+
+# search in specific channel
+yt-fts search "life in the big city" --channel "The Tim Dillon Show" 
+
+# search in specific channel by id
+yt-fts search "life in the big city" -c 4
 ```
-output:
+
 ```
 "Dennis would go hey life in the big city"
 
@@ -173,12 +88,6 @@ output:
     Time Stamp: 00:58:53.789
     Video ID: MhaG3Yfv1cU
     Link: https://youtu.be/MhaG3Yfv1cU?t=3530
-```
-
-**Search all channels**
-
-```bash
-yt-fts search "text to search" --all
 ```
 
 **Search in video**
@@ -206,74 +115,67 @@ output:
     Link: https://youtu.be/e79H5nxS65Q?t=2736
 ```
 
-## `update`
-Will update a channel with new subtitles if any are found. 
+
+## `vsearch`
+Vector search, requires that you enable semantic search for a channel with `get-embeddings`. 
+It has the same options as `search` but output will be sorted by similarity to the search string
+and the return limit is 10. 
+
 ```
-Usage: yt-fts update [OPTIONS]
-
-  Updates a specified YouTube channel.
-
-  You must provide the ID of the channel as an argument. Keep in mind some
-  might not have subtitles enabled. This command will still attempt to
-  download subtitles as subtitles are sometimes added later.
-
-Options:
-  -c, --channel TEXT            The name or id of the channel to update.
-                                [required]
-  -l, --language TEXT           Language of the subtitles to download
-  -j, --number-of-jobs INTEGER  Optional number of jobs to parallelize the run
+yt-fts vsearch "deep quote by russian author" --channel "Academy of Ideas"
 ```
 
-## `delete` 
-Will delete a channel from your database 
 ```
-Usage: yt-fts delete [OPTIONS]
+"the great Russian author Fyodor Dostoevsky above all don't 
+lie to yourself he wrote the man who lies to"
 
-  Delete a channel and all its data.
-
-  You must provide the name or the id of the channel you want to delete as an
-  argument.
-
-  The command will ask for confirmation before performing the deletion.
-
-Options:
-  -c, --channel TEXT  The name or id of the channel to delete  [required]
+    Distance: 0.25210678577423096
+    Channel: Academy of Ideas - (UCiRiQGCHGjDLT9FQXFW0I3A)
+    Title: The Psychology of Self-Deception - YouTube
+    Time Stamp: 00:10:01.749
+    Video ID: Uig8Lw7ixI0
+    Link: https://youtu.be/Uig8Lw7ixI0?t=598
 ```
 
-**Examples:**
+## How To
+
+**Export search results:**
+For both the `search` and `vsearch` commands you can export the results to a csv file with 
+the `--export` flag. and it will save the results to a csv file in the current directory. 
+```bash
+yt-fts search "life in the big city" --export
+yt-fts vsearch "existing in large metropolaten center" --export
+```
+
+**Delete a channel:**
+You can delete a channel with the `delete` command. 
 
 ```bash
-yt-fts delete "The Tim Dillon Show"
-# or
-yt-fts delete 1 
+yt-fts delete --channel "3Blue1Brown"
 ```
 
+
+**Update a channel:**
+The update command currently only works for full text search and will not update the 
+semantic search embeddings. 
+
+```bash
+yt-fts update --channel "3Blue1Brown"
+```
 
 --- 
 # Semantic Search via OpenAI embeddings API 
-The following commands are a work in progress but should enable semantic search. 
-This requires that you have an openAI API key which you can learn more about that [here](https://platform.openai.com/docs/api-reference/introduction). 
+You can enable semantic search for a channel by using the `get-embeddings` command.
+This feature requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`, 
+or you can pass the key with the `--openai-api-key` flag. 
 
-**Limitations**
 
-Keep in mind that generating embeddings will substantially grow the size of your subtitles database and will run slower due to the limitations of working with vectors in sqlite. When running semantic
-searches for the first time, API access is still required to generate embeddings for the search string.
-These search string embeddings are saved to a history table and won't require additional api requests
-after. 
-
-### `get-embedings`
+## `get-embedings`
+Fetches OpenAI embeddings for specified channel
+```shell
+yt-fts get-embeddings --channel "3Blue1Brown"
 ```
-Usage: yt-fts get-embeddings [OPTIONS]
 
-  Generate embeddings for a channel using OpenAI's embeddings API.
+After the embeddings are saved you will see a `(ss)` next to the channel name when you 
+list channels and you will be able to use the `vsearch` command for that channel. 
 
-  Requires an OpenAI API key to be set as an environment variable
-  OPENAI_API_KEY.
-
-Options:
-  -c, --channel TEXT   The name or id of the channel to generate embeddings
-                       for
-  --open-api-key TEXT  OpenAI API key. If not provided, the script will
-                       attempt to read it from the OPENAI_API_KEY environment
-                       variable.
-```
