@@ -13,12 +13,12 @@ https://github.com/NotJoeMartinez/yt-fts/assets/39905973/6ffd8962-d060-490f-9e73
 
 ## Installation 
 
-**pip**
 ```bash
 pip install yt-fts
 ```
 
-## Dependencies 
+**Dependencies:**
+
 This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. Platform specific installation instructions are available on the [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation). 
 
 **pip**
@@ -48,7 +48,11 @@ yt-fts download --number-of-jobs 5 "https://www.youtube.com/@3blue1brown"
 List saved channels.
 
 The (ss) next to the channel name indicates that the channel has semantic search enabled. 
-`yt-fts list`
+
+```shell
+yt-fts list
+```
+
 ```
 ┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ ID ┃ Name                  ┃ Count ┃ Channel ID               ┃
@@ -66,7 +70,6 @@ The (ss) next to the channel name indicates that the channel has semantic search
 Full text search for string in saved channels.
 
 - The search string does not have to be a word for word and match 
-- Use Id if you have channels with the same name or channels that have special characters in their name 
 - Search strings are limited to 40 characters. 
 
 ```bash
