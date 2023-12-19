@@ -243,6 +243,8 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
     if export:    
         export_vector_search(res, text, scope)
 
+    console.print(f"Query '{text}' ")
+    console.print(f"Scope: {scope}")
 
 
 # get-embeddings 

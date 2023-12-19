@@ -54,15 +54,8 @@ def print_fts_res(res):
 
         fts_res.append(quote_match)
 
-    summary_data = {
-        "num_matches": len(res),
-        "num_channels": len(set(channel_names)),
-        "num_videos": len(set([quote["video_id"] for quote in res]))
-    } 
-
     # sort by channel name
     fts_res = sorted(fts_res, key=lambda x: x["channel_name"])
-
 
     console.print("")
     for quote in fts_res: 
@@ -76,17 +69,13 @@ def print_fts_res(res):
         console.print(f"    Link: {quote['link']}")
         console.print("")
     
-    print_summary(summary_data)
+    num_matches = len(res)
+    num_channels = len(set(channel_names))  
+    num_videos = len(set([quote["video_id"] for quote in res]))
 
+    summary_str = f"Found [bold]{num_matches}[/bold] matches in [bold]{num_videos}[/bold] videos from [bold]{num_channels}[/bold] channel"
 
-def print_summary(summary_data):
-    """
-    "num_matches": num_matches,
-    "num_channels": num_channels,
-    "num_videos": num_videos,
-    """
-    console = Console()
+    if num_channels > 1:
+        summary_str += "s"
 
-    console.print("")
-    console.print(f"Found [bold]{summary_data['num_matches']}[/bold] matches in [bold]{summary_data['num_videos']}[/bold] videos from [bold]{summary_data['num_channels']}[/bold] channels")
-    pass
+    console.print(summary_str) 
