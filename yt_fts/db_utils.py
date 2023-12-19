@@ -108,24 +108,28 @@ def get_channels():
     return db.execute("SELECT ROWID, channel_id, channel_name, channel_url FROM Channels").fetchall()
 
 
-def search_channel(channel_id, text):
+def search_channel(channel_id, text, limit=None):
     
     db = Database(get_db_path())
 
-    return list(db["Subtitles"].search(text, where=f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')"))
+    return list(db["Subtitles"].search(text, 
+                                       where=f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')",
+                                       limit=limit))
 
 
-def search_video(video_id, text):
+def search_video(video_id, text, limit=None):
     
     db = Database(get_db_path())
 
-    return list(db["Subtitles"].search(text, where=f"video_id = '{video_id}'"))
+    return list(db["Subtitles"].search(text, 
+                                       where=f"video_id = '{video_id}'",
+                                       limit=limit))
 
-def search_all(text):
+def search_all(text, limit=None):
     
     db = Database(get_db_path())
 
-    return list(db["Subtitles"].search(text))
+    return list(db["Subtitles"].search(text, limit=limit))
 
 
 def get_title_from_db(video_id):

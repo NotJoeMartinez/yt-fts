@@ -6,20 +6,20 @@ from rich.console import Console
 
 
 # full text search
-def fts_search(text, scope, channel_id=None, video_id=None):
+def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
     """
     Calls search functions and prints the results 
     """
 
     if scope == "all":
-        res = search_all(text)
+        res = search_all(text, limit)
     
     if scope == "channel":
         channel_id = get_channel_id_from_input(channel_id)
-        res = search_channel(channel_id, text)
+        res = search_channel(channel_id, text, limit)
     
     if scope == "video":
-        res = search_video(video_id, text)
+        res = search_video(video_id, text, limit)
 
     if len(res) == 0:
         show_message("no_matches_found")

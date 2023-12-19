@@ -9,7 +9,7 @@ from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.34"
+YT_FTS_VERSION = "0.1.35"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -156,8 +156,9 @@ def delete(channel):
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in.")
 @click.option("-v", "--video", default=None, help="The id of the video to search in.")
+@click.option("-l", "--limit", default=None, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-def search(text, channel, video, export):
+def search(text, channel, video, export, limit):
 
     from yt_fts.search import fts_search, print_fts_res  
     from yt_fts.export import export_fts 
@@ -175,7 +176,7 @@ def search(text, channel, video, export):
     else:
         scope = "all"
 
-    res = fts_search(text, scope, channel_id=channel, video_id=video)
+    res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
     print_fts_res(res)
 
     if export:
