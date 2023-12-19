@@ -83,6 +83,8 @@ def print_vector_search_results(res):
     console = Console()
 
     
+    channel_names = []
+
     for match in reversed(res):
         distance = match["distance"]
         link = match["link"]
@@ -92,6 +94,7 @@ def print_vector_search_results(res):
         video_id = match["video_id"]
         title = match["video_title"]
         channel_name = match["channel_name"]
+        channel_names.append(channel_name)
 
 
         console.print(f"[magenta][italic]\"[bold][link={link}]{text}[/link][/bold]\"[/italic][/magenta]", style="magenta")
@@ -103,6 +106,17 @@ def print_vector_search_results(res):
         console.print(f"    Video ID: {video_id}")
         console.print(f"    Link: {link}")
         console.print("")
+
+    num_matches = len(res)
+    num_channels = len(set(channel_names))  
+    num_videos = len(set([quote["video_id"] for quote in res]))
+
+    summary_str = f"Found [bold]{num_matches}[/bold] matches in [bold]{num_videos}[/bold] videos from [bold]{num_channels}[/bold] channel"
+
+    if num_channels > 1:
+        summary_str += "s"
+
+    console.print(summary_str) 
 
 
 
