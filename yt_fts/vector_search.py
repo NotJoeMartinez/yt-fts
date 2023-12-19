@@ -41,15 +41,14 @@ def search_chroma_db(
 
     documents = chroma_res["documents"][0]
     metadata = chroma_res["metadatas"][0]
+    distances = chroma_res["distances"][0]  
 
     res = []
 
     for i in range(len(documents)):
         text = documents[i]
         video_id = metadata[i]["video_id"]
-        subtitle_id = metadata[i]["subtitle_id"] 
         start_time = metadata[i]["start_time"]
-        stop_time = metadata[i]["stop_time"]
         link = f"https://youtu.be/{video_id}?t={time_to_secs(start_time)}"
         channel_name = get_channel_name_from_video_id(video_id)
         channel_id = metadata[i]["channel_id"]
@@ -57,13 +56,12 @@ def search_chroma_db(
 
 
         match = {
-            "subtitle_id": subtitle_id,
+            "distance": distances[i],
             "channel_name": channel_name,
             "channel_id": channel_id, 
             "video_title": title,
             "subs": text,
             "start_time": start_time,
-            "stop_time": stop_time,
             "video_id": video_id,
             "link": link,
         }
@@ -74,17 +72,19 @@ def search_chroma_db(
 
 def print_vector_search_results(res):
     """
-    {'subtitle_id': '492', 
+    {
     'channel_name': 'Peter Whidden', 
     'video_title': 'Training AI to Play Pokemon with Reinforcement Learning - YouTube', 
     'subs': 'choosing a Pokemon and winning its first', 
-    'time_stamp': '00:22:14.909', 
+    'start_time': '00:22:14.909', 
     'video_id': 'DcYLT37ImBY', 
     'link': 'https://youtu.be/DcYLT37ImBY?t=1331'}
     """
     console = Console()
 
-    for match in res:
+    
+    for match in reversed(res):
+        distance = match["distance"]
         link = match["link"]
         text = match["subs"]
         time_stamp = match["start_time"]    
@@ -96,6 +96,7 @@ def print_vector_search_results(res):
 
         console.print(f"[magenta][italic]\"[bold][link={link}]{text}[/link][/bold]\"[/italic][/magenta]", style="magenta")
         print("")
+        console.print(f"    Distance: {distance}",style="none")
         console.print(f"    Channel: {channel_name} - ({channel_id})",style="none")
         print(f"    Title: {title}")
         print(f"    Time Stamp: {time_stamp}")

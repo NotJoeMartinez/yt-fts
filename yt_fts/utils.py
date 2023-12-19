@@ -124,3 +124,46 @@ def enable_ss(channel_id):
         """, [channel_id])
     con.commit()
     con.close() 
+
+
+def split_subtitles(video_id):
+
+    from datetime import datetime
+    from .db_utils import get_subs_by_video_id
+
+    def time_to_seconds(time_str):
+        """ Convert time string to total seconds """
+        return datetime.strptime(time_str, '%H:%M:%S.%f').time().hour * 3600 + \
+            datetime.strptime(time_str, '%H:%M:%S.%f').time().minute * 60 + \
+            datetime.strptime(time_str, '%H:%M:%S.%f').time().second + \
+            datetime.strptime(time_str, '%H:%M:%S.%f').time().microsecond / 1e6
+
+
+    subs = get_subs_by_video_id(video_id)
+
+    if len(subs) == 0:
+        print("Video is too short to split")
+        return None
+
+    total_seconds = time_to_secs(subs[-1][1])
+
+    if (total_seconds < 10):
+        print("Video is too short to split")
+    
+
+
+    # Convert times to seconds and store texts
+    converted_data = [(time_to_seconds(start), start, text) for start, end, text in subs]
+
+    interval_texts = {}
+    for start, start_time_str, text in converted_data:
+        interval = int(start // 10) * 10  
+        key = interval_texts.setdefault(interval, {'start_time': start_time_str, 'texts': []})
+        key['texts'].append(text)
+
+
+    result = [(data['start_time'], ' '.join(data['texts']).strip()) for data in interval_texts.values()]
+    return result
+
+
+

@@ -246,6 +246,7 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):
         download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
         vtt_to_db(channel_id, tmp_dir, s)
+    return True
 
 
 def get_channel_id_from_input(channel_input):

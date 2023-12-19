@@ -168,3 +168,5 @@ tests/rich_tests
 tests/rich_tests
 
 DEVLOG.md
+examples
+*.txt
