@@ -156,7 +156,7 @@ def get_channel_name_from_video_id(video_id):
 def delete_channel(channel_id):
     
     from .utils import check_ss_enabled
-    from .vector_search import delte_channel_from_chroma_db 
+    from .vector_search import delete_channel_from_chroma 
 
     conn = sqlite3.connect(get_db_path())
     cur = conn.cursor()
@@ -167,13 +167,15 @@ def delete_channel(channel_id):
     cur.execute("DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
 
     cur.execute("DELETE FROM Videos WHERE channel_id = ?", (channel_id,))
+
+    if check_ss_enabled(channel_id):
+        delete_channel_from_chroma(channel_id)
+
     cur.execute("DELETE FROM SemanticSearchEnabled WHERE channel_id = ?", (channel_id,))
 
     conn.commit()
     conn.close()
 
-    if check_ss_enabled(channel_id):
-        delte_channel_from_chroma_db(channel_id)
 
 
 def get_channel_id_from_rowid(rowid):
