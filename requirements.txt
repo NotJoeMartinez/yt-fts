@@ -1,0 +1,7 @@
+click==8.1.7
+openai==1.4.0
+chromadb==0.4.20
+requests==2.31.0
+rich==13.7.0
+sqlite-utils==3.36
+beautifulsoup4==4.12.2
