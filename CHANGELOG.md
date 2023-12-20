@@ -3,7 +3,19 @@
 All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
+
+## [0.1.35] - 2023-12-19
+
+### Added
+- [yt-fts-109](https://github.com/NotJoeMartinez/yt-fts/pull/109)
+  - Minor: added summary string to vector search
+- [yt-fts-108](https://github.com/NotJoeMartinez/yt-fts/pull/108)
+  - Minor: added limit option to fts search 
+### Fixed
+- [yt-fts-110](https://github.com/NotJoeMartinez/yt-fts/pull/110)
+  - Medium: Fixed issue with `delete` command not deleting channels from chroma database
  
+
 ## [0.1.34] - 2023-12-19
 
 ### Added
@@ -17,8 +29,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   - Minor: both `vsearch` and `search` now search all channels by default. Use `--channel` to specify a channel to search. 
   - Minor: There's currently no way to update the embeddings
   - Minor: the `search` command has no `--limit` flag
-
-
 
 
 ## [0.1.33] - 2023-12-14
@@ -36,7 +46,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
   Minor: Moved `--list config` to its own command `list config` to make it more discoverable.
 
-## [0.1.31] - 2023-02-08
+## [0.1.31] - 2023-08-02
 
 ### Changed
 
