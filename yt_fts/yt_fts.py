@@ -107,6 +107,8 @@ def list(transcript, channel, library):
 @click.option("-l", "--language", default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def update(channel, language, number_of_jobs):
+    from .utils import check_ss_enabled
+    from .update import update_embeddings
 
     channel_id = get_channel_id_from_input(channel)
     channel_url = f"https://www.youtube.com/channel/{channel_id}/videos" 
@@ -117,6 +119,9 @@ def update(channel, language, number_of_jobs):
     channel_name = get_channel_name(channel_id, s)
 
     update_channel(channel_id, channel_name, language, number_of_jobs, s)
+
+    if check_ss_enabled(channel_id):
+        update_embeddings(channel_id)
 
 
 # Delete

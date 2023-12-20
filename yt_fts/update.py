@@ -1,7 +1,7 @@
 import tempfile, os
 
 from .download import get_videos_list, download_vtts, vtt_to_db
-from .db_utils import add_channel_info, get_num_vids, get_vid_ids_by_channel_id
+from .db_utils import get_num_vids, get_vid_ids_by_channel_id
 
 def update_channel(channel_id, channel_name, language, number_of_jobs, s):
     """
@@ -39,3 +39,54 @@ def update_channel(channel_id, channel_name, language, number_of_jobs, s):
         vtt_to_db(channel_id, tmp_dir, s)
 
         print(f"Added {len(vtt_to_parse)} new videos from \"{channel_name}\" to the database")
+
+
+# I don't have a way to test this other than waiting for a channel to update
+
+def update_embeddings(channel_id):
+    import chromadb
+    import OpenAI
+    from .utils import split_subtitles
+    from .config import get_or_make_chroma_path
+    from .embeddings import add_embeddings_to_chroma
+
+    sqlite_vids = get_vid_ids_by_channel_id(channel_id)
+
+    chroma_path = get_or_make_chroma_path()
+    chroma_client = chromadb.PersistentClient(path=chroma_path)
+    collection = chroma_client.get_collection(name="subEmbeddings")
+
+    chroma_documents = collection.get(
+        where={"channel_id": channel_id},
+        )
+
+
+    # make a list of video ids in chroma 
+    chroma_vid_ids = []
+    for meta in chroma_documents["metadatas"]:
+        chroma_vid_ids.append(meta["video_id"])
+    chroma_vid_ids = set(chroma_vid_ids)
+
+
+    # make new list of video ids in sqlite but not chroma
+    vids_to_update = []
+    for vid in sqlite_vids:
+        if vid[0] not in chroma_vid_ids:
+            vids_to_update.append(vid[0])
+
+
+    print(f"Found {len(vids_to_update)} videos to update in chroma")
+
+    # essentially do the same as get-embeddings but with new vids
+    new_chroma_subs = []
+    for vid_id in vids_to_update:
+        split_subs = split_subtitles(vid_id[0])
+        if split_subs is None:
+            continue
+        for sub in split_subs:
+            start_time = sub[0]
+            text = sub[1]
+            embedding_subs = (channel_id, vid_id[0], start_time, text)
+            new_chroma_subs.append(embedding_subs)
+
+    add_embeddings_to_chroma(new_chroma_subs, OpenAI())

@@ -8,13 +8,9 @@ from yt_fts.db_utils import get_channel_name_from_video_id, get_title_from_db
 from pprint import pprint
 
 def main():
-    chroma_path = get_or_make_chroma_path() 
-    view_collections(chroma_path)
-    # search = "nural networks"
-    # search_collections(chroma_path, search)
 
-    # view_by_channel_id("")
-    # delete_stuff()
+    view_by_channel_id("UCO2QPmnJFjdvJ6ch-pe27dQ")
+
 
 def view_collections(chroma_path):
     chroma_client = chromadb.PersistentClient(path=chroma_path)
@@ -29,17 +25,12 @@ def view_by_channel_id(channel_id):
 
     collection = chroma_client.get_collection(name="subEmbeddings")
 
-
-    # collection.get({
-    #     include: [ "documents" ]
-    # })
-
-    # chroma_res = collection.query(
-    #     query_texts=["networks"],
-    #     n_results=5,
-    #     where={"channel_id": channel_id})
+    chroma_res = collection.get(
+        where={"channel_id": channel_id}
+        )
     
-    # pprint(chroma_res)
+    for meta in chroma_res["metadatas"]:
+        pprint(meta["video_id"])
 
 
 
