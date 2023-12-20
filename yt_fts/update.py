@@ -80,7 +80,7 @@ def update_embeddings(channel_id):
     # essentially do the same as get-embeddings but with new vids
     new_chroma_subs = []
     for vid_id in vids_to_update:
-        split_subs = split_subtitles(vid_id[0])
+        split_subs = split_subtitles(vid_id)
         if split_subs is None:
             continue
         for sub in split_subs:
