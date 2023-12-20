@@ -9,15 +9,48 @@ from pprint import pprint
 
 def main():
     chroma_path = get_or_make_chroma_path() 
-    search = sys.argv[1]
-    search_collections(chroma_path, search)
+    view_collections(chroma_path)
+    # search = "nural networks"
+    # search_collections(chroma_path, search)
+
+    # view_by_channel_id("")
+    # delete_stuff()
 
 def view_collections(chroma_path):
     chroma_client = chromadb.PersistentClient(path=chroma_path)
     collection = chroma_client.get_collection(name="subEmbeddings")
-    # print(collection.peek())
+    print(collection.peek())
     print(collection.count())
 
+
+def view_by_channel_id(channel_id):
+    chroma_path = get_or_make_chroma_path()
+    chroma_client = chromadb.PersistentClient(path=chroma_path)
+
+    collection = chroma_client.get_collection(name="subEmbeddings")
+
+
+    # collection.get({
+    #     include: [ "documents" ]
+    # })
+
+    # chroma_res = collection.query(
+    #     query_texts=["networks"],
+    #     n_results=5,
+    #     where={"channel_id": channel_id})
+    
+    # pprint(chroma_res)
+
+
+
+def delete_stuff():
+    chroma_path = get_or_make_chroma_path()
+    chroma_client = chromadb.PersistentClient(path=chroma_path)
+    collection = chroma_client.get_collection(name="subEmbeddings")
+
+    collection.delete(
+        where={"channel_id": "UCF0ZSm2AmSkJ2b2sLMlgLFg"}
+    )
 
 def search_collections(chroma_path, text):
     chroma_client = chromadb.PersistentClient(path=chroma_path)
