@@ -1,4 +1,4 @@
-import csv, datetime
+import csv, datetime, os
 
 from rich.console import Console
 
@@ -113,5 +113,18 @@ def export_transcripts(channel_id):
             f.write(str_transcript)
 
 
-   
+def export_channel_to_txt(channel_id):
+    from .db_utils import  get_vid_ids_by_channel_id, get_subs_by_video_id
 
+    os.mkdir(channel_id) 
+
+    vid_ids = get_vid_ids_by_channel_id(channel_id)
+
+    for vid_id in vid_ids:
+        vid_id = vid_id[0]
+        subs = get_subs_by_video_id(vid_id)
+        str_subs = ""
+        for sub in subs:
+            str_subs += sub[2] + "\n"
+        with open(f"{channel_id}/{vid_id}.txt", "w") as f:
+            f.write(str_subs)

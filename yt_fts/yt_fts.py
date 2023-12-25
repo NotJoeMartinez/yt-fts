@@ -9,7 +9,7 @@ from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.35"
+YT_FTS_VERSION = "0.1.36"
 
 @click.group()
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -145,6 +145,23 @@ def delete(channel):
         print(f"Deleted channel {channel_name}: {channel_url}")
     else:
         print("Exiting")
+
+
+@cli.command(
+        help="""
+        export transcripts
+        """
+)
+@click.option("-c", "--channel", default=None, required=True, help="The name or id of the channel to export transcripts for")
+@click.option("-f", "--format", default="txt", help="The format to export transcripts to. Supported formats: txt, vtt")
+def export(channel, format):
+
+    from .export import export_channel_to_txt 
+
+    channel_id = get_channel_id_from_input(channel)
+
+    if format == "txt":
+        export_channel_to_txt(channel_id)
 
 
 # search
