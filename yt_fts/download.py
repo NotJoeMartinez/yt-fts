@@ -92,6 +92,23 @@ def get_videos_list(channel_url):
         res = subprocess.run(cmd, capture_output=True, check=True)
         list_of_videos_urls = res.stdout.decode().splitlines()
 
+        streams_url = channel_url.replace("/videos", "/streams") 
+        cmd = [
+            "yt-dlp",
+            "--flat-playlist",
+            "--print",
+            "id",
+            streams_url
+        ]
+        res = subprocess.run(cmd, capture_output=True, check=True)
+
+        live_stream_urls = res.stdout.decode().splitlines()
+
+
+        if len(live_stream_urls) > 0:
+            list_of_videos_urls.extend(live_stream_urls)
+
+
     return list_of_videos_urls 
 
 
