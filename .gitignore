@@ -170,3 +170,6 @@ tests/rich_tests
 DEVLOG.md
 examples
 UCYO_jab_esuFRV4b17AJtAw
+.ignore
+.ignore/
+.ignore/*
