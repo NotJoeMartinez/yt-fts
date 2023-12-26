@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.36] - 2023-12-25
+### Fixed 
+- [yt-fts-112](https://github.com/NotJoeMartinez/yt-fts/pull/112)
+  - Medium: Fixed issue with download command not downloading live streamed videos
+
+### Added
+- [yt-fts-111](https://github.com/NotJoeMartinez/yt-fts/pull/111)
+  - Minor: Added `export` command which exports channel subtitles to a directory of text files
+
 ## [0.1.35] - 2023-12-19
 
 ### Added
