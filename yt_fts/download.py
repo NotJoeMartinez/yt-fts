@@ -281,7 +281,6 @@ def get_channel_id_from_input(channel_input):
     name_res = get_channel_id_from_name(channel_input) 
     id_res = get_channel_id_from_rowid(channel_input) 
 
-    print(id_res)
 
     
     if id_res != None:

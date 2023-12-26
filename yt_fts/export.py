@@ -115,8 +115,15 @@ def export_transcripts(channel_id):
 
 def export_channel_to_txt(channel_id):
     from .db_utils import  get_vid_ids_by_channel_id, get_subs_by_video_id
+    console = Console()
 
-    os.mkdir(channel_id) 
+    output_dir = f"{channel_id}_txt"
+
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir) 
+    else:
+        console.print(f"[red]Erorr:[/red] Directory [yellow]{output_dir}[/yellow] already exists")
+        return None
 
     vid_ids = get_vid_ids_by_channel_id(channel_id)
 
@@ -126,5 +133,40 @@ def export_channel_to_txt(channel_id):
         str_subs = ""
         for sub in subs:
             str_subs += sub[2] + "\n"
-        with open(f"{channel_id}/{vid_id}.txt", "w") as f:
+        with open(f"{output_dir}/{vid_id}.txt", "w") as f:
             f.write(str_subs)
+
+    return output_dir
+
+
+def export_channel_to_vtt(channel_id):
+    console = Console()
+    from .db_utils import  get_vid_ids_by_channel_id, get_subs_by_video_id
+
+    output_dir = f"{channel_id}_vtt"
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    else:
+        console.print(f"[red]Erorr:[/red] Directory [yellow]{output_dir}[/yellow] already exists")
+        return None
+
+
+
+    vid_ids = get_vid_ids_by_channel_id(channel_id)
+
+    for vid_id in vid_ids:
+        vid_id = vid_id[0]
+        subs = get_subs_by_video_id(vid_id)
+
+        with open(f"{output_dir}/{vid_id}.vtt", "w") as f:
+            f.write("WEBVTT\n\n")
+
+        for sub in subs:
+            start_time = sub[0]
+            end_time = sub[1]
+            text = sub[2]
+
+            with open(f"{output_dir}/{vid_id}.vtt", "a") as f:
+                f.write(f"{start_time} --> {end_time}\n{text}\n\n")
+
+    return output_dir
