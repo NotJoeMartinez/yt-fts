@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.37] - 2023-12-27
+### Added 
+  - [yt-fts-114](https://github.com/NotJoeMartinez/yt-fts/pull/114)
+    - Medium: Added vtt export to export command
+    - Minor: removed print statement from `get_channel_id_from_input`
+
+
 ## [0.1.36] - 2023-12-25
 ### Fixed 
 - [yt-fts-112](https://github.com/NotJoeMartinez/yt-fts/pull/112)
