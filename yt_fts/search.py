@@ -10,6 +10,7 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
     """
     Calls search functions and prints the results 
     """
+    console = Console()
 
     if scope == "all":
         res = search_all(text, limit)
@@ -22,7 +23,14 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
         res = search_video(video_id, text, limit)
 
     if len(res) == 0:
-        show_message("no_matches_found")
+        console.print("- Try shortening the search to specific words")
+        console.print("- Try using the wildcard operator [bold]*[/bold] to search for partial words")
+        console.print("- Try using the [bold]OR[/bold] operator to search for multiple words")
+        if len(text.split(" ")) > 1:
+            example_or = text.replace(" ", " OR ")
+            console.print(f"    - EX: \"[bold]{example_or}[/bold]\"")
+        else: 
+            console.print(f"    - EX: \"[bold]foo OR [bold]bar[/bold]\"")
         exit()
 
     return res

@@ -190,7 +190,7 @@ def search(text, channel, video, export, limit):
 
     if len(text) > 40:
         show_message("search_too_long")
-        exit()
+        return
 
     if channel:
         scope = "channel"
