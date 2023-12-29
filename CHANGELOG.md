@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.38] - 2023-12-29
+### Added 
+  - [yt-fts-116](https://github.com/NotJoeMartinez/yt-fts/pull/116)
+    - Minor: Search word bold highlighting on `vsearch` and `search`
+  - [yt-fts-117](https://github.com/NotJoeMartinez/yt-fts/pull/117)
+    - Minor: Added hints on advanced query syntax when query doesn't get anything 
+
+
 ## [0.1.37] - 2023-12-27
 ### Added 
   - [yt-fts-114](https://github.com/NotJoeMartinez/yt-fts/pull/114)
