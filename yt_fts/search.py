@@ -29,7 +29,7 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
 
 
 # pretty print search results
-def print_fts_res(res):
+def print_fts_res(res, query):
 
     console = Console()
 
@@ -47,7 +47,7 @@ def print_fts_res(res):
         channel_names.append(quote_match["channel_name"])
 
         quote_match["video_title"] = get_title_from_db(video_id)
-        quote_match["subs"] = quote["text"].strip()
+        quote_match["subs"] = bold_query_matches(quote["text"].strip(), query)
         quote_match["time_stamp"] = time_stamp
         quote_match["video_id"] = video_id
         quote_match["link"] = link 
@@ -60,11 +60,10 @@ def print_fts_res(res):
     console.print("")
     for quote in fts_res: 
 
-        console.print(f"[magenta][italic]\"[bold][link={quote['link']}]{quote['subs']}[/link][/bold]\"[/italic][/magenta]", style="magenta")
-        print("")
+        console.print(f"[magenta][italic]\"[link={quote['link']}]{quote['subs']}[/link]\"[/italic][/magenta]")
         console.print(f"    Channel: {quote['channel_name']}",style="none")
-        print(f"    Title: {quote['video_title']}")
-        print(f"    Time Stamp: {quote['time_stamp']}")
+        console.print(f"    Title: {quote['video_title']}")
+        console.print(f"    Time Stamp: {quote['time_stamp']}")
         console.print(f"    Video ID: {quote['video_id']}")
         console.print(f"    Link: {quote['link']}")
         console.print("")

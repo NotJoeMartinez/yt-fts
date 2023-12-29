@@ -3,7 +3,7 @@ import chromadb
 from rich.console import Console
 from sqlite_utils import Database
 
-from .utils import time_to_secs
+from .utils import time_to_secs, bold_query_matches
 from .embeddings import get_embedding
 from .config import get_or_make_chroma_path 
 from .db_utils import get_channel_name_from_video_id, get_title_from_db
@@ -70,7 +70,7 @@ def search_chroma_db(
     return res
 
 
-def print_vector_search_results(res):
+def print_vector_search_results(res, query):
     """
     {
     'channel_name': 'Peter Whidden', 
@@ -88,7 +88,7 @@ def print_vector_search_results(res):
     for match in reversed(res):
         distance = match["distance"]
         link = match["link"]
-        text = match["subs"]
+        text = bold_query_matches(match["subs"], query)
         time_stamp = match["start_time"]    
         channel_id = match["channel_id"]
         video_id = match["video_id"]
@@ -97,12 +97,11 @@ def print_vector_search_results(res):
         channel_names.append(channel_name)
 
 
-        console.print(f"[magenta][italic]\"[bold][link={link}]{text}[/link][/bold]\"[/italic][/magenta]", style="magenta")
-        print("")
+        console.print(f"[magenta][italic]\"[link={link}]{text}[/link]\"[/italic][/magenta]\n")
         console.print(f"    Distance: {distance}",style="none")
         console.print(f"    Channel: {channel_name} - ({channel_id})",style="none")
-        print(f"    Title: {title}")
-        print(f"    Time Stamp: {time_stamp}")
+        console.print(f"    Title: {title}")
+        console.print(f"    Time Stamp: {time_stamp}")
         console.print(f"    Video ID: {video_id}")
         console.print(f"    Link: {link}")
         console.print("")
