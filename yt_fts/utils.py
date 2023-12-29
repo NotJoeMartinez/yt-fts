@@ -166,4 +166,17 @@ def split_subtitles(video_id):
     return result
 
 
+def bold_query_matches(text, query):
+    """
+    Bold the query in the text, keeping the case the same
+    """
+    query_words = query.lower().split()
+    result_words = []
 
+    for word in text.split():
+        if word.lower() in query_words:
+            result_words.append(f"[bold]{word}[/bold]")
+        else:
+            result_words.append(word)
+
+    return ' '.join(result_words)

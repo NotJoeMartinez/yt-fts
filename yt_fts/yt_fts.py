@@ -200,7 +200,7 @@ def search(text, channel, video, export, limit):
         scope = "all"
 
     res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
-    print_fts_res(res)
+    print_fts_res(res, text)
 
     if export:
         export_fts(text, scope, channel_id=channel, video_id=video)
@@ -261,7 +261,7 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
                            limit=limit, 
                            openai_client=openai_client)
     
-    print_vector_search_results(res)
+    print_vector_search_results(res, query=text)
 
     if export:    
         export_vector_search(res, text, scope)
