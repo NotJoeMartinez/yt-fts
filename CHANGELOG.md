@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.39] - 2023-12-31
+### Fixed
+  - [yt-fts-118](https://github.com/NotJoeMartinez/yt-fts/pull/118)
+  - Major: Fixed bug where download will fail if channel does not have live stream page
+
 ## [0.1.38] - 2023-12-29
 ### Added 
   - [yt-fts-116](https://github.com/NotJoeMartinez/yt-fts/pull/116)
