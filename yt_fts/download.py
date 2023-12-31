@@ -100,13 +100,13 @@ def get_videos_list(channel_url):
             "id",
             streams_url
         ]
-        res = subprocess.run(cmd, capture_output=True, check=True)
-
-        live_stream_urls = res.stdout.decode().splitlines()
-
-
-        if len(live_stream_urls) > 0:
-            list_of_videos_urls.extend(live_stream_urls)
+        try:
+            res = subprocess.run(cmd, capture_output=True, check=True)
+            live_stream_urls = res.stdout.decode().splitlines()
+            if len(live_stream_urls) > 0:
+                list_of_videos_urls.extend(live_stream_urls)
+        except subprocess.CalledProcessError:
+            console.print("[bold red]No streams tab found or error fetching streams.")
 
 
     return list_of_videos_urls 
