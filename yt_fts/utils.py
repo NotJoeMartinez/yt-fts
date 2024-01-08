@@ -54,7 +54,12 @@ def parse_vtt(file_path):
 
             # prevent duplicate entries
             if result and result[-1]['text'] == sub_titles.strip('\n'):
-                continue
+                # replace the previous entry with the new one
+                result[-1] = {
+                    'start_time': start_time,
+                    'stop_time': stop_time,
+                    'text': sub_titles.strip('\n'),
+                }
             else:   
                 result.append({
                     'start_time': start_time,
