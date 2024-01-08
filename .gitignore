@@ -172,4 +172,4 @@ examples
 UCYO_jab_esuFRV4b17AJtAw
 .ignore
 .ignore/
-.ignore/*
+tests/test_data/
