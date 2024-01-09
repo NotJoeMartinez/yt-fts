@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.41] - 2024-01-08
+### Fixed
+  - [yt-fts-121](https://github.com/NotJoeMartinez/yt-fts/pull/121)
+    - Major: Fixed bug where delete command fails due to database locking
+
 ## [0.1.40] - 2024-01-08
 ### Fixed 
   - [yt-fts-119](https://github.com/NotJoeMartinez/yt-fts/pull/119)
