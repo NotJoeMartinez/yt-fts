@@ -135,7 +135,8 @@ def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
 def get_vtt(tmp_dir, video_url, language):
     subprocess.run([
         "yt-dlp",
-        "-o", f"{tmp_dir}/%(id)s.%(ext)s",
+        "-o", f"{tmp_dir}/%(id)s",
+        "--write-info-json",
         "--write-auto-sub",
         "--convert-subs", "vtt",
         "--skip-download",
@@ -153,6 +154,10 @@ def vtt_to_db(channel_id, dir_path, s):
     file_paths = []
 
     for item in items:
+        # ignore other files e.g. info.json files
+        if not item.endswith('.vtt'):
+            continue
+
         item_path = os.path.join(dir_path, item)
         if os.path.isfile(item_path):
             file_paths.append(item_path)    
@@ -164,9 +169,9 @@ def vtt_to_db(channel_id, dir_path, s):
 
     for vtt in track(file_paths, description="Adding subtitles to database..."):
         base_name = os.path.basename(vtt)
-        vid_id = re.match(r'^([^.]*)', base_name).group(1)
+        vid_id = base_name.split('.')[0]
         vid_url = f"https://youtu.be/{vid_id}"
-        vid_title = get_vid_title(vid_url, s)
+        vid_title = get_vid_title(os.path.join(os.path.dirname(vtt), f'{vid_id}.info.json'))
         add_video(channel_id, vid_id, vid_title, vid_url)
 
         vtt_json = parse_vtt(vtt)
@@ -183,18 +188,12 @@ def vtt_to_db(channel_id, dir_path, s):
     con.close()
 
 
-def get_vid_title(vid_url, s):
+def get_vid_title(info_json_path):
     """
-    Scrapes video title from the video page
+    Retrieves video title from the info json file.
     """
-    res = s.get(vid_url)
-    if res.status_code == 200:
-        html = res.text
-        soup = BeautifulSoup(html, 'html.parser')
-        title = soup.title.string
-        return title 
-    else:
-        return None
+    with open(info_json_path) as f:
+        return json.load(f)['title']
 
 
 def validate_channel_url(channel_url):
