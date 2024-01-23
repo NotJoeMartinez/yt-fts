@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+### [0.1.42] - 2024-01-22
+Special thanks to [@danlamanna](https://github.com/danlamanna) for these fixes
+
+### Fixed 
+  - [yt-fts-12](https://github.com/NotJoeMartinez/yt-fts/pull/126) 
+    - Major: Fixed bug that prevented chroma database entries from being deleted if the user did not have an openAI key set 
+
+### Changed 
+  - [yt-fts-127](https://github.com/NotJoeMartinez/yt-fts/pull/127)
+    - Major: Improved adding to database time on download by over 50% by using metadata downloaded from yt-dlp
+
+### Added 
+  -[yt-fts-124](https://github.com/NotJoeMartinez/yt-fts/pull/124)
+    - Minor added -h flag to cli 
+
+
 ## [0.1.41] - 2024-01-08
 ### Fixed
   - [yt-fts-121](https://github.com/NotJoeMartinez/yt-fts/pull/121)
