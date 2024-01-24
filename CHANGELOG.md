@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 Special thanks to [@danlamanna](https://github.com/danlamanna) for these fixes
 
 ### Fixed 
-  - [yt-fts-12](https://github.com/NotJoeMartinez/yt-fts/pull/126) 
+  - [yt-fts-126](https://github.com/NotJoeMartinez/yt-fts/pull/126) 
     - Major: Fixed bug that prevented chroma database entries from being deleted if the user did not have an openAI key set 
 
 ### Changed 
@@ -16,7 +16,7 @@ Special thanks to [@danlamanna](https://github.com/danlamanna) for these fixes
     - Major: Improved adding to database time on download by over 50% by using metadata downloaded from yt-dlp
 
 ### Added 
-  -[yt-fts-124](https://github.com/NotJoeMartinez/yt-fts/pull/124)
+  - [yt-fts-124](https://github.com/NotJoeMartinez/yt-fts/pull/124)
     - Minor added -h flag to cli 
 
 

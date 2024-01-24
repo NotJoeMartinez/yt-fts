@@ -17,30 +17,25 @@ https://github.com/NotJoeMartinez/yt-fts/assets/39905973/6ffd8962-d060-490f-9e73
 pip install yt-fts
 ```
 
-**Dependencies:**
+**yt-dlp dependency:**
 
 This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. Platform specific installation instructions are available on the [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation). 
 
-**pip**
 ```bash
+# MacOS/Homebrew
+brew install yt-dlp
+# Windows/winget
+winget install yt-dlp
+# pip
 python3 -m pip install -U yt-dlp
 ```
-**MacOS/Homebrew**
-```bash
-brew install yt-dlp
-```
-**Windows/winget**
-```bash
-winget install yt-dlp
-```
-
 
 ## `download`
 Download subtitles for a channel. 
 
 Takes a channel url or id as an argument. Specify the number of jobs to parallelize the download with the `--number-of-jobs` option. 
 
-```shell
+```bash
 yt-fts download --number-of-jobs 5 "https://www.youtube.com/@3blue1brown"
 ```
 
@@ -49,7 +44,7 @@ List saved channels.
 
 The (ss) next to the channel name indicates that the channel has semantic search enabled. 
 
-```shell
+```bash
 yt-fts list
 ```
 
@@ -66,79 +61,87 @@ yt-fts list
 
 ```
 
-## `search`
-Full text search for string in saved channels.
+## `search` (Full Text Search)
+Full text search for a string in saved channels.
 
 - The search string does not have to be a word for word and match 
 - Search strings are limited to 40 characters. 
 
 ```bash
 # search in all channels
-yt-fts search "life in the big city" 
+yt-fts search "[search query]" 
 
-# search in specific channel
-yt-fts search "life in the big city" --channel "The Tim Dillon Show" 
+# search in channel 
+yt-fts search "[search query]" --channel "[channel name or id]" 
 
-# search in specific channel by id
-yt-fts search "life in the big city" -c 4
+# search in specific video
+yt-fts search "[search query]" --video "[video id]"
+
+# limit results 
+yt-fts search "[search query]" --limit "[number of results]" --channel "[channel name or id]"
+
+# export results to csv
+yt-fts search "[search query]" --export --channel "[channel name or id]" 
 ```
 
-```
-"Dennis would go hey life in the big city"
-
-    Channel: The Tim Dillon Show
-    Title: 154 - The 3 AM Episode - YouTube
-    Time Stamp: 00:58:53.789
-    Video ID: MhaG3Yfv1cU
-    Link: https://youtu.be/MhaG3Yfv1cU?t=3530
-```
-
-**Search in video**
-
-```bash
-yt-fts search "text to search" --video [VIDEO_ID]
-```
-
-**Advanced Search Syntax**
+Advanced Search Syntax:
 
 The search string supports sqlite [Enhanced Query Syntax](https://www.sqlite.org/fts3.html#full_text_index_queries).
 which includes things like [prefix queries](https://www.sqlite.org/fts3.html#termprefix) which you can use to match parts of a word.  
 
 ```bash
+# AND search
+yt-fts search "knife AND Malibu" --channel "The Tim Dillon Show" 
+
+# OR SEARCH 
+yt-fts search "knife OR Malibu" --channel "The Tim Dillon Show" 
+
+# wild cards
 yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show" 
 ```
-output:
-```
-"real knife fight down here in Malibu I"
-
-    Channel: The Tim Dillon Show
-    Title: #200 - Knife Fights In Malibu | The Tim Dillon Show - YouTube
-    Time Stamp: 00:45:39.420
-    Video ID: e79H5nxS65Q
-    Link: https://youtu.be/e79H5nxS65Q?t=2736
-```
 
 
-## `vsearch`
-Vector search, requires that you enable semantic search for a channel with `get-embeddings`. 
-It has the same options as `search` but output will be sorted by similarity to the search string
-and the return limit is 10. 
+# Semantic Search 
+You can enable semantic search for a channel by using the `get-embeddings` command.
+This requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`, or 
+you can pass the key with the `--openai-api-key` flag. 
+
+
+## `get-embedings`
+Fetches OpenAI embeddings for specified channel
+```bash
+
+# make sure openAI key is set
+# export OPENAI_API_KEY="[yourOpenAIKey]"
+
+yt-fts get-embeddings --channel "3Blue1Brown"
+```
+
+After the embeddings are saved you will see a `(ss)` next to the channel name when you 
+list channels and you will be able to use the `vsearch` command for that channel. 
+
+## `vsearch` (Semantic Search)
+`vsearch` is for "Vector search". This requires that you enable semantic 
+search for a channel with `get-embeddings`. It has the same options as 
+`search` but output will be sorted by similarity to the search string and 
+the default return limit is 10. 
+
+```bash
+# search by channel name
+yt-fts vsearch "[search query]" --channel "[channel name or id]"
+
+# search in specific video
+yt-fts vsearch "[search query]" --video "[video id]"
+
+# limit results 
+yt-fts vsearch "[search query]" --limit "[number of results]" --channel "[channel name or id]"
+
+# export results to csv
+yt-fts vsearch "[search query]" --export --channel "[channel name or id]" 
 
 ```
-yt-fts vsearch "deep quote by russian author" --channel "Academy of Ideas"
-```
 
-```
-"the great Russian author Fyodor Dostoevsky above all don't 
-lie to yourself he wrote the man who lies to"
 
-    Distance: 0.25210678577423096
-    Channel: Academy of Ideas - (UCiRiQGCHGjDLT9FQXFW0I3A)
-    Title: The Psychology of Self-Deception - YouTube
-    Time Stamp: 00:10:01.749
-    Video ID: Uig8Lw7ixI0
-    Link: https://youtu.be/Uig8Lw7ixI0?t=598
-```
 
 ## How To
 
@@ -166,19 +169,11 @@ semantic search embeddings.
 yt-fts update --channel "3Blue1Brown"
 ```
 
---- 
-# Semantic Search via OpenAI embeddings API 
-You can enable semantic search for a channel by using the `get-embeddings` command.
-This feature requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`, 
-or you can pass the key with the `--openai-api-key` flag. 
 
-
-## `get-embedings`
-Fetches OpenAI embeddings for specified channel
-```shell
-yt-fts get-embeddings --channel "3Blue1Brown"
+**Export all of a channel's transcript:**
+This command will create a directory in current working directory with the youtube 
+channel id of the specified channel.
+```bash
+# Export to vtt
+yt-fts export --channel "[id/name]" --format "[vtt/txt]"
 ```
-
-After the embeddings are saved you will see a `(ss)` next to the channel name when you 
-list channels and you will be able to use the `vsearch` command for that channel. 
-
