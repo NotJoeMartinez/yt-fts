@@ -1,14 +1,13 @@
-.PHONY: build install clean
+.PHONY: build install clean test
 
-# Build the package
 build:
-	python setup.py sdist bdist_wheel
+	python -m build
 
-# Install the package
 install:
-	pip install -e .
+	pip install .
 
-# Clean build artifacts
 clean:
 	rm -rf build dist *.egg-info
-	pip uninstall yt-fts 
+
+test:
+	pytest tests/
