@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=46.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "experimental-yt-fts"
+version = "0.1.42" 
+description = "Search all of a YouTube channel from the command line"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [
+    { name = "NotJoeMartinez", email = "notjoemartinez@protonmail.com" }
+]
+keywords = ["youtube", "subtitles", "search"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: The Unlicense (Unlicense)", 
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "click==8.1.7",
+    "openai==1.4.0",
+    "chromadb==0.4.20", 
+    "requests==2.31.0",
+    "rich==13.7.0",
+    "sqlite-utils==3.36",
+    "beautifulsoup4==4.12.2"
+]
+
+[project.scripts]
+yt-fts = "yt_fts.yt_fts:cli"
