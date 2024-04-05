@@ -1,4 +1,4 @@
-name: Publish Python 🐍 distribution 📦 to PyPI 
+name: Publish Python distribution to PyPI 
 
 on: push
 
@@ -29,15 +29,15 @@ jobs:
   publish-to-pypi:
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')  
     needs:
     - build
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/yt-fts  # Replace <package-name> with your PyPI project name
+      url: https://pypi.org/p/yt-fts  
     permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
+      id-token: write  
     steps:
     - name: Download all the dists
       uses: actions/download-artifact@v3
@@ -55,8 +55,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write  # IMPORTANT: mandatory for sigstore
+      contents: write  
+      id-token: write  
 
     steps:
     - name: Download all the dists
@@ -81,9 +81,6 @@ jobs:
     - name: Upload artifact signatures to GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      # Upload to GitHub Release using the `gh` CLI.
-      # `dist/` contains the built packages, and the
-      # sigstore-produced signatures and certificates.
       run: >-
         gh release upload
         '${{ github.ref_name }}' dist/**
