@@ -180,7 +180,7 @@ def bold_query_matches(text, query):
 
     for word in text.split():
         if word.lower() in query_words:
-            result_words.append(f"[bold]{word}[/bold]")
+            result_words.append(f"[bold][bright_magenta]{word}[/bright_magenta][/bold]")
         else:
             result_words.append(word)
 
