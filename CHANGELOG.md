@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+### [0.1.43] - 2024-04-05
+### Changed 
+  - [yt-fts-136](https://github.com/NotJoeMartinez/yt-fts/pull/136)
+    - Overhauled full text search results UI
+    - Results are displayed more logically, with less unnecessary information sorted by frequency.
+  
+  - [yt-fts-131](https://github.com/NotJoeMartinez/yt-fts/pull/131)
+    - Moved build system to `pyproject.toml` from `setup.py`
+
+### Fixed
+  - [yt-fts-134](https://github.com/NotJoeMartinez/yt-fts/pull/134)
+    - Disabled chromadb opentelemetry
+
+### Added 
+  - [yt-fts-132](https://github.com/NotJoeMartinez/yt-fts/pull/132)
+    - Github actions integration
+
+  
+
 ### [0.1.42] - 2024-01-22
 Special thanks to [@danlamanna](https://github.com/danlamanna) for these fixes
 
