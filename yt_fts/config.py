@@ -1,5 +1,9 @@
-import sys, os
 
+import sys 
+import os
+
+import chromadb
+from chromadb.config import Settings
 
 
 def get_config_path():
@@ -107,4 +111,9 @@ def get_or_make_chroma_path():
         return chroma_path
     else:
         return chroma_path
-    
+
+
+def get_chroma_client():
+    chroma_path = get_or_make_chroma_path()
+    return chromadb.PersistentClient(path=chroma_path, 
+                                     settings=Settings(anonymized_telemetry=False))

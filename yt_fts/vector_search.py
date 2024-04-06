@@ -3,9 +3,9 @@ import chromadb
 from rich.console import Console
 from sqlite_utils import Database
 
-from .utils import time_to_secs, bold_query_matches
+from .utils import time_to_secs, bold_query_matches 
 from .embeddings import get_embedding
-from .config import get_or_make_chroma_path 
+from .config import get_chroma_client 
 from .db_utils import get_channel_name_from_video_id, get_title_from_db
 from .download import get_channel_id_from_input 
 
@@ -17,8 +17,7 @@ def search_chroma_db(
         limit=10,
         openai_client=None):
 
-    chroma_path = get_or_make_chroma_path()
-    chroma_client = chromadb.PersistentClient(path=chroma_path)
+    chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
     search_embedding = get_embedding(text, "text-embedding-ada-002", openai_client)
@@ -120,8 +119,8 @@ def print_vector_search_results(res, query):
 
 
 def delete_channel_from_chroma(channel_id):
-    chroma_path = get_or_make_chroma_path()
-    chroma_client = chromadb.PersistentClient(path=chroma_path)
+
+    chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
     print(f"deleting channel {channel_id} from chroma")
