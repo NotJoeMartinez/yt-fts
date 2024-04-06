@@ -21,12 +21,12 @@ classifiers = [
 
 dependencies = [
     "click==8.1.7",
-    "openai==1.4.0",
-    "chromadb==0.4.20", 
+    "openai==1.16.2",
+    "chromadb==0.4.24",
     "requests==2.31.0",
-    "rich==13.7.0",
+    "rich==13.7.1",
     "sqlite-utils==3.36",
-    "beautifulsoup4==4.12.2"
+    "beautifulsoup4==4.12.3"
 ]
 
 [project.scripts]
