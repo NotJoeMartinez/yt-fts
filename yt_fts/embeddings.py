@@ -1,16 +1,12 @@
-import chromadb
-
-from .config import get_or_make_chroma_path
-
 from openai import OpenAI
 from rich.progress import track
 from rich.console import Console
 
+from .config import get_chroma_client 
 
 def add_embeddings_to_chroma(subs, openai_client):
 
-    chroma_path = get_or_make_chroma_path()
-    chroma_client = chroma_client = chromadb.PersistentClient(path=chroma_path) 
+    chroma_client = get_chroma_client()
     collection = chroma_client.get_or_create_collection(name="subEmbeddings")
 
     for sub in track(subs, description="Getting embeddings"):
