@@ -1,8 +1,9 @@
-
+from pprint import pprint
 from .download import get_channel_id_from_input
 from .db_utils import * 
 from .utils import *
 from rich.console import Console
+from rich.text import Text
 
 
 # full text search
@@ -62,20 +63,76 @@ def print_fts_res(res, query):
 
         fts_res.append(quote_match)
 
-    # sort by channel name
-    fts_res = sorted(fts_res, key=lambda x: x["channel_name"])
 
-    console.print("")
-    for quote in fts_res: 
+    """
+    need to resturcutre the data to be able to print it in a nice way
 
-        console.print(f"[magenta][italic]\"[link={quote['link']}]{quote['subs']}[/link]\"[/italic][/magenta]")
-        console.print(f"    Channel: {quote['channel_name']}",style="none")
-        console.print(f"    Title: {quote['video_title']}")
-        console.print(f"    Time Stamp: {quote['time_stamp']}")
-        console.print(f"    Video ID: {quote['video_id']}")
-        console.print(f"    Link: {quote['link']}")
-        console.print("")
+    fts_dict = {
+        "channel_name": {
+            "video_name": [
+                {
+                    "quote": "quote",
+                    "time_stamp": "time_stamp",
+                    "link": "link"
+                }
+            ]
+        }
+    }
+
+    original format is:
+    fts_res = [
+        {
+            "channel_name": "channel_name",
+            "video_name": "video_name",
+            "quote": "quote",
+            "time_stamp": "time_stamp",
+            "link": "link"
+        }
+    ]
+    """
+
+    fts_dict = {}
+    for quote in fts_res:
+        channel_name = quote["channel_name"]
+        video_name = quote["video_title"]
+        quote_data = {
+            "quote": quote["subs"],
+            "time_stamp": quote["time_stamp"],
+            "link": quote["link"]
+        }
+        if channel_name not in fts_dict:
+            fts_dict[channel_name] = {}
+        if video_name not in fts_dict[channel_name]:
+            fts_dict[channel_name][video_name] = []
+        fts_dict[channel_name][video_name].append(quote_data)
     
+
+    # Sort the list by the total number of quotes in each channel
+    channel_list = list(fts_dict.items())
+    channel_list.sort(key=lambda x: sum(len(quotes) for quotes in x[1].values()))
+
+    for channel_name, videos in channel_list:
+        console.print(f"[spring_green2][bold]{channel_name}[/bold][/spring_green2]")
+        console.print("")
+
+        # Sort the list by the number of quotes in each video
+        video_list = list(videos.items())
+        video_list.sort(key=lambda x: len(x[1]))
+
+        for video_name, quotes in video_list:
+            console.print(f"    [bold][blue]{video_name}[/blue][/bold]")
+            console.print("")
+
+            # Sort the quotes by timestamp
+            quotes.sort(key=lambda x: x['time_stamp'])
+
+            for quote in quotes:
+                link = quote["link"]
+                time_stamp = quote["time_stamp"]
+                words = quote["quote"]
+                console.print(f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> [italic][white]\"{words}\"[/white][/italic]")
+            console.print("")
+
     num_matches = len(res)
     num_channels = len(set(channel_names))  
     num_videos = len(set([quote["video_id"] for quote in res]))
