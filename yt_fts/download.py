@@ -74,7 +74,6 @@ def get_channel_name(channel_id, s):
         return None
 
 
-
 def get_videos_list(channel_url):
     """
     Scrapes list of all video urls from the channel
@@ -110,6 +109,32 @@ def get_videos_list(channel_url):
 
 
     return list_of_videos_urls 
+
+
+def get_playlist_urls(playlist_url):
+    """
+    Returns a list of channel ids and video ids from a playlist
+    [
+        ['channel_id', 'video_id'],
+    ]
+    """
+
+    console = Console()
+
+    with console.status("[bold green]Scraping video urls, this might take a little...") as status:
+        cmd = [
+            "yt-dlp",
+            "--print",
+            "%(channel_id)s,%(id)s",
+            f"{playlist_url}"
+        ]
+        res = subprocess.run(cmd, capture_output=True, check=True)
+        list_of_videos_urls = res.stdout.decode().splitlines()
+
+        list_of_videos_urls = [x.split(',') for x in list_of_videos_urls]
+
+
+    return list_of_videos_urls
 
 
 def download_vtts(number_of_jobs, list_of_videos_urls, language ,tmp_dir):
@@ -165,7 +190,6 @@ def vtt_to_db(channel_id, dir_path, s):
     con = sqlite3.connect(get_db_path())  
     cur = con.cursor()
 
-    # bar = Bar('Adding to database', max=len(file_paths))
 
     for vtt in track(file_paths, description="Adding subtitles to database..."):
         base_name = os.path.basename(vtt)
@@ -263,6 +287,26 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):
         add_channel_info(channel_id, channel_name, channel_url)
         vtt_to_db(channel_id, tmp_dir, s)
     return True
+
+
+def download_playlist(playlist_url, language, number_of_jobs, s):
+
+    playlist_urls = get_playlist_urls(playlist_url)
+
+
+    import tempfile
+    from yt_fts.db_utils import (add_channel_info, 
+                                 check_if_channel_exists,
+                                 )
+
+
+
+    for video_id in playlist_urls:
+        print(video_id)
+        # video_url = f'https://www.youtube.com/watch?v={video_id}'
+
+
+
 
 
 def get_channel_id_from_input(channel_input):

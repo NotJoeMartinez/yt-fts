@@ -27,9 +27,10 @@ def cli():
     """
 )
 @click.argument("channel_url", required=True)
+@click.option("-p", "--playlist", is_flag=True, required=False)
 @click.option("-l", "--language", default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def download(channel_url, language, number_of_jobs):
+def download(channel_url, playlist, language, number_of_jobs):
     console = Console()
     s = requests.session()
 

@@ -224,6 +224,9 @@ def get_channel_list_by_id(channel_id):
 
 
 def check_if_channel_exists(channel_id):
+    """
+    Check if channel exists in the database
+    """
 
     db = Database(get_db_path())
 
