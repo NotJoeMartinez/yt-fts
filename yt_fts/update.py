@@ -36,6 +36,6 @@ def update_channel(channel_id, channel_name, language, number_of_jobs, s):
             print(f"{len(fresh_videos)} videos on \"{channel_name}\" do not have subtitles")
             exit()
 
-        vtt_to_db(channel_id, tmp_dir, s)
+        vtt_to_db(tmp_dir)
 
         print(f"Added {len(vtt_to_parse)} new videos from \"{channel_name}\" to the database")
