@@ -80,14 +80,19 @@ def add_channel_info(channel_id, channel_name, channel_url):
 
 def add_video(channel_id, video_id,  video_title, video_url):
     
-    db = Database(get_db_path())
+        conn = sqlite3.connect(get_db_path())
+        cur = conn.cursor()
+        existing_video = cur.execute("SELECT * FROM Videos WHERE video_id = ?", 
+                                     (video_id,)).fetchone()
 
-    db["Videos"].insert({
-        "video_id": video_id,
-        "video_title": video_title,
-        "video_url": video_url,
-        "channel_id": channel_id
-    })
+        if existing_video is None:
+            cur.execute("INSERT INTO Videos (video_id, video_title, video_url, channel_id) VALUES (?, ?, ?, ?)",
+                        (video_id, video_title, video_url, channel_id))
+            conn.commit()
+
+        else:
+            print(f"{video_id} Video already exists in the database.")
+        conn.close()
 
 
 def add_subtitle(video_id, start_time, text):
@@ -224,6 +229,9 @@ def get_channel_list_by_id(channel_id):
 
 
 def check_if_channel_exists(channel_id):
+    """
+    Check if channel exists in the database
+    """
 
     db = Database(get_db_path())
 

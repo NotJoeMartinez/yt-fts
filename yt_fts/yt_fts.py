@@ -26,21 +26,26 @@ def cli():
     You must provide the URL of the channel as an argument. The script will automatically extract the channel id from the URL.
     """
 )
-@click.argument("channel_url", required=True)
+@click.argument("url", required=True)
+@click.option("-p", "--playlist", is_flag=True, required=False)
 @click.option("-l", "--language", default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def download(channel_url, language, number_of_jobs):
+def download(url, playlist, language, number_of_jobs):
+
     console = Console()
     s = requests.session()
+    handle_reject_consent_cookie(url, s)
 
+    if playlist == True:
+        download_playlist(url, s, language, number_of_jobs)
+        return
 
     # find out if the channel exists on the internet 
     with console.status("[bold green]Getting Channel ID...") as status:
-        channel_url = validate_channel_url(channel_url)
-        handle_reject_consent_cookie(channel_url, s)
-        channel_id = get_channel_id(channel_url, s)
+        url = validate_channel_url(url)
+        channel_id = get_channel_id(url, s)
    
-    if channel_id is None:
+    if channel_id == None:
         console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
         return
 
@@ -53,15 +58,15 @@ def download(channel_url, language, number_of_jobs):
         console.print(error)
         return
 
-    handle_reject_consent_cookie(channel_url, s)
     channel_name = get_channel_name(channel_id, s)
     
     if channel_name is None:
         console.print("[bold red]Error:[/bold red] The channel does not exist.")
         return
 
-    foo = download_channel(channel_id, channel_name, language, number_of_jobs, s)
-    if foo is None:
+    dl_status = download_channel(channel_id, channel_name, language, number_of_jobs, s)
+
+    if dl_status is None:
         console.print("[bold red]Error:[/bold red] Unable to download channel.")
         return
     else:
