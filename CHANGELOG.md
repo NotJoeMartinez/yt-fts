@@ -4,7 +4,19 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-### [0.1.43] - 2024-04-05
+## [0.1.43] - 2024-04-05
+### Fixed
+- [yt-fts-138](https://github.com/NotJoeMartinez/yt-fts/pull/141)
+  - Fixed unicode decode error #138
+  - Introduced when we added current metadata with `--write-info-json`
+    - Caused by writing json to windows filesystem, which encodes in `Windows-1252` instead of `utf-8`
+    - Another reason to not use subprocess.  
+### Added 
+- [yt-fts-139](https://github.com/NotJoeMartinez/yt-fts/pull/139)
+  - Playlists downloading now supported by passing the `--playlist/-p` to `download` command 
+
+
+## [0.1.43] - 2024-04-05
 ### Changed 
   - [yt-fts-136](https://github.com/NotJoeMartinez/yt-fts/pull/136)
     - Overhauled full text search results UI
