@@ -211,7 +211,7 @@ def vtt_to_db(dir_path):
 
         vid_json_path = os.path.join(os.path.dirname(vtt), f'{vid_id}.info.json')
 
-        with open(vid_json_path, "r") as f:
+        with open(vid_json_path, 'r', encoding='utf-8', errors='ignore') as f:
             vid_json = json.load(f)
 
         vid_title =  vid_json['title']
