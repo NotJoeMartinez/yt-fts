@@ -13,9 +13,17 @@ https://github.com/NotJoeMartinez/yt-fts/assets/39905973/6ffd8962-d060-490f-9e73
 
 ## Installation 
 
+pip 
 ```bash
 pip install yt-fts
 ```
+
+homebrew
+```bash
+brew tap notjoemartinez/yt-fts
+brew install yt-fts
+```
+
 
 **yt-dlp dependency:**
 
