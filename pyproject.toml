@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yt-fts"
-version = "0.1.47"
+version = "0.1.48"
 description = "Search all of a YouTube channel from the command line"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -31,3 +31,6 @@ dependencies = [
 
 [project.scripts]
 yt-fts = "yt_fts.yt_fts:cli"
+
+[project.urls]
+Homepage = "https://github.com/NotJoeMartinez/yt-fts"

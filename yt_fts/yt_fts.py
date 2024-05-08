@@ -9,7 +9,7 @@ from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.47"
+YT_FTS_VERSION = "0.1.48"
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
