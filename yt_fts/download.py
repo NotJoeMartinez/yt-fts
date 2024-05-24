@@ -1,4 +1,3 @@
-
 import tempfile
 import subprocess, re, os, sqlite3, json
 
@@ -8,7 +7,7 @@ from urllib.parse import urlparse
 
 from .config import get_db_path
 from .db_utils import add_video
-from .utils import parse_vtt
+from .utils import parse_vtt, get_date
 from urllib.parse import urlparse 
 
 from rich.progress import track
@@ -215,9 +214,10 @@ def vtt_to_db(dir_path):
             vid_json = json.load(f)
 
         vid_title =  vid_json['title']
+        vid_date = get_date(vid_json['upload_date'])
         channel_id = vid_json['channel_id']
 
-        add_video(channel_id, vid_id, vid_title, vid_url)
+        add_video(channel_id, vid_id, vid_title, vid_url, vid_date)
 
         vtt_json = parse_vtt(vtt)
 

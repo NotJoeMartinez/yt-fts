@@ -1,6 +1,7 @@
 """
 This is where I'm putting all the functions that don't belong anywhere else
 """
+import datetime
 import re
 import sqlite3
 
@@ -89,6 +90,13 @@ def get_time_delta(timestamp1, timestamp2):
     diff = str(diff).split(".")[0]
 
     return diff 
+
+
+def get_date(date_string):
+    # Python 3.11 would support datimetime.date.fromisoformat('YYYYMMDD') directly
+    if '-' in date_string:
+        return datetime.date.fromisoformat(date_string)
+    return datetime.datetime.strptime(date_string, '%Y%m%d').date()
 
 
 # check if semantic search has been enabled for channel
