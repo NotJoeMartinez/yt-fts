@@ -4,7 +4,7 @@ from rich.console import Console
 
 from .db_utils import (
     search_channel, search_video, search_all, 
-    get_channel_name_from_video_id, get_title_from_db
+    get_channel_name_from_video_id, get_metadata_from_db,
     )
 
 from .utils import time_to_secs, show_message
@@ -35,17 +35,24 @@ def export_fts(text, scope, channel_id=None, video_id=None):
 
     with open(file_name, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Channel Name','Video Title', 'Quote', 'Time Stamp', 'Link'])
+        writer.writerow(['Channel Name','Video Title', 'Date', 'Quote', 'Time Stamp', 'Link'])
         
         for quote in res:
             video_id = quote["video_id"]
             channel_name = get_channel_name_from_video_id(video_id)
-            video_title = get_title_from_db(video_id)
+            metadata = get_metadata_from_db(video_id)
             time_stamp = quote["start_time"]
             subs = quote["text"]
             time = time_to_secs(time_stamp) 
 
-            writer.writerow([channel_name,video_title, subs.strip(), time_stamp, f"https://youtu.be/{video_id}?t={time}"])
+            writer.writerow([
+                channel_name,
+                metadata['video_title'],
+                metadata['video_date'],
+                subs.strip(),
+                time_stamp,
+                f"https://youtu.be/{video_id}?t={time}"
+            ])
     
     console = Console()
 

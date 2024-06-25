@@ -55,7 +55,7 @@ def print_fts_res(res, query):
         quote_match["channel_name"] = get_channel_name_from_video_id(video_id)
         channel_names.append(quote_match["channel_name"])
 
-        quote_match["video_title"] = get_title_from_db(video_id)
+        quote_match["metadata"] = get_metadata_from_db(video_id)
         quote_match["subs"] = bold_query_matches(quote["text"].strip(), query)
         quote_match["time_stamp"] = time_stamp
         quote_match["video_id"] = video_id
@@ -94,7 +94,9 @@ def print_fts_res(res, query):
     fts_dict = {}
     for quote in fts_res:
         channel_name = quote["channel_name"]
-        video_name = quote["video_title"]
+        metadata = quote["metadata"]
+        video_name = metadata["video_title"]
+        video_date = metadata["video_date"]
         quote_data = {
             "quote": quote["subs"],
             "time_stamp": quote["time_stamp"],
@@ -102,9 +104,9 @@ def print_fts_res(res, query):
         }
         if channel_name not in fts_dict:
             fts_dict[channel_name] = {}
-        if video_name not in fts_dict[channel_name]:
-            fts_dict[channel_name][video_name] = []
-        fts_dict[channel_name][video_name].append(quote_data)
+        if (video_name, video_date) not in fts_dict[channel_name]:
+            fts_dict[channel_name][(video_name, video_date)] = []
+        fts_dict[channel_name][(video_name, video_date)].append(quote_data)
     
 
     # Sort the list by the total number of quotes in each channel
@@ -119,8 +121,8 @@ def print_fts_res(res, query):
         video_list = list(videos.items())
         video_list.sort(key=lambda x: len(x[1]))
 
-        for video_name, quotes in video_list:
-            console.print(f"    [bold][blue]{video_name}[/blue][/bold]")
+        for (video_name, video_date), quotes in video_list:
+            console.print(f"    [bold][blue]{video_name}[/blue][/bold] ({video_date})")
             console.print("")
 
             # Sort the quotes by timestamp

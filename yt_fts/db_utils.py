@@ -4,7 +4,7 @@ from sqlite_utils import Database
 from rich.console import Console
 from rich.table import Table
 
-from .utils import show_message
+from .utils import show_message, get_date
 from .config import get_db_path 
 
 
@@ -25,7 +25,8 @@ def make_db(db_path):
             "video_id": str,
             "video_title": str,
             "video_url": str,
-            "channel_id": str
+            "channel_id": str,
+            "video_date": str,
         }, 
         pk="video_id", 
         not_null={"video_title", "video_url"}, 
@@ -78,7 +79,7 @@ def add_channel_info(channel_id, channel_name, channel_url):
     })
 
 
-def add_video(channel_id, video_id,  video_title, video_url):
+def add_video(channel_id, video_id,  video_title, video_url, video_date):
     
         conn = sqlite3.connect(get_db_path())
         cur = conn.cursor()
@@ -86,8 +87,8 @@ def add_video(channel_id, video_id,  video_title, video_url):
                                      (video_id,)).fetchone()
 
         if existing_video is None:
-            cur.execute("INSERT INTO Videos (video_id, video_title, video_url, channel_id) VALUES (?, ?, ?, ?)",
-                        (video_id, video_title, video_url, channel_id))
+            cur.execute("INSERT INTO Videos (video_id, video_title, video_url, video_date, channel_id) VALUES (?, ?, ?, ?, ?)",
+                        (video_id, video_title, video_url, video_date, channel_id))
             conn.commit()
 
         else:
@@ -142,6 +143,15 @@ def get_title_from_db(video_id):
     db = Database(get_db_path())
 
     return db.execute(f"SELECT video_title FROM Videos WHERE video_id = ?", [video_id]).fetchone()[0]
+
+
+def get_metadata_from_db(video_id):
+
+    db = Database(get_db_path())
+
+    metadata = db.execute_returning_dicts(f"SELECT * FROM Videos WHERE video_id = ?", [video_id])[0]
+    metadata["video_date"] = get_date(metadata["video_date"])
+    return metadata
 
 
 def get_channel_name_from_id(channel_id):
