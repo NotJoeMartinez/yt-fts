@@ -193,3 +193,23 @@ def bold_query_matches(text, query):
             result_words.append(word)
 
     return ' '.join(result_words)
+
+
+def handle_reject_consent_cookie(channel_url, s):
+    """
+    Auto rejects the consent cookie if request is redirected to the consent page
+    """
+    r = s.get(channel_url)
+    if "https://consent.youtube.com" in r.url:
+        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
+        if m:
+            data = {
+                "gl":"DE",
+                "pc":"yt",
+                "continue":channel_url,
+                "x":"6",
+                "bl":m.group(1),
+                "hl":"de",
+                "set_eom":"true"
+            }
+            s.post("https://consent.youtube.com/save", data=data)
