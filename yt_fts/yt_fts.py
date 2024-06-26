@@ -1,4 +1,5 @@
 import click
+import sys
 import requests
 
 from .config import get_config_path, get_db_path, get_or_make_chroma_path 
@@ -10,6 +11,7 @@ from .utils import *
 from rich.console import Console
 
 YT_FTS_VERSION = "0.1.49"
+console = Console()
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -32,13 +34,16 @@ def cli():
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def download(url, playlist, language, number_of_jobs):
 
-    console = Console()
     s = requests.session()
     handle_reject_consent_cookie(url, s)
 
     if playlist == True:
+        if "playlist?" not in url:
+            console.print(f"\n[bold red]Error:[/bold red] Invalid playlist url {url}")
+            print("\nYouTube playlists have this format: https://www.youtube.com/playlist?list=<playlist_id>\n")
+            sys.exit(1)
         download_playlist(url, s, language, number_of_jobs)
-        return
+        sys.exit(0)
 
     # find out if the channel exists on the internet 
     with console.status("[bold green]Getting Channel ID...") as status:
@@ -141,9 +146,9 @@ def delete(channel):
     channel_name = get_channel_name_from_id(channel_id) 
     channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
 
-    print(f"Deleting channel {channel_name}: {channel_url}")
-    print("Are you sure you want to delete this channel and all its data?")
-    confirm = input("y/n: ")
+    console.print(f"Deleting channel [bold]\"{channel_name}\"[/bold]: {channel_url}")
+    console.print("[bold]Are you sure you want to delete this channel and all its data?[/bold]")
+    confirm = input("(Y/n): ")
 
     if confirm == "y":
         delete_channel(channel_id)

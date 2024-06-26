@@ -26,7 +26,8 @@ dependencies = [
     "requests==2.31.0",
     "rich==13.7.1",
     "sqlite-utils==3.36",
-    "beautifulsoup4==4.12.3"
+    "beautifulsoup4==4.12.3",
+    "yt-dlp==2024.5.27"
 ]
 
 [project.scripts]
