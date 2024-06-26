@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.1.43] - 2024-04-05
+## [0.1.49] - 2024-06-25
+### Fixed
+- Outdated chromadb dependency crashing cli 
+  - https://github.com/NotJoeMartinez/yt-fts/issues/145
+
+### Added
+- Date in fts searches and exports 
+  - https://github.com/NotJoeMartinez/yt-fts/issues/142
+
+
+## [0.1.48] - 2024-04-05
 ### Fixed
 - [yt-fts-138](https://github.com/NotJoeMartinez/yt-fts/pull/141)
   - Fixed unicode decode error #138
