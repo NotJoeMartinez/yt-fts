@@ -1,6 +1,11 @@
+import yt_dlp
 import tempfile
-import subprocess, re, os, sqlite3, json
+import re
+import os
+import sqlite3
+import json
 
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
@@ -12,6 +17,7 @@ from urllib.parse import urlparse
 
 from rich.progress import track
 from rich.console import Console
+console = Console()
 
 def handle_reject_consent_cookie(channel_url, s):
     """
@@ -82,80 +88,60 @@ def get_videos_list(channel_url):
     console = Console()
 
     with console.status("[bold green]Scraping video urls, this might take a little...") as status:
-        cmd = [
-            "yt-dlp",
-            "--flat-playlist",
-            "--print",
-            "id",
-            f"{channel_url}"
-        ]
-        res = subprocess.run(cmd, capture_output=True, check=True)
-        list_of_videos_urls = res.stdout.decode().splitlines()
+        ydl_opts = {
+            'extract_flat': True,
+            'quiet': True,
+        }
 
-        streams_url = channel_url.replace("/videos", "/streams") 
-        cmd = [
-            "yt-dlp",
-            "--flat-playlist",
-            "--print",
-            "id",
-            streams_url
-        ]
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(channel_url, download=False)
+            list_of_videos_urls = [entry['id'] for entry in info['entries']]
+
+        streams_url = channel_url.replace("/videos", "/streams")
         try:
-            res = subprocess.run(cmd, capture_output=True, check=True)
-            live_stream_urls = res.stdout.decode().splitlines()
-            if len(live_stream_urls) > 0:
-                list_of_videos_urls.extend(live_stream_urls)
-        except subprocess.CalledProcessError:
-            console.print("[bold red]No streams tab found or error fetching streams.")
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                streams_info = ydl.extract_info(streams_url, download=False)
+                live_stream_urls = [entry['id'] for entry in streams_info['entries']]
+                if len(live_stream_urls) > 0:
+                    list_of_videos_urls.extend(live_stream_urls)
+        except Exception:
+            console.print("[bold red]No streams found")
 
-
-    return list_of_videos_urls 
+    return list_of_videos_urls
 
 
 def get_playlist_data(playlist_url):
     """
     Returns a list of channel ids and video ids from a playlist
-    [
-        ['channel_id', 'video_id'],
-    ]
     """
-
     console = Console()
 
     with console.status("[bold green]Scraping video urls, this might take a little...") as status:
-        cmd = [
-            "yt-dlp",
-            "--print",
-            "%(channel)s,%(channel_id)s,%(id)s",
-            f"{playlist_url}"
-        ]
-        res = subprocess.run(cmd, capture_output=True, check=True)
-        data = res.stdout.decode().splitlines()
+        ydl_opts = {
+            'quiet': True,
+            'extract_flat': True,
+        }
 
-        playlist_data = []
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(playlist_url, download=False)
+            playlist_data = []
+            for entry in info['entries']:
+                vid_obj = {
+                    'channel_name': entry['channel'],
+                    'channel_id': entry['channel_id'],
+                    'video_id': entry['id'],
+                    'channel_url': f"https://www.youtube.com/channel/{entry['channel_id']}/videos",
+                    'video_url': f"https://youtu.be/{entry['id']}"
+                }
+                playlist_data.append(vid_obj)
 
-        for vid in data:
-            vid = vid.split(',')
-            vid_obj = {
-                'channel_name': vid[0],
-                'channel_id': vid[1],
-                'video_id': vid[2],
-                'channel_url': f"https://www.youtube.com/channel/{vid[1]}/videos",
-                'video_url': f"https://youtu.be/{vid[2]}"
-            }
-            playlist_data.append(vid_obj)
-
-    return playlist_data 
+    return playlist_data
 
 
-def download_vtts(number_of_jobs, video_ids, language ,tmp_dir):
+def download_vtts(number_of_jobs, video_ids, language, tmp_dir):
     """
     Multi-threaded download of vtt files
     """
-
-    # showing progress on a multi-threaded task might be more trouble than it's worth
-    # console = Console()
-
     executor = ThreadPoolExecutor(number_of_jobs)
     futures = []
 
@@ -168,17 +154,26 @@ def download_vtts(number_of_jobs, video_ids, language ,tmp_dir):
         futures[i].result()
 
 
+def quiet_progress_hook(d):
+    if d['status'] == 'finished':
+        filename = Path(d['filename']).name
+        print(f" -> {filename}")
+
+
 def get_vtt(tmp_dir, video_url, language):
-    subprocess.run([
-        "yt-dlp",
-        "-o", f"{tmp_dir}/%(id)s",
-        "--write-info-json",
-        "--write-auto-sub",
-        "--convert-subs", "vtt",
-        "--skip-download",
-        "--sub-langs", f"{language},-live_chat",
-        video_url
-    ])
+    ydl_opts = {
+        'outtmpl': f'{tmp_dir}/%(id)s',
+        'writeinfojson': True,
+        'writeautomaticsub': True,
+        'subtitlesformat': 'vtt',
+        'skip_download': True,
+        'subtitleslangs': [language, '-live_chat'],
+        'quiet': True,
+        'progress_hooks': [quiet_progress_hook]
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([video_url])
 
 
 def vtt_to_db(dir_path):
@@ -187,20 +182,10 @@ def vtt_to_db(dir_path):
     the vtt parsing function, then inserts the data into the database.
     """
     items = os.listdir(dir_path)
-    file_paths = []
-
-    for item in items:
-        # ignore other files e.g. info.json files
-        if not item.endswith('.vtt'):
-            continue
-
-        item_path = os.path.join(dir_path, item)
-        if os.path.isfile(item_path):
-            file_paths.append(item_path)    
+    file_paths = [os.path.join(dir_path, item) for item in items if item.endswith('.vtt')]
 
     con = sqlite3.connect(get_db_path())  
     cur = con.cursor()
-
 
     for vtt in track(file_paths, description="Adding subtitles to database..."):
         base_name = os.path.basename(vtt)
@@ -213,7 +198,7 @@ def vtt_to_db(dir_path):
         with open(vid_json_path, 'r', encoding='utf-8', errors='ignore') as f:
             vid_json = json.load(f)
 
-        vid_title =  vid_json['title']
+        vid_title = vid_json['title']
         vid_date = get_date(vid_json['upload_date'])
         channel_id = vid_json['channel_id']
 
