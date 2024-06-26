@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yt-fts"
-version = "0.1.48"
+version = "0.1.49"
 description = "Search all of a YouTube channel from the command line"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -21,8 +21,8 @@ classifiers = [
 
 dependencies = [
     "click==8.1.7",
-    "openai==1.16.2",
-    "chromadb==0.4.24",
+    "openai==1.35.3",
+    "chromadb==0.5.2",
     "requests==2.31.0",
     "rich==13.7.1",
     "sqlite-utils==3.36",

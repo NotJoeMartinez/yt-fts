@@ -1,6 +1,6 @@
 click==8.1.7
-openai==1.16.2
-chromadb==0.4.24
+openai==1.35.3
+chromadb==0.5.2
 requests==2.31.0
 rich==13.7.1
 sqlite-utils==3.36
