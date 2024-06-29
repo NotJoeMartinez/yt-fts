@@ -21,6 +21,9 @@ def time_to_secs(time_str):
     """
     converts timestamp to seconds youtube urls. Subtracts 3 seconds to give a buffer. 
     """
+    # TODO: Figure out why we get syntax warning on first run
+    #  SyntaxWarning: invalid escape sequence '\d'
+    #  time_rex = re.search("^(\d\d):(\d\d):(\d\d)",time_str)
     time_rex = re.search("^(\d\d):(\d\d):(\d\d)",time_str)
     hours = int(time_rex.group(1)) * 3600 
     mins = int(time_rex.group(2)) * 60

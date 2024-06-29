@@ -2,7 +2,8 @@ import click
 import sys
 import requests
 
-from .config import get_config_path, get_db_path, get_or_make_chroma_path 
+from .config import get_config_path, get_db_path, get_or_make_chroma_path
+# TODO: don't use import *
 from .db_utils import *
 from .download import *
 from .list import list_channels
@@ -350,6 +351,7 @@ def get_embeddings(channel, openai_api_key):
     """
 )
 def config():
+    # TODO: remove this duplicate call
     config_path = get_config_path()
     db_path = get_db_path()
     chroma_path = get_or_make_chroma_path()

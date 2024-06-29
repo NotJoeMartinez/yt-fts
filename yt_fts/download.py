@@ -23,6 +23,7 @@ def get_channel_id(url, s): # yt_fts
     """
     Scrapes channel id from the channel page
     """
+    # TODO: wrap in try except
     res = s.get(url)
     if res.status_code == 200:
         html = res.text
@@ -294,30 +295,3 @@ def download_playlist(playlist_url, s, language=None, number_of_jobs=None): # yt
         console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] vtt files[/bold][/green]\n")
         download_vtts(number_of_jobs, video_ids, language, tmp_dir)
         vtt_to_db(tmp_dir)
-            
-
-def get_channel_id_from_input(channel_input): # yt_fts, export, search, vector_search ... broken 
-    """
-    Checks if the input is a rowid or a channel name and returns channel id
-    """
-
-    from yt_fts.db_utils import (
-        get_channel_id_from_rowid, 
-        get_channel_id_from_name
-    )
-
-    from yt_fts.utils import show_message
-
-    name_res = get_channel_id_from_name(channel_input) 
-    id_res = get_channel_id_from_rowid(channel_input) 
-
-
-    
-    if id_res != None:
-        return id_res
-    elif name_res != None: 
-        return name_res
-    else:
-        show_message("channel_not_found")
-        exit()
-    
