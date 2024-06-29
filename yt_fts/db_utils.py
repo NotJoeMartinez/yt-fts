@@ -135,6 +135,9 @@ def search_all(text, limit=None):
     
     db = Database(get_db_path())
 
+    # TODO: handle quotes
+    # this thing breaks if the user puts quotes in their
+    # search query
     return list(db["Subtitles"].search(text, limit=limit))
 
 
@@ -315,4 +318,23 @@ def get_subs_by_video_id(video_id):
 
     return db.execute(f"SELECT start_time, stop_time, text FROM Subtitles WHERE video_id = ?", 
                       [video_id]).fetchall()
+
+
+def get_channel_id_from_input(channel_input): # yt_fts, export, search, vector_search ... broken 
+    """
+    Checks if the input is a rowid or a channel name and returns channel id
+    """
+
+    name_res = get_channel_id_from_name(channel_input) 
+    id_res = get_channel_id_from_rowid(channel_input) 
+
+
     
+    if id_res != None:
+        return id_res
+    elif name_res != None: 
+        return name_res
+    else:
+        show_message("channel_not_found")
+        exit()
+ 

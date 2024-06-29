@@ -6,8 +6,11 @@ from sqlite_utils import Database
 from .utils import time_to_secs, bold_query_matches 
 from .embeddings import get_embedding
 from .config import get_chroma_client 
-from .db_utils import get_channel_name_from_video_id, get_title_from_db
-from .download import get_channel_id_from_input 
+from .db_utils import (
+    get_channel_name_from_video_id,
+    get_title_from_db,
+    get_channel_id_from_input
+)
 
 def search_chroma_db(
         text, 

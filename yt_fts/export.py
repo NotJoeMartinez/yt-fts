@@ -5,6 +5,7 @@ from rich.console import Console
 from .db_utils import (
     search_channel, search_video, search_all, 
     get_channel_name_from_video_id, get_metadata_from_db,
+    get_channel_id_from_input
     )
 
 from .utils import time_to_secs, show_message
@@ -23,11 +24,9 @@ def export_fts(text, scope, channel_id=None, video_id=None):
         file_name = f"video_{video_id}_{timestamp}.csv"
         res = search_video(video_id, text)
     if scope == "channel":
-        from .download import get_channel_id_from_input
         channel_id = get_channel_id_from_input(channel_id)
         file_name = f"channel_{channel_id}_{timestamp}.csv"
         res = search_channel(channel_id, text)
-
 
     if len(res) == 0:
         show_message("no_matches_found")
@@ -100,7 +99,6 @@ def export_transcripts(channel_id):
 
     console = Console()
 
-    from .download import get_channel_id_from_input
     channel_id = get_channel_id_from_input(channel_id)
 
     from .db_utils import get_vid_ids_by_channel_id, get_transcript_by_video_id 

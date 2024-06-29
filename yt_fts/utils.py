@@ -21,6 +21,9 @@ def time_to_secs(time_str):
     """
     converts timestamp to seconds youtube urls. Subtracts 3 seconds to give a buffer. 
     """
+    # TODO: Figure out why we get syntax warning on first run
+    #  SyntaxWarning: invalid escape sequence '\d'
+    #  time_rex = re.search("^(\d\d):(\d\d):(\d\d)",time_str)
     time_rex = re.search("^(\d\d):(\d\d):(\d\d)",time_str)
     hours = int(time_rex.group(1)) * 3600 
     mins = int(time_rex.group(2)) * 60
@@ -193,3 +196,23 @@ def bold_query_matches(text, query):
             result_words.append(word)
 
     return ' '.join(result_words)
+
+
+def handle_reject_consent_cookie(channel_url, s):
+    """
+    Auto rejects the consent cookie if request is redirected to the consent page
+    """
+    r = s.get(channel_url)
+    if "https://consent.youtube.com" in r.url:
+        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
+        if m:
+            data = {
+                "gl":"DE",
+                "pc":"yt",
+                "continue":channel_url,
+                "x":"6",
+                "bl":m.group(1),
+                "hl":"de",
+                "set_eom":"true"
+            }
+            s.post("https://consent.youtube.com/save", data=data)

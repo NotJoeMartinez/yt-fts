@@ -19,30 +19,11 @@ from rich.progress import track
 from rich.console import Console
 console = Console()
 
-def handle_reject_consent_cookie(channel_url, s):
-    """
-    Auto rejects the consent cookie if request is redirected to the consent page
-    """
-    r = s.get(channel_url)
-    if "https://consent.youtube.com" in r.url:
-        m = re.search(r"<input type=\"hidden\" name=\"bl\" value=\"([^\"]*)\"", r.text)
-        if m:
-            data = {
-                "gl":"DE",
-                "pc":"yt",
-                "continue":channel_url,
-                "x":"6",
-                "bl":m.group(1),
-                "hl":"de",
-                "set_eom":"true"
-            }
-            s.post("https://consent.youtube.com/save", data=data)
-
-
-def get_channel_id(url, s):
+def get_channel_id(url, s): # yt_fts 
     """
     Scrapes channel id from the channel page
     """
+    # TODO: wrap in try except
     res = s.get(url)
     if res.status_code == 200:
         html = res.text
@@ -52,7 +33,7 @@ def get_channel_id(url, s):
         return None
 
 
-def get_channel_name(channel_id, s):
+def get_channel_name(channel_id, s): # yt_fts, update
     """
     Scrapes channel name from the channel page
     """
@@ -81,7 +62,7 @@ def get_channel_name(channel_id, s):
         return None
 
 
-def get_videos_list(channel_url):
+def get_videos_list(channel_url): # download, update
     """
     Scrapes list of all video urls from the channel
     """
@@ -110,7 +91,7 @@ def get_videos_list(channel_url):
     return list_of_videos_urls
 
 
-def get_playlist_data(playlist_url):
+def get_playlist_data(playlist_url): # download 
     """
     Returns a list of channel ids and video ids from a playlist
     """
@@ -138,7 +119,7 @@ def get_playlist_data(playlist_url):
     return playlist_data
 
 
-def download_vtts(number_of_jobs, video_ids, language, tmp_dir):
+def download_vtts(number_of_jobs, video_ids, language, tmp_dir): # download, update
     """
     Multi-threaded download of vtt files
     """
@@ -154,13 +135,13 @@ def download_vtts(number_of_jobs, video_ids, language, tmp_dir):
         futures[i].result()
 
 
-def quiet_progress_hook(d):
+def quiet_progress_hook(d): # download 
     if d['status'] == 'finished':
         filename = Path(d['filename']).name
         print(f" -> {filename}")
 
 
-def get_vtt(tmp_dir, video_url, language):
+def get_vtt(tmp_dir, video_url, language): # download 
     ydl_opts = {
         'outtmpl': f'{tmp_dir}/%(id)s',
         'writeinfojson': True,
@@ -176,7 +157,7 @@ def get_vtt(tmp_dir, video_url, language):
         ydl.download([video_url])
 
 
-def vtt_to_db(dir_path):
+def vtt_to_db(dir_path): # download, update
     """
     Iterates through all vtt files in the temp_dir, passes them to 
     the vtt parsing function, then inserts the data into the database.
@@ -218,7 +199,7 @@ def vtt_to_db(dir_path):
     con.close()
 
 
-def validate_channel_url(channel_url):
+def validate_channel_url(channel_url): # yt_fts
     """
     valid patterns
     https://www.youtube.com/channel/channelID
@@ -264,7 +245,7 @@ def validate_channel_url(channel_url):
     exit()
 
 
-def download_channel(channel_id, channel_name, language, number_of_jobs, s):
+def download_channel(channel_id, channel_name, language, number_of_jobs, s): # yt_fts
     """
     Downloads all the videos from a channel to a tmp directory
     """
@@ -287,7 +268,7 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):
     return True
 
 
-def download_playlist(playlist_url, s, language=None, number_of_jobs=None):
+def download_playlist(playlist_url, s, language=None, number_of_jobs=None): # yt-fts
     """
         Downloads all subtitles from playlist, making new channels where needed
     """
@@ -314,30 +295,3 @@ def download_playlist(playlist_url, s, language=None, number_of_jobs=None):
         console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] vtt files[/bold][/green]\n")
         download_vtts(number_of_jobs, video_ids, language, tmp_dir)
         vtt_to_db(tmp_dir)
-            
-
-def get_channel_id_from_input(channel_input):
-    """
-    Checks if the input is a rowid or a channel name and returns channel id
-    """
-
-    from yt_fts.db_utils import (
-        get_channel_id_from_rowid, 
-        get_channel_id_from_name
-    )
-
-    from yt_fts.utils import show_message
-
-    name_res = get_channel_id_from_name(channel_input) 
-    id_res = get_channel_id_from_rowid(channel_input) 
-
-
-    
-    if id_res != None:
-        return id_res
-    elif name_res != None: 
-        return name_res
-    else:
-        show_message("channel_not_found")
-        exit()
-    
