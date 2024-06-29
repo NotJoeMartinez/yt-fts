@@ -11,7 +11,7 @@ from .update import update_channel
 from .utils import *
 from rich.console import Console
 
-YT_FTS_VERSION = "0.1.49"
+YT_FTS_VERSION = "0.1.50"
 console = Console()
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})

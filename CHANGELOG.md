@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.50] - 2024-06-28
+### Changed
+- Removed need for system installation of `yt-dlp`
+  - instead of subprocess we use yt-dlp package from pypi
+  - https://github.com/NotJoeMartinez/yt-fts/pull/147 
+
 ## [0.1.49] - 2024-06-25
 ### Fixed
 - Outdated chromadb dependency crashing cli 

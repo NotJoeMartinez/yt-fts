@@ -19,27 +19,6 @@ pip
 pip install yt-fts
 ```
 
-Homebrew
-
-```bash
-brew tap notjoemartinez/yt-fts
-brew install yt-fts
-```
-
-
-**yt-dlp dependency:**
-
-This project requires [yt-dlp](https://github.com/yt-dlp/yt-dlp) installed globally. Platform specific installation instructions are available on the [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Installation). 
-
-```bash
-# MacOS/Homebrew
-brew install yt-dlp
-# Windows/winget
-winget install yt-dlp
-# pip
-python3 -m pip install -U yt-dlp
-```
-
 ## `download`
 Download subtitles for a channel. 
 
