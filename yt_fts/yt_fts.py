@@ -6,7 +6,6 @@ import requests
 from .config import get_config_path, get_db_path, get_or_make_chroma_path
 # TODO: don't use import *
 from .db_utils import *
-# from .download import *
 from .list import list_channels
 from .update import update_channel
 from .utils import *
