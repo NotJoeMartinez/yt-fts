@@ -23,13 +23,23 @@ def get_channel_id(url, s): # yt_fts
     """
     Scrapes channel id from the channel page
     """
-    # TODO: wrap in try except
-    res = s.get(url)
-    if res.status_code == 200:
-        html = res.text
-        channel_id = re.search('channelId":"(.{24})"', html).group(1)
-        return channel_id
-    else:
+    try:
+        res = s.get(url)
+        if res.status_code == 200:
+            html = res.text
+            soup = BeautifulSoup(html, 'html.parser')
+            meta_tag = soup.find('meta', property='og:url')
+            if meta_tag:
+                content_url = meta_tag['content']
+            else:
+                console.print('Error: Could not find channel url')
+                return None
+
+            channel_id = content_url.split('/')[-1]
+            return channel_id
+
+    except Exception as e:
+        console.print(f'Error: {e}')
         return None
 
 
