@@ -18,8 +18,6 @@ console = Console()
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
 def cli():
-    # config_path = get_config_path()
-    # db_path = get_db_path()
     pass
 
 
@@ -49,7 +47,7 @@ def download(url, playlist, language, number_of_jobs):
         sys.exit(0)
 
     # find out if the channel exists on the internet 
-    with console.status("[bold green]Getting Channel ID...") as status:
+    with console.status("[bold green]Getting Channel ID..."):
         url = validate_channel_url(url)
         channel_id = get_channel_id(url, s)
 
@@ -353,11 +351,11 @@ def get_embeddings(channel, openai_api_key):
 )
 def config():
     # TODO: remove this duplicate call
-    config_path = get_config_path()
     db_path = get_db_path()
     chroma_path = get_or_make_chroma_path()
+    config_path = get_config_path()
 
-    console.print(f"\nConfig directory: {config_path}\n")
-    console.print(f"Database path: {db_path}\n")
-    console.print(f"Chroma path: {chroma_path}\n")
+    console.print(f"Config directory: {config_path}")
+    console.print(f"Database path: {db_path}")
+    console.print(f"Chroma path: {chroma_path}")
     sys.exit(0)
