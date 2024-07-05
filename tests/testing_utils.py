@@ -33,15 +33,15 @@ def fetch_and_unzip_test_db():
 
         shutil.copytree(source_dir, dest_dir, symlinks=True, ignore=None)
 
-    print(f"The 'yt-fts' directory has been copied to {dest_dir}")
-    print("Contents of the copied directory:")
-    for root, dirs, files in os.walk(dest_dir):
-        level = root.replace(dest_dir, '').count(os.sep)
-        indent = ' ' * 4 * level
-        print(f"{indent}{os.path.basename(root)}/")
-        sub_indent = ' ' * 4 * (level + 1)
-        for f in files:
-            print(f"{sub_indent}{f}")
+    # print(f"The 'yt-fts' directory has been copied to {dest_dir}")
+    # print("Contents of the copied directory:")
+    # for root, dirs, files in os.walk(dest_dir):
+    #     level = root.replace(dest_dir, '').count(os.sep)
+    #     indent = ' ' * 4 * level
+    #     print(f"{indent}{os.path.basename(root)}/")
+    #     sub_indent = ' ' * 4 * (level + 1)
+    #     for f in files:
+    #         print(f"{sub_indent}{f}")
 
 
 

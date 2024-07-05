@@ -62,6 +62,32 @@ def test_export_search(runner, capsys):
 
 
 
+def test_export_vsearch(runner, capsys):
+    reset_testing_env()
+
+    runner.invoke(cli, [
+        'vsearch',
+        '-c',
+        '3',
+        'icmb gambit',
+        '-e'
+    ])
+
+    output_files = os.listdir()
+
+    exported_file = None
+    for file in output_files:
+        if file.startswith('channel_UCO2QPmnJFjdvJ6ch-pe27dQ'):
+            exported_file = file
+    assert exported_file is not None, 'vsearch exported file not found'
+
+    with open(exported_file, 'r') as f:
+        reader = csv.reader(f)
+        lines = list(reader)
+        assert len(lines) >= 11, 'vsearch exported file has less than 11 lines' 
+    
+    subprocess.run('rm *.csv', shell=True)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
