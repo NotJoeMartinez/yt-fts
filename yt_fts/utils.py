@@ -103,7 +103,7 @@ def get_date(date_string):
 
 
 # check if semantic search has been enabled for channel
-def check_ss_enabled(channel_id=None):
+def check_ss_enabled(channel_id=None) -> bool:
 
     from yt_fts.config import get_db_path
 
