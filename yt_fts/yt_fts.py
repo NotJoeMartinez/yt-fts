@@ -1,16 +1,24 @@
 import click
+import os
 import sys
 import requests
 
 from .config import get_config_path, get_db_path, get_or_make_chroma_path
 # TODO: don't use import *
 from .db_utils import *
-from .download import *
+# from .download import *
 from .list import list_channels
 from .update import update_channel
 from .utils import *
 from rich.console import Console
 
+from .download import (
+    get_channel_id,
+    get_channel_name,
+    validate_channel_url,
+    download_channel,
+    download_playlist
+)
 YT_FTS_VERSION = "0.1.51"
 console = Console()
 
