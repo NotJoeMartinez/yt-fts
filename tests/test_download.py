@@ -7,7 +7,6 @@ from yt_fts.yt_fts import download, cli
 
 CONFIG_DIR = os.path.expanduser('~/.config/yt-fts')
 
-
 @pytest.fixture
 def runner():
     return CliRunner()
