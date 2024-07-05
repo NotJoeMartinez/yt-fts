@@ -1,7 +1,10 @@
-import tempfile, os
+import tempfile
+import os
+import sys
 
 from .download import get_videos_list, download_vtts, vtt_to_db
 from .db_utils import add_channel_info, get_num_vids, get_vid_ids_by_channel_id
+
 
 def update_channel(channel_id, channel_name, language, number_of_jobs, s):
     """
@@ -17,7 +20,7 @@ def update_channel(channel_id, channel_name, language, number_of_jobs, s):
 
         if num_public_vids == num_local_vids:
             print("No new videos to download")
-            exit()
+            sys.exit(0)
 
         local_vid_ids = get_vid_ids_by_channel_id(channel_id)
         local_vid_ids = [i[0] for i in local_vid_ids]
@@ -34,7 +37,7 @@ def update_channel(channel_id, channel_name, language, number_of_jobs, s):
         if len(vtt_to_parse) == 0:
             print("No new videos saved")
             print(f"{len(fresh_videos)} videos on \"{channel_name}\" do not have subtitles")
-            exit()
+            sys.exit(0)
 
         vtt_to_db(tmp_dir)
 

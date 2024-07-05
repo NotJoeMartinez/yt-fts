@@ -1,3 +1,4 @@
+import sys
 from pprint import pprint
 from .db_utils import *
 from .utils import *
@@ -31,7 +32,7 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
             console.print(f"    - EX: \"[bold]{example_or}[/bold]\"")
         else: 
             console.print(f"    - EX: \"[bold]foo OR [bold]bar[/bold]\"")
-        exit()
+        sys.exit(1)
 
     return res
 

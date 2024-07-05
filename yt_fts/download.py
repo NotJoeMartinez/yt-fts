@@ -1,5 +1,6 @@
 import yt_dlp
 import tempfile
+import sys
 import re
 import os
 import sqlite3
@@ -230,13 +231,13 @@ def validate_channel_url(channel_url): # yt_fts
         console.print("")
         console.print(f"[bold red]Error:[/bold red] Invalid channel domain: [blue]{domain}[/blue]")
         console.print("")
-        exit()
+        sys.exit(1)
     
     if len(path) < 2:
         console.print("")
         console.print(f"[bold red]Error:[/bold red] Invalid channel url: [blue]{channel_url}[/blue]")
         console.print("")
-        exit()
+        sys.exit(1)
 
     if path[1].startswith("@"):
         return f"https://www.youtube.com/{path[1]}/videos"
@@ -252,7 +253,8 @@ def validate_channel_url(channel_url): # yt_fts
     console.print("    - https://www.youtube.com/[yellow]@channelname[/yellow]")
     console.print("    - https://www.youtube.com/channel/[yellow]channelId[/yellow]")
     console.print("")
-    exit()
+    # TODO: Make this function return something and handle error there
+    sys.exit(1)
 
 
 def download_channel(channel_id, channel_name, language, number_of_jobs, s): # yt_fts
@@ -297,9 +299,7 @@ def download_playlist(playlist_url, s, language=None, number_of_jobs=None): # yt
         if not check_if_channel_exists(channel_id):
             add_channel_info(channel_id, channel_name, channel_url)
         
-
     video_ids = list(set(video["video_id"] for video in playlist_data))
-
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] vtt files[/bold][/green]\n")

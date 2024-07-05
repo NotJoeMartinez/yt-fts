@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 
 from sqlite_utils import Database
 from rich.console import Console
@@ -336,5 +337,5 @@ def get_channel_id_from_input(channel_input): # yt_fts, export, search, vector_s
         return name_res
     else:
         show_message("channel_not_found")
-        exit()
+        sys.exit(1)
  
