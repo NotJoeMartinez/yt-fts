@@ -36,6 +36,7 @@ def test_export_search(runner, capsys):
         '-e'
     ])
 
+    assert result.exit_code == 0
     
     # list of files in the current directory
     output_files = os.listdir()
@@ -62,13 +63,15 @@ def test_export_search(runner, capsys):
 def test_export_vsearch(runner, capsys):
     reset_testing_env()
 
-    runner.invoke(cli, [
+    result = runner.invoke(cli, [
         'vsearch',
         '-c',
         '3',
         'icmb gambit',
         '-e'
     ])
+
+    assert result.exit_code == 0
 
     output_files = os.listdir()
 
@@ -89,11 +92,13 @@ def test_export_vsearch(runner, capsys):
 def test_export_search_all(runner, capsys):
     reset_testing_env()
 
-    runner.invoke(cli, [
+    result = runner.invoke(cli, [
         'search',
         'guilt',
         '-e',
     ])
+
+    assert result.exit_code == 0
 
     output_files = os.listdir()
 
