@@ -15,11 +15,11 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
 
     if scope == "all":
         res = search_all(text, limit)
-    
+
     if scope == "channel":
         channel_id = get_channel_id_from_input(channel_id)
         res = search_channel(channel_id, text, limit)
-    
+
     if scope == "video":
         res = search_video(video_id, text, limit)
 
@@ -30,7 +30,7 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
         if len(text.split(" ")) > 1:
             example_or = text.replace(" ", " OR ")
             console.print(f"    - EX: \"[bold]{example_or}[/bold]\"")
-        else: 
+        else:
             console.print(f"    - EX: \"[bold]foo OR [bold]bar[/bold]\"")
         sys.exit(1)
 
@@ -39,7 +39,6 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
 
 # pretty print search results
 def print_fts_res(res, query):
-
     console = Console()
 
     fts_res = []
@@ -59,10 +58,9 @@ def print_fts_res(res, query):
         quote_match["subs"] = bold_query_matches(quote["text"].strip(), query)
         quote_match["time_stamp"] = time_stamp
         quote_match["video_id"] = video_id
-        quote_match["link"] = link 
+        quote_match["link"] = link
 
         fts_res.append(quote_match)
-
 
     """
     need to resturcutre the data to be able to print it in a nice way
@@ -107,7 +105,6 @@ def print_fts_res(res, query):
         if (video_name, video_date) not in fts_dict[channel_name]:
             fts_dict[channel_name][(video_name, video_date)] = []
         fts_dict[channel_name][(video_name, video_date)].append(quote_data)
-    
 
     # Sort the list by the total number of quotes in each channel
     channel_list = list(fts_dict.items())
@@ -132,11 +129,13 @@ def print_fts_res(res, query):
                 link = quote["link"]
                 time_stamp = quote["time_stamp"]
                 words = quote["quote"]
-                console.print(f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> [italic][white]\"{words}\"[/white][/italic]")
+                console.print(
+                    f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> [italic][white]\"{words}\"[/white]["
+                    f"/italic]")
             console.print("")
 
     num_matches = len(res)
-    num_channels = len(set(channel_names))  
+    num_channels = len(set(channel_names))
     num_videos = len(set([quote["video_id"] for quote in res]))
 
     summary_str = f"Found [bold]{num_matches}[/bold] matches in [bold]{num_videos}[/bold] videos from [bold]{num_channels}[/bold] channel"
@@ -144,4 +143,4 @@ def print_fts_res(res, query):
     if num_channels > 1:
         summary_str += "s"
 
-    console.print(summary_str) 
+    console.print(summary_str)

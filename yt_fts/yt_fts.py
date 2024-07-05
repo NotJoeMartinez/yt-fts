@@ -350,7 +350,6 @@ def get_embeddings(channel, openai_api_key):
     """
 )
 def config():
-    # TODO: remove this duplicate call
     db_path = get_db_path()
     chroma_path = get_or_make_chroma_path()
     config_path = get_config_path()

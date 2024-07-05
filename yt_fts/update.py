@@ -25,7 +25,6 @@ def update_channel(channel_id, channel_name, language, number_of_jobs, s):
         local_vid_ids = get_vid_ids_by_channel_id(channel_id)
         local_vid_ids = [i[0] for i in local_vid_ids]
 
-
         fresh_videos = [i for i in public_video_ids if i not in local_vid_ids]
 
         print(f"Found {len(fresh_videos)} videos on \"{channel_name}\" not in the database")

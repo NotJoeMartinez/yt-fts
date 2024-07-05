@@ -3,23 +3,23 @@ import chromadb
 from rich.console import Console
 from sqlite_utils import Database
 
-from .utils import time_to_secs, bold_query_matches 
+from .utils import time_to_secs, bold_query_matches
 from .embeddings import get_embedding
-from .config import get_chroma_client 
+from .config import get_chroma_client
 from .db_utils import (
     get_channel_name_from_video_id,
     get_title_from_db,
     get_channel_id_from_input
 )
 
+
 def search_chroma_db(
-        text, 
-        scope, 
-        channel_id=None, 
-        video_id=None, 
+        text,
+        scope,
+        channel_id=None,
+        video_id=None,
         limit=10,
         openai_client=None):
-
     chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
@@ -38,12 +38,11 @@ def search_chroma_db(
         query_embeddings=[search_embedding],
         n_results=limit,
         where=scope_options,
-        )
-
+    )
 
     documents = chroma_res["documents"][0]
     metadata = chroma_res["metadatas"][0]
-    distances = chroma_res["distances"][0]  
+    distances = chroma_res["distances"][0]
 
     res = []
 
@@ -56,11 +55,10 @@ def search_chroma_db(
         channel_id = metadata[i]["channel_id"]
         title = get_title_from_db(video_id)
 
-
         match = {
             "distance": distances[i],
             "channel_name": channel_name,
-            "channel_id": channel_id, 
+            "channel_id": channel_id,
             "video_title": title,
             "subs": text,
             "start_time": start_time,
@@ -84,24 +82,22 @@ def print_vector_search_results(res, query):
     """
     console = Console()
 
-    
     channel_names = []
 
     for match in reversed(res):
         distance = match["distance"]
         link = match["link"]
         text = bold_query_matches(match["subs"], query)
-        time_stamp = match["start_time"]    
+        time_stamp = match["start_time"]
         channel_id = match["channel_id"]
         video_id = match["video_id"]
         title = match["video_title"]
         channel_name = match["channel_name"]
         channel_names.append(channel_name)
 
-
         console.print(f"[magenta][italic]\"[link={link}]{text}[/link]\"[/italic][/magenta]\n")
-        console.print(f"    Distance: {distance}",style="none")
-        console.print(f"    Channel: {channel_name} - ({channel_id})",style="none")
+        console.print(f"    Distance: {distance}", style="none")
+        console.print(f"    Channel: {channel_name} - ({channel_id})", style="none")
         console.print(f"    Title: {title}")
         console.print(f"    Time Stamp: {time_stamp}")
         console.print(f"    Video ID: {video_id}")
@@ -109,7 +105,7 @@ def print_vector_search_results(res, query):
         console.print("")
 
     num_matches = len(res)
-    num_channels = len(set(channel_names))  
+    num_channels = len(set(channel_names))
     num_videos = len(set([quote["video_id"] for quote in res]))
 
     summary_str = f"Found [bold]{num_matches}[/bold] matches in [bold]{num_videos}[/bold] videos from [bold]{num_channels}[/bold] channel"
@@ -117,16 +113,14 @@ def print_vector_search_results(res, query):
     if num_channels > 1:
         summary_str += "s"
 
-    console.print(summary_str) 
-
+    console.print(summary_str)
 
 
 def delete_channel_from_chroma(channel_id):
-
     chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
     print(f"deleting channel {channel_id} from chroma")
     collection.delete(
         where={"channel_id": channel_id}
-        )
+    )
