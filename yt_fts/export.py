@@ -1,14 +1,17 @@
-import csv, datetime, os
+import csv
+import datetime
+import os
 
 from rich.console import Console
 
 from .db_utils import (
-    search_channel, search_video, search_all, 
+    search_channel, search_video, search_all,
     get_channel_name_from_video_id, get_metadata_from_db,
     get_channel_id_from_input
-    )
+)
 
 from .utils import time_to_secs, show_message
+
 
 def export_fts(text, scope, channel_id=None, video_id=None):
     """
@@ -34,15 +37,15 @@ def export_fts(text, scope, channel_id=None, video_id=None):
 
     with open(file_name, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Channel Name','Video Title', 'Date', 'Quote', 'Time Stamp', 'Link'])
-        
+        writer.writerow(['Channel Name', 'Video Title', 'Date', 'Quote', 'Time Stamp', 'Link'])
+
         for quote in res:
             video_id = quote["video_id"]
             channel_name = get_channel_name_from_video_id(video_id)
             metadata = get_metadata_from_db(video_id)
             time_stamp = quote["start_time"]
             subs = quote["text"]
-            time = time_to_secs(time_stamp) 
+            time = time_to_secs(time_stamp)
 
             writer.writerow([
                 channel_name,
@@ -52,7 +55,7 @@ def export_fts(text, scope, channel_id=None, video_id=None):
                 time_stamp,
                 f"https://youtu.be/{video_id}?t={time}"
             ])
-    
+
     console = Console()
 
     console.print(f"[bold]{len(res)}[/bold] matches found for text: \"[italic]{text}[/italic]\"")
@@ -60,7 +63,6 @@ def export_fts(text, scope, channel_id=None, video_id=None):
 
 
 def export_vector_search(res, search, scope):
-
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # run semantic search based on scope
@@ -74,22 +76,21 @@ def export_vector_search(res, search, scope):
 
     with open(file_name, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Channel Name','Video Title', 'Quote', 'Time Stamp', 'Link'])
-        
+        writer.writerow(['Channel Name', 'Video Title', 'Quote', 'Time Stamp', 'Link'])
+
         for quote in res:
-            channel_name = quote["channel_name"] 
-            video_title = quote["video_title"] 
+            channel_name = quote["channel_name"]
+            video_title = quote["video_title"]
             time_stamp = quote["start_time"]
             subs = quote["subs"]
             link = quote["link"]
 
-            writer.writerow([channel_name,video_title, subs.strip(), time_stamp, link])
-    
+            writer.writerow([channel_name, video_title, subs.strip(), time_stamp, link])
+
     console = Console()
 
     console.print(f"[bold]{len(res)}[/bold] matches found for text: \"[italic]{search}[/italic]\"")
     console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")
-
 
 
 def export_transcripts(channel_id):
@@ -97,11 +98,9 @@ def export_transcripts(channel_id):
     Exports video transcripts from a channel to a text file 
     """
 
-    console = Console()
-
     channel_id = get_channel_id_from_input(channel_id)
 
-    from .db_utils import get_vid_ids_by_channel_id, get_transcript_by_video_id 
+    from .db_utils import get_vid_ids_by_channel_id, get_transcript_by_video_id
     videos = get_vid_ids_by_channel_id(channel_id)
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -119,13 +118,13 @@ def export_transcripts(channel_id):
 
 
 def export_channel_to_txt(channel_id):
-    from .db_utils import  get_vid_ids_by_channel_id, get_subs_by_video_id
+    from .db_utils import get_vid_ids_by_channel_id, get_subs_by_video_id
     console = Console()
 
     output_dir = f"{channel_id}_txt"
 
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir) 
+        os.mkdir(output_dir)
     else:
         console.print(f"[red]Erorr:[/red] Directory [yellow]{output_dir}[/yellow] already exists")
         return None
@@ -146,7 +145,7 @@ def export_channel_to_txt(channel_id):
 
 def export_channel_to_vtt(channel_id):
     console = Console()
-    from .db_utils import  get_vid_ids_by_channel_id, get_subs_by_video_id
+    from .db_utils import get_vid_ids_by_channel_id, get_subs_by_video_id
 
     output_dir = f"{channel_id}_vtt"
     if not os.path.exists(output_dir):
@@ -154,8 +153,6 @@ def export_channel_to_vtt(channel_id):
     else:
         console.print(f"[red]Erorr:[/red] Directory [yellow]{output_dir}[/yellow] already exists")
         return None
-
-
 
     vid_ids = get_vid_ids_by_channel_id(channel_id)
 

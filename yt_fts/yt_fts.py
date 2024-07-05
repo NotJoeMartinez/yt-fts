@@ -18,8 +18,7 @@ console = Console()
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
 def cli():
-    config_path = get_config_path()
-    db_path = get_db_path()
+    pass
 
 
 # download
@@ -27,7 +26,8 @@ def cli():
     help="""
     Download subtitles from a specified YouTube channel.
 
-    You must provide the URL of the channel as an argument. The script will automatically extract the channel id from the URL.
+    You must provide the URL of the channel as an argument. 
+    The script will automatically extract the channel id from the URL.
     """
 )
 @click.argument("url", required=True)
@@ -38,7 +38,7 @@ def download(url, playlist, language, number_of_jobs):
     s = requests.session()
     handle_reject_consent_cookie(url, s)
 
-    if playlist == True:
+    if playlist:
         if "playlist?" not in url:
             console.print(f"\n[bold red]Error:[/bold red] Invalid playlist url {url}")
             print("\nYouTube playlists have this format: https://www.youtube.com/playlist?list=<playlist_id>\n")
@@ -47,11 +47,11 @@ def download(url, playlist, language, number_of_jobs):
         sys.exit(0)
 
     # find out if the channel exists on the internet 
-    with console.status("[bold green]Getting Channel ID...") as status:
+    with console.status("[bold green]Getting Channel ID..."):
         url = validate_channel_url(url)
         channel_id = get_channel_id(url, s)
 
-    if channel_id == None:
+    if channel_id is None:
         console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
         sys.exit(1)
 
@@ -169,8 +169,8 @@ def delete(channel):
               help="The name or id of the channel to export transcripts for")
 @click.option("-f", "--format", default="txt", help="The format to export transcripts to. Supported formats: txt, vtt")
 def export(channel, format):
+    output_dir = None
     from .export import export_channel_to_txt, export_channel_to_vtt
-    console = Console()
 
     channel_id = get_channel_id_from_input(channel)
 
@@ -180,7 +180,7 @@ def export(channel, format):
     if format == "vtt":
         output_dir = export_channel_to_vtt(channel_id)
 
-    if output_dir != None:
+    if output_dir is not None:
         console.print(f"Exported to [green][bold]{output_dir}[/bold][/green]")
         sys.exit(0)
 
@@ -199,8 +199,6 @@ def export(channel, format):
 def search(text, channel, video, export, limit):
     from yt_fts.search import fts_search, print_fts_res
     from yt_fts.export import export_fts
-
-    console = Console()
 
     if len(text) > 40:
         show_message("search_too_long")
@@ -227,7 +225,8 @@ def search(text, channel, video, export, limit):
 # vsearch
 @cli.command(
     help="""
-            Vector search. Requires embeddings to be generated for the channel and environment variable OPENAI_API_KEY to be set.
+            Vector search. Requires embeddings to be generated for the channel
+            and environment variable OPENAI_API_KEY to be set.
         """
 )
 @click.argument("text", required=True)
@@ -236,13 +235,12 @@ def search(text, channel, video, export, limit):
 @click.option("-l", "--limit", default=10, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 @click.option("--openai-api-key", default=None,
-              help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+              help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
+                   "environment variable.")
 def vsearch(text, channel, video, limit, export, openai_api_key):
     from openai import OpenAI
     from yt_fts.vector_search import search_chroma_db, print_vector_search_results
     from yt_fts.export import export_vector_search
-
-    console = Console()
 
     if len(text) > 80:
         show_message("search_too_long")
@@ -296,19 +294,18 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
 )
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to generate embeddings for")
 @click.option("--openai-api-key", default=None,
-              help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY environment variable.")
+              help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
+                   "environment variable.")
 def get_embeddings(channel, openai_api_key):
     from yt_fts.db_utils import get_vid_ids_by_channel_id
     from yt_fts.embeddings import add_embeddings_to_chroma
     from yt_fts.utils import split_subtitles, check_ss_enabled, enable_ss
     from openai import OpenAI
 
-    console = Console()
-
     channel_id = get_channel_id_from_input(channel)
 
     # verify that embeddings have not already been created for the channel
-    if check_ss_enabled(channel_id) == True:
+    if check_ss_enabled(channel_id):
         console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
         sys.exit(1)
 
@@ -353,16 +350,11 @@ def get_embeddings(channel, openai_api_key):
     """
 )
 def config():
-    # TODO: remove this duplicate call
-    config_path = get_config_path()
     db_path = get_db_path()
     chroma_path = get_or_make_chroma_path()
-
-    console = Console()
-
     config_path = get_config_path()
 
-    console.print(f"\nConfig directory: {config_path}\n")
-    console.print(f"Database path: {db_path}\n")
-    console.print(f"Chroma path: {chroma_path}\n")
+    console.print(f"Config directory: {config_path}")
+    console.print(f"Database path: {db_path}")
+    console.print(f"Chroma path: {chroma_path}")
     sys.exit(0)

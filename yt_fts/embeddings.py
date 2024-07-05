@@ -2,10 +2,10 @@ from openai import OpenAI
 from rich.progress import track
 from rich.console import Console
 
-from .config import get_chroma_client 
+from .config import get_chroma_client
+
 
 def add_embeddings_to_chroma(subs, openai_client):
-
     chroma_client = get_chroma_client()
     collection = chroma_client.get_or_create_collection(name="subEmbeddings")
 
@@ -34,10 +34,8 @@ def add_embeddings_to_chroma(subs, openai_client):
         )
 
 
-
 def get_embedding(text, model="text-embedding-ada-002", client=None):
-   if client is None:
-       client = OpenAI()
-   text = text.replace("\n", " ")
-   return client.embeddings.create(input = [text], model=model).data[0].embedding
-
+    if client is None:
+        client = OpenAI()
+    text = text.replace("\n", " ")
+    return client.embeddings.create(input=[text], model=model).data[0].embedding

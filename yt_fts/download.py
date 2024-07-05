@@ -14,13 +14,15 @@ from urllib.parse import urlparse
 from .config import get_db_path
 from .db_utils import add_video
 from .utils import parse_vtt, get_date
-from urllib.parse import urlparse 
+from urllib.parse import urlparse
 
 from rich.progress import track
 from rich.console import Console
+
 console = Console()
 
-def get_channel_id(url, s): # yt_fts 
+
+def get_channel_id(url, s):  # yt_fts
     """
     Scrapes channel id from the channel page
     """
@@ -44,11 +46,10 @@ def get_channel_id(url, s): # yt_fts
         return None
 
 
-def get_channel_name(channel_id, s): # yt_fts, update
+def get_channel_name(channel_id, s):  # yt_fts, update
     """
     Scrapes channel name from the channel page
     """
-    console = Console()
     res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
 
     if res.status_code == 200:
@@ -67,17 +68,16 @@ def get_channel_name(channel_id, s): # yt_fts, update
             data = json.loads(script)
 
         channel_name = data['itemListElement'][0]['item']['name']
-        return channel_name 
+        return channel_name
     else:
         print("we couldn't get the channel name")
         return None
 
 
-def get_videos_list(channel_url): # download, update
+def get_videos_list(channel_url):  # download, update
     """
     Scrapes list of all video urls from the channel
     """
-    console = Console()
 
     with console.status("[bold green]Scraping video urls, this might take a little...") as status:
         ydl_opts = {
@@ -102,11 +102,10 @@ def get_videos_list(channel_url): # download, update
     return list_of_videos_urls
 
 
-def get_playlist_data(playlist_url): # download 
+def get_playlist_data(playlist_url):  # download
     """
     Returns a list of channel ids and video ids from a playlist
     """
-    console = Console()
 
     with console.status("[bold green]Scraping video urls, this might take a little...") as status:
         ydl_opts = {
@@ -130,7 +129,7 @@ def get_playlist_data(playlist_url): # download
     return playlist_data
 
 
-def download_vtts(number_of_jobs, video_ids, language, tmp_dir): # download, update
+def download_vtts(number_of_jobs, video_ids, language, tmp_dir):  # download, update
     """
     Multi-threaded download of vtt files
     """
@@ -141,18 +140,18 @@ def download_vtts(number_of_jobs, video_ids, language, tmp_dir): # download, upd
         video_url = f'https://www.youtube.com/watch?v={video_id}'
         future = executor.submit(get_vtt, tmp_dir, video_url, language)
         futures.append(future)
-    
+
     for i in range(len(video_ids)):
         futures[i].result()
 
 
-def quiet_progress_hook(d): # download 
+def quiet_progress_hook(d):  # download
     if d['status'] == 'finished':
         filename = Path(d['filename']).name
         print(f" -> {filename}")
 
 
-def get_vtt(tmp_dir, video_url, language): # download 
+def get_vtt(tmp_dir, video_url, language):  # download
     ydl_opts = {
         'outtmpl': f'{tmp_dir}/%(id)s',
         'writeinfojson': True,
@@ -168,7 +167,7 @@ def get_vtt(tmp_dir, video_url, language): # download
         ydl.download([video_url])
 
 
-def vtt_to_db(dir_path): # download, update
+def vtt_to_db(dir_path):  # download, update
     """
     Iterates through all vtt files in the temp_dir, passes them to 
     the vtt parsing function, then inserts the data into the database.
@@ -176,12 +175,12 @@ def vtt_to_db(dir_path): # download, update
     items = os.listdir(dir_path)
     file_paths = [os.path.join(dir_path, item) for item in items if item.endswith('.vtt')]
 
-    con = sqlite3.connect(get_db_path())  
+    con = sqlite3.connect(get_db_path())
     cur = con.cursor()
 
     for vtt in track(file_paths, description="Adding subtitles to database..."):
         base_name = os.path.basename(vtt)
-        
+
         vid_id = base_name.split('.')[0]
         vid_url = f"https://youtu.be/{vid_id}"
 
@@ -202,7 +201,7 @@ def vtt_to_db(dir_path): # download, update
             start_time = sub['start_time']
             stop_time = sub['stop_time']
             text = sub['text']
-            cur.execute(f"INSERT INTO Subtitles (video_id, start_time, stop_time, text) VALUES (?, ?, ?, ?)", 
+            cur.execute(f"INSERT INTO Subtitles (video_id, start_time, stop_time, text) VALUES (?, ?, ?, ?)",
                         (vid_id, start_time, stop_time, text))
 
         con.commit()
@@ -210,7 +209,7 @@ def vtt_to_db(dir_path): # download, update
     con.close()
 
 
-def validate_channel_url(channel_url): # yt_fts
+def validate_channel_url(channel_url):  # yt_fts
     """
     valid patterns
     https://www.youtube.com/channel/channelID
@@ -220,7 +219,6 @@ def validate_channel_url(channel_url): # yt_fts
     https://www.youtube.com/channel/channelID/*
     """
     from rich.console import Console
-    console = Console()
 
     channel_url = channel_url.strip('/')
     parsed = urlparse(channel_url)
@@ -232,7 +230,7 @@ def validate_channel_url(channel_url): # yt_fts
         console.print(f"[bold red]Error:[/bold red] Invalid channel domain: [blue]{domain}[/blue]")
         console.print("")
         sys.exit(1)
-    
+
     if len(path) < 2:
         console.print("")
         console.print(f"[bold red]Error:[/bold red] Invalid channel url: [blue]{channel_url}[/blue]")
@@ -257,7 +255,7 @@ def validate_channel_url(channel_url): # yt_fts
     sys.exit(1)
 
 
-def download_channel(channel_id, channel_name, language, number_of_jobs, s): # yt_fts
+def download_channel(channel_id, channel_name, language, number_of_jobs, s):  # yt_fts
     """
     Downloads all the videos from a channel to a tmp directory
     """
@@ -265,14 +263,14 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s): # y
     import tempfile
     from yt_fts.db_utils import add_channel_info
 
-    console = Console() 
-
     with tempfile.TemporaryDirectory() as tmp_dir:
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         list_of_videos_urls = get_videos_list(channel_url)
 
         console.print(f"[green][bold]Downloading [red]{len(list_of_videos_urls)}[/red] vtt files[/bold][/green]\n")
-        console.print("[green]I would normally show a progress bar here, but multithreading and progress bars don't play nice.[/green]\n")
+        console.print(
+            "[green]I would normally show a progress bar here, but multithreading and progress bars don't play nice.["
+            "/green]\n")
 
         download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
@@ -280,7 +278,7 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s): # y
     return True
 
 
-def download_playlist(playlist_url, s, language=None, number_of_jobs=None): # yt-fts
+def download_playlist(playlist_url, s, language=None, number_of_jobs=None):  # yt-fts
     """
         Downloads all subtitles from playlist, making new channels where needed
     """
@@ -289,16 +287,14 @@ def download_playlist(playlist_url, s, language=None, number_of_jobs=None): # yt
 
     playlist_data = get_playlist_data(playlist_url)
 
-    console = Console()
-
-    # add missing stuff to db before multi threading? 
+    # add missing stuff to db before multi threading?
     for video in playlist_data:
-        channel_name = video["channel_name"] 
-        channel_id = video["channel_id"] 
-        channel_url = video["channel_url"] 
+        channel_name = video["channel_name"]
+        channel_id = video["channel_id"]
+        channel_url = video["channel_url"]
         if not check_if_channel_exists(channel_id):
             add_channel_info(channel_id, channel_name, channel_url)
-        
+
     video_ids = list(set(video["video_id"] for video in playlist_data))
 
     with tempfile.TemporaryDirectory() as tmp_dir:
