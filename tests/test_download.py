@@ -20,26 +20,80 @@ def reset_testing_env():
         else:
             print('running tests with existing db')
 
+def get_test_db():
+    conn = sqlite3.connect(f"{CONFIG_DIR}/subtitles.db")
+    curr = conn.cursor()
+    return curr
+
 
 def test_successful_download(runner, capsys):  # Add capsys as a parameter
     reset_testing_env()
-    runner.invoke(cli, ['download', '-j', '5', 'https://www.youtube.com/@JCS'])
-    conn = sqlite3.connect(f"{CONFIG_DIR}/subtitles.db")
-    curr = conn.cursor()
+    runner.invoke(cli, [
+        'download',
+        '-j',
+        '5',
+        'https://www.youtube.com/@JCS'
+    ])
+    curr = get_test_db()
 
-    query = '''
-        select count(*) from
-        Videos where channel_id = 'UCYwVxWpjeKFWwu8TML-Te9A';
-    '''
-    res = curr.execute(query)
-    res = res.fetchone()
+    # jcs channel id
+    channel_id = 'UCYwVxWpjeKFWwu8TML-Te9A'
 
-    # captured = capsys.readouterr()
-    # print(f"Captured output: {captured.out}")
+    res = curr.execute(f"""
+            select count(*) from
+            Videos where channel_id = '{channel_id}'
+    """)
+    video_count = res.fetchone()[0]
 
-    video_count = res[0]
+    res = curr.execute(f"""
+        SELECT COUNT(*) as subtitle_count
+        FROM Subtitles s
+        JOIN Videos v ON s.video_id = v.video_id
+        JOIN Channels c ON v.channel_id = c.channel_id
+        WHERE c.channel_id = '{channel_id}'
+    """)
+    subtitle_count = res.fetchone()[0]
 
     assert video_count == 17, f"Expected 17 videos, but got {video_count}"
+    assert subtitle_count == 21153, f"Expected 21153 subtitles, but got {subtitle_count}"
+
+
+def test_playlist_download(runner, capsys):
+    reset_testing_env()
+
+    print("downloading playlist")
+    runner.invoke(cli, [
+        'download',
+        '--playlist',
+        '-j',
+        '5',
+        'https://www.youtube.com/playlist?list=PL5q_lef6zVkaTY_cT1k7qFNF2TidHCe-1'
+    ])
+
+    curr = get_test_db()
+    # ycombinator
+    channel_id = 'UCxIJaCMEptJjxmmQgGFsnCg'
+
+    res = curr.execute(f"""
+            select count(*) 
+            from Videos 
+            where channel_id = '{channel_id}'
+    """)
+
+    video_count = res.fetchone()[0]
+
+    res = curr.execute(f"""
+        SELECT COUNT(*) as subtitle_count
+        FROM Subtitles s
+        JOIN Videos v ON s.video_id = v.video_id
+        JOIN Channels c ON v.channel_id = c.channel_id
+        WHERE c.channel_id = '{channel_id}'
+    """)
+
+    subtitle_count = res.fetchone()[0]
+
+    assert video_count == 21, f"Expected 21 videos, but got {video_count}"
+    assert subtitle_count == 20970, f"Expected 20970 subtitles, but got {subtitle_count}"
 
 
 if __name__ == "__main__":
