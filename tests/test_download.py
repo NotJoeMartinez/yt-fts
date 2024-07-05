@@ -21,9 +21,9 @@ def reset_testing_env():
             print('running tests with existing db')
 
 
-def test_successful_download(runner):
+def test_successful_download(runner, capsys):  # Add capsys as a parameter
     reset_testing_env()
-    runner.invoke(cli, ['download', 'https://www.youtube.com/@JCS'])
+    runner.invoke(cli, ['download', '-j', '5', 'https://www.youtube.com/@JCS'])
     conn = sqlite3.connect(f"{CONFIG_DIR}/subtitles.db")
     curr = conn.cursor()
 
@@ -34,8 +34,12 @@ def test_successful_download(runner):
     res = curr.execute(query)
     res = res.fetchone()
 
-    print(res)
-    assert res[0] > 0, f"Expected at least one video, but got {res[0]}"
+    # captured = capsys.readouterr()
+    # print(f"Captured output: {captured.out}")
+
+    video_count = res[0]
+
+    assert video_count == 17, f"Expected 17 videos, but got {video_count}"
 
 
 if __name__ == "__main__":
