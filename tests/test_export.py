@@ -50,8 +50,6 @@ def test_export_search(runner, capsys):
 
     assert exported_file is not None, 'Exported file not found'
 
-    # read the file and check if it has at least 12 lines
-
     with open(exported_file, 'r') as f:
         reader = csv.reader(f)
         lines = list(reader)
@@ -86,6 +84,31 @@ def test_export_vsearch(runner, capsys):
         lines = list(reader)
         assert len(lines) >= 11, 'vsearch exported file has less than 11 lines' 
     
+    subprocess.run('rm *.csv', shell=True)
+
+
+def test_export_search_all(runner, capsys):
+    reset_testing_env()
+
+    runner.invoke(cli, [
+        'search',
+        'guilt',
+        '-e',
+    ])
+
+    output_files = os.listdir()
+
+    exported_file = None
+    for file in output_files:
+        if file.startswith('all_'):
+            exported_file = file
+    assert exported_file is not None, 'Exported file not found'
+
+    with open(exported_file, 'r') as f:
+        reader = csv.reader(f)
+        lines = list(reader)
+        assert len(lines) >= 17, 'Exported file has less than 17 lines'
+
     subprocess.run('rm *.csv', shell=True)
 
 
