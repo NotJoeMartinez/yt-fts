@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.51] - 2024-07-04
+### Fixed 
+- Fixed broken `get_channel_id` function cause by YouTube change to video page html
+  - https://github.com/NotJoeMartinez/yt-fts/issues/150
+  - https://github.com/NotJoeMartinez/yt-fts/commit/3f9c408027072de6f6c90bacedd323571800ae71
+
 ## [0.1.50] - 2024-06-28
 ### Changed
 - Removed need for system installation of `yt-dlp`
