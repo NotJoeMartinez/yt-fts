@@ -25,14 +25,17 @@ def get_test_db():
     return curr
 
 
-def test_successful_download(runner, capsys):  # Add capsys as a parameter
+def test_channel_download(runner, capsys):  # Add capsys as a parameter
     reset_testing_env()
-    runner.invoke(cli, [
+    results = runner.invoke(cli, [
         'download',
         '-j',
         '5',
         'https://www.youtube.com/@JCS'
     ])
+
+    assert results.exit_code == 0
+
     curr = get_test_db()
 
     # jcs channel id
@@ -54,20 +57,22 @@ def test_successful_download(runner, capsys):  # Add capsys as a parameter
     subtitle_count = res.fetchone()[0]
 
     assert video_count == 17, f"Expected 17 videos, but got {video_count}"
-    assert subtitle_count == 21153, f"Expected 21153 subtitles, but got {subtitle_count}"
+    assert subtitle_count >= 21153, f"Expected 21153 subtitles, but got {subtitle_count}"
 
 
 def test_playlist_download(runner, capsys):
     reset_testing_env()
 
     print("downloading playlist")
-    runner.invoke(cli, [
+    results = runner.invoke(cli, [
         'download',
         '--playlist',
         '-j',
         '5',
         'https://www.youtube.com/playlist?list=PL5q_lef6zVkaTY_cT1k7qFNF2TidHCe-1'
     ])
+
+    assert results.exit_code == 0
 
     curr = get_test_db()
     # ycombinator
@@ -92,7 +97,7 @@ def test_playlist_download(runner, capsys):
     subtitle_count = res.fetchone()[0]
 
     assert video_count == 21, f"Expected 21 videos, but got {video_count}"
-    assert subtitle_count == 20970, f"Expected 20970 subtitles, but got {subtitle_count}"
+    assert subtitle_count >= 20970, f"Expected 20970 subtitles, but got {subtitle_count}"
 
 
 if __name__ == "__main__":

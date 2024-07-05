@@ -23,13 +23,6 @@ def reset_testing_env():
             print('running tests with existing db')
 
 
-
-def get_test_db():
-    conn = sqlite3.connect(f"{CONFIG_DIR}/subtitles.db")
-    curr = conn.cursor()
-    return curr
-
-
 def test_vsearch(runner, capsys):
     reset_testing_env()
 
@@ -39,6 +32,8 @@ def test_vsearch(runner, capsys):
         '3',
         'icbm gambit',
     ])
+
+    assert result.exit_code == 0
 
     print(result.output)
     captured = capsys.readouterr()
