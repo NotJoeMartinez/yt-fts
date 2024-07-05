@@ -1,18 +1,115 @@
-
-import unittest
+import pytest
+import csv
 import os
-from yt_fts.export import export_fts
+import shutil
+import subprocess
+from click.testing import CliRunner
+from yt_fts.yt_fts import cli
+from testing_utils import fetch_and_unzip_test_db
 
-class TestExportFts(unittest.TestCase):
-    def test_export_fts(self):
-        # Setup
-        text = "oiwfjnoibne"
-        scope = "all"
-        channel_id = "1"
-        video_id = None 
+CONFIG_DIR = os.path.expanduser('~/.config/yt-fts')
 
-        result = export_fts(text, scope, channel_id, video_id)
-        self.assertIsNone(result, "Expected None when no matches are found")
+@pytest.fixture
+def runner():
+    return CliRunner()
 
-if __name__ == '__main__':
-    unittest.main()
+
+def reset_testing_env():
+    if os.path.exists(CONFIG_DIR):
+        if os.environ.get('YT_FTS_TEST_RESET', 'true').lower() == 'true':
+            shutil.rmtree(CONFIG_DIR)
+            fetch_and_unzip_test_db()
+            subprocess.run('rm *.csv', shell=True)
+
+        else:
+            print('running tests with existing db')
+
+
+def test_export_search(runner, capsys):
+    reset_testing_env()
+
+    result = runner.invoke(cli, [
+        'search',
+        '-c',
+        '1',
+        'criminal',
+        '-e'
+    ])
+
+    
+    # list of files in the current directory
+    output_files = os.listdir()
+
+    # if the file starts with channel_UCYwVxWpjeKFWwu8TML-Te9A 
+    # then it's the exported file
+    exported_file = None
+    for file in output_files:
+        if file.startswith('channel_UCYwVxWpjeKFWwu8TML-Te9A'):
+            exported_file = file
+
+    assert exported_file is not None, 'Exported file not found'
+
+    with open(exported_file, 'r') as f:
+        reader = csv.reader(f)
+        lines = list(reader)
+        assert len(lines) >= 12, 'Exported file has less than 12 lines'
+
+    # clean up
+    subprocess.run('rm *.csv', shell=True)
+
+
+
+def test_export_vsearch(runner, capsys):
+    reset_testing_env()
+
+    runner.invoke(cli, [
+        'vsearch',
+        '-c',
+        '3',
+        'icmb gambit',
+        '-e'
+    ])
+
+    output_files = os.listdir()
+
+    exported_file = None
+    for file in output_files:
+        if file.startswith('channel_UCO2QPmnJFjdvJ6ch-pe27dQ'):
+            exported_file = file
+    assert exported_file is not None, 'vsearch exported file not found'
+
+    with open(exported_file, 'r') as f:
+        reader = csv.reader(f)
+        lines = list(reader)
+        assert len(lines) >= 11, 'vsearch exported file has less than 11 lines' 
+    
+    subprocess.run('rm *.csv', shell=True)
+
+
+def test_export_search_all(runner, capsys):
+    reset_testing_env()
+
+    runner.invoke(cli, [
+        'search',
+        'guilt',
+        '-e',
+    ])
+
+    output_files = os.listdir()
+
+    exported_file = None
+    for file in output_files:
+        if file.startswith('all_'):
+            exported_file = file
+    assert exported_file is not None, 'Exported file not found'
+
+    with open(exported_file, 'r') as f:
+        reader = csv.reader(f)
+        lines = list(reader)
+        assert len(lines) >= 17, 'Exported file has less than 17 lines'
+
+    subprocess.run('rm *.csv', shell=True)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
