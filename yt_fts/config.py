@@ -67,7 +67,6 @@ def get_db_path():
             print("unable to make config path, using current directory")
             return "subtitles.db"
         
-
     platform = sys.platform
 
     if platform == 'win32':

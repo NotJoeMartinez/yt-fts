@@ -6,32 +6,32 @@ from rich.console import Console
 from rich.table import Table
 
 from .utils import show_message, get_date
-from .config import get_db_path 
+from .config import get_db_path
 
 
 def make_db(db_path):
     db = Database(db_path)
 
     db["Channels"].create({
-            "channel_id": str,
-            "channel_name": str,
-            "channel_url": str,
-        }, 
-        pk="channel_id", 
-        not_null={"channel_name", "channel_url"}, 
+        "channel_id": str,
+        "channel_name": str,
+        "channel_url": str,
+    },
+        pk="channel_id",
+        not_null={"channel_name", "channel_url"},
         if_not_exists=True
     )
 
     db["Videos"].create({
-            "video_id": str,
-            "video_title": str,
-            "video_url": str,
-            "channel_id": str,
-            "video_date": str,
-        }, 
-        pk="video_id", 
-        not_null={"video_title", "video_url"}, 
-        if_not_exists=True, 
+        "video_id": str,
+        "video_title": str,
+        "video_url": str,
+        "channel_id": str,
+        "video_date": str,
+    },
+        pk="video_id",
+        not_null={"video_title", "video_url"},
+        if_not_exists=True,
         foreign_keys=[
             ("channel_id", "Channels")
         ]
@@ -44,16 +44,16 @@ def make_db(db_path):
             "start_time": str,
             "stop_time": str,
             "text": str
-        }, 
-        pk="subtitle_id", 
-        not_null={"start_time", "text"}, 
-        if_not_exists=True, 
+        },
+        pk="subtitle_id",
+        not_null={"start_time", "text"},
+        if_not_exists=True,
         foreign_keys=[
             ("video_id", "Videos")
         ]
     ).enable_fts(
-        ["text"], 
-        create_triggers=True, 
+        ["text"],
+        create_triggers=True,
         replace=True
     )
 
@@ -65,12 +65,11 @@ def make_db(db_path):
         foreign_keys=[
             ("channel_id", "Channels")
         ]
-        
+
     )
 
 
 def add_channel_info(channel_id, channel_name, channel_url):
-    
     db = Database(get_db_path())
 
     db["Channels"].insert({
@@ -80,25 +79,24 @@ def add_channel_info(channel_id, channel_name, channel_url):
     })
 
 
-def add_video(channel_id, video_id,  video_title, video_url, video_date):
-    
-        conn = sqlite3.connect(get_db_path())
-        cur = conn.cursor()
-        existing_video = cur.execute("SELECT * FROM Videos WHERE video_id = ?", 
-                                     (video_id,)).fetchone()
+def add_video(channel_id, video_id, video_title, video_url, video_date):
+    conn = sqlite3.connect(get_db_path())
+    cur = conn.cursor()
+    existing_video = cur.execute("SELECT * FROM Videos WHERE video_id = ?",
+                                 (video_id,)).fetchone()
 
-        if existing_video is None:
-            cur.execute("INSERT INTO Videos (video_id, video_title, video_url, video_date, channel_id) VALUES (?, ?, ?, ?, ?)",
-                        (video_id, video_title, video_url, video_date, channel_id))
-            conn.commit()
+    if existing_video is None:
+        cur.execute(
+            "INSERT INTO Videos (video_id, video_title, video_url, video_date, channel_id) VALUES (?, ?, ?, ?, ?)",
+            (video_id, video_title, video_url, video_date, channel_id))
+        conn.commit()
 
-        else:
-            print(f"{video_id} Video already exists in the database.")
-        conn.close()
+    else:
+        print(f"{video_id} Video already exists in the database.")
+    conn.close()
 
 
 def add_subtitle(video_id, start_time, text):
-    
     db = Database(get_db_path())
 
     db["Subtitles"].insert({
@@ -109,31 +107,29 @@ def add_subtitle(video_id, start_time, text):
 
 
 def get_channels():
-    
     db = Database(get_db_path())
 
     return db.execute("SELECT ROWID, channel_id, channel_name, channel_url FROM Channels").fetchall()
 
 
 def search_channel(channel_id, text, limit=None):
-    
     db = Database(get_db_path())
 
-    return list(db["Subtitles"].search(text, 
-                                       where=f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')",
+    query = f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')"
+    return list(db["Subtitles"].search(text,
+                                       where=query,
                                        limit=limit))
 
 
 def search_video(video_id, text, limit=None):
-    
     db = Database(get_db_path())
 
-    return list(db["Subtitles"].search(text, 
+    return list(db["Subtitles"].search(text,
                                        where=f"video_id = '{video_id}'",
                                        limit=limit))
 
+
 def search_all(text, limit=None):
-    
     db = Database(get_db_path())
 
     # TODO: handle quotes
@@ -143,14 +139,12 @@ def search_all(text, limit=None):
 
 
 def get_title_from_db(video_id):
-
     db = Database(get_db_path())
 
     return db.execute(f"SELECT video_title FROM Videos WHERE video_id = ?", [video_id]).fetchone()[0]
 
 
 def get_metadata_from_db(video_id):
-
     db = Database(get_db_path())
 
     metadata = db.execute_returning_dicts(f"SELECT * FROM Videos WHERE video_id = ?", [video_id])[0]
@@ -159,23 +153,23 @@ def get_metadata_from_db(video_id):
 
 
 def get_channel_name_from_id(channel_id):
-    
     db = Database(get_db_path())
 
     return db.execute(f"SELECT channel_name FROM Channels WHERE channel_id = ?", [channel_id]).fetchone()[0]
 
+
 def get_channel_name_from_video_id(video_id):
-    
     db = Database(get_db_path())
 
-    return db.execute(f"SELECT channel_name FROM Channels WHERE channel_id = (SELECT channel_id FROM Videos WHERE video_id = ?)", [video_id]).fetchone()[0]
+    return db.execute(
+        f"SELECT channel_name FROM Channels WHERE channel_id = (SELECT channel_id FROM Videos WHERE video_id = ?)",
+        [video_id]).fetchone()[0]
 
 
 # delete all videos, subtitles, and embeddings associated with channel
 def delete_channel(channel_id):
-    
     from .utils import check_ss_enabled
-    from .vector_search import delete_channel_from_chroma 
+    from .vector_search import delete_channel_from_chroma
 
     if check_ss_enabled(channel_id):
         delete_channel_from_chroma(channel_id)
@@ -186,7 +180,8 @@ def delete_channel(channel_id):
     cur.execute("DELETE FROM Channels WHERE channel_id = ?", (channel_id,))
 
     # make sure to delete all subtitles and embeddings before videos  
-    cur.execute("DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)", (channel_id,))
+    cur.execute("DELETE FROM Subtitles WHERE video_id IN (SELECT video_id FROM Videos WHERE channel_id = ?)",
+                (channel_id,))
 
     cur.execute("DELETE FROM Videos WHERE channel_id = ?", (channel_id,))
 
@@ -196,9 +191,7 @@ def delete_channel(channel_id):
     conn.close()
 
 
-
 def get_channel_id_from_rowid(rowid):
-    
     db = Database(get_db_path())
 
     res = db.execute(f"SELECT channel_id FROM Channels WHERE ROWID = ?", [rowid]).fetchone()
@@ -210,7 +203,6 @@ def get_channel_id_from_rowid(rowid):
 
 
 def get_channel_id_from_name(channel_name):
-    
     db = Database(get_db_path())
 
     res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
@@ -222,11 +214,12 @@ def get_channel_id_from_name(channel_name):
         table.add_column("channel_name")
         table.add_column("channel_url")
 
-        channels = db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
+        channels = db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_name = ?",
+                              [channel_name]).fetchall()
         for channel in channels:
             table.add_row(str(channel[0]), channel[1], channel[2])
 
-        console.print(table)    
+        console.print(table)
         show_message("multiple_channels_found")
     if len(res) == 0:
         return None
@@ -236,10 +229,10 @@ def get_channel_id_from_name(channel_name):
 
 # for listing specific channel 
 def get_channel_list_by_id(channel_id):
-    
     db = Database(get_db_path())
 
-    return db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_id = ?", [channel_id]).fetchall()
+    return db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_id = ?",
+                      [channel_id]).fetchall()
 
 
 def check_if_channel_exists(channel_id):
@@ -255,21 +248,20 @@ def check_if_channel_exists(channel_id):
     else:
         return False
 
+
 def get_num_vids(channel_id):
-    
     db = Database(get_db_path())
 
     return db.execute(f"SELECT COUNT(*) FROM Videos WHERE channel_id = ?", [channel_id]).fetchone()[0]
 
+
 def get_vid_ids_by_channel_id(channel_id):
-    
     db = Database(get_db_path())
 
     return db.execute(f"SELECT video_id FROM Videos WHERE channel_id = ?", [channel_id]).fetchall()
 
 
 def get_all_subs_by_channel_id(channel_id):
-    
     db = Database(get_db_path())
 
     parsed_subs = []
@@ -279,17 +271,17 @@ def get_all_subs_by_channel_id(channel_id):
         JOIN Videos v ON s.video_id = v.video_id
         WHERE v.channel_id = ?
         """, [channel_id]).fetchall()
-    
+
     for sub in subs:
         split_subs = sub[4].strip().split(" ")
-        if len(split_subs) > 0: 
+        if len(split_subs) > 0:
             parsed_subs.append(sub)
 
     return parsed_subs
 
+
 # get all subs where semantic search is enabled
 def get_all_subs_by_channel_id_ss(channel_id):
-    
     db = Database(get_db_path())
 
     parsed_subs = []
@@ -299,7 +291,7 @@ def get_all_subs_by_channel_id_ss(channel_id):
         JOIN Videos v ON s.video_id = v.video_id
         WHERE v.channel_id = ?
         """, [channel_id]).fetchall()
-    
+
     for sub in subs:
         if len(sub[3].strip()) > 0:
             parsed_subs.append(sub)
@@ -307,35 +299,30 @@ def get_all_subs_by_channel_id_ss(channel_id):
 
 
 def get_transcript_by_video_id(video_id):
-    
     db = Database(get_db_path())
 
     return db.execute(f"SELECT text FROM Subtitles WHERE video_id = ?", [video_id]).fetchall()
 
 
 def get_subs_by_video_id(video_id):
-
     db = Database(get_db_path())
 
-    return db.execute(f"SELECT start_time, stop_time, text FROM Subtitles WHERE video_id = ?", 
+    return db.execute(f"SELECT start_time, stop_time, text FROM Subtitles WHERE video_id = ?",
                       [video_id]).fetchall()
 
 
-def get_channel_id_from_input(channel_input): # yt_fts, export, search, vector_search ... broken 
+def get_channel_id_from_input(channel_input):  # yt_fts, export, search, vector_search ... broken
     """
     Checks if the input is a rowid or a channel name and returns channel id
     """
 
-    name_res = get_channel_id_from_name(channel_input) 
-    id_res = get_channel_id_from_rowid(channel_input) 
+    name_res = get_channel_id_from_name(channel_input)
+    id_res = get_channel_id_from_rowid(channel_input)
 
-
-    
-    if id_res != None:
+    if id_res is not None:
         return id_res
-    elif name_res != None: 
+    elif name_res is not None:
         return name_res
     else:
         show_message("channel_not_found")
         sys.exit(1)
- 
