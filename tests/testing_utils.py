@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import tempfile
 import shutil
 import requests
@@ -42,3 +43,9 @@ def fetch_and_unzip_test_db():
         for f in files:
             print(f"{sub_indent}{f}")
 
+
+
+def get_test_db():
+    conn = sqlite3.connect(f"{CONFIG_DIR}/subtitles.db")
+    curr = conn.cursor()
+    return curr
