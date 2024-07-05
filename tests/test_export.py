@@ -25,7 +25,6 @@ def reset_testing_env():
             print('running tests with existing db')
 
 
-
 def test_export_search(runner, capsys):
     reset_testing_env()
 
