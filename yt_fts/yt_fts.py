@@ -316,7 +316,7 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
 @click.option("-i", "--interval",
               default=10,
               type=int,
-              help="Interval in seconds to wait between requests to the OpenAI API.")
+              help="Interval in seconds to split the transcripts into chunks")
 def embeddings(channel, openai_api_key, interval=10):
     from yt_fts.db_utils import get_vid_ids_by_channel_id
     from yt_fts.get_embeddings import add_embeddings_to_chroma
