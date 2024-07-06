@@ -145,7 +145,7 @@ def enable_ss(channel_id):
     con.close()
 
 
-def split_subtitles(video_id):
+def split_subtitles(video_id, interval=60):
     from datetime import datetime
     from .db_utils import get_subs_by_video_id
 
@@ -172,8 +172,13 @@ def split_subtitles(video_id):
 
     interval_texts = {}
     for start, start_time_str, text in converted_data:
-        interval = int(start // 10) * 10
-        key = interval_texts.setdefault(interval, {'start_time': start_time_str, 'texts': []})
+        split_interval = int(start // interval) * interval
+
+        key = interval_texts.setdefault(split_interval, {
+            'start_time': start_time_str,
+            'texts': []
+        })
+
         key['texts'].append(text)
 
     result = [(data['start_time'], ' '.join(data['texts']).strip()) for data in interval_texts.values()]

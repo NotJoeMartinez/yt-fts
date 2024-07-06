@@ -1,7 +1,7 @@
 import chromadb
 import sys
 from openai import OpenAI
-from yt_fts.embeddings import get_embedding
+from yt_fts.get_embeddings import get_embedding
 from yt_fts.config import get_or_make_chroma_path
 from yt_fts.utils import time_to_secs
 from yt_fts.db_utils import get_channel_name_from_video_id, get_title_from_db
