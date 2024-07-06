@@ -1,16 +1,17 @@
-import click
 import os
 import sys
-import requests
 
-from .config import get_config_path, get_db_path, get_or_make_chroma_path
-# TODO: don't use import *
-from .db_utils import *
-from .list import list_channels
-from .update import update_channel
-from .utils import *
+import click
+import requests
 from rich.console import Console
 
+from .config import get_config_path, get_db_path, get_or_make_chroma_path
+from .db_utils import (
+    check_if_channel_exists,
+    get_channel_id_from_input,
+    get_channel_name_from_id,
+    delete_channel
+)
 from .download import (
     get_channel_id,
     get_channel_name,
@@ -18,6 +19,13 @@ from .download import (
     download_channel,
     download_playlist
 )
+from .list import list_channels
+from .update import update_channel
+from .utils import (
+    handle_reject_consent_cookie,
+    show_message
+)
+
 YT_FTS_VERSION = "0.1.51"
 console = Console()
 
