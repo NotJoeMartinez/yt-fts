@@ -7,6 +7,16 @@ from yt_fts.yt_fts import download, cli
 
 CONFIG_DIR = os.path.expanduser('~/.config/yt-fts')
 
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_after_tests():
+    yield
+    if os.path.exists(CONFIG_DIR):
+        shutil.rmtree(CONFIG_DIR)
+    if os.path.exists(f"{CONFIG_DIR}_backup"):
+        shutil.move(f"{CONFIG_DIR}_backup", CONFIG_DIR)
+
+
 @pytest.fixture
 def runner():
     return CliRunner()
@@ -105,10 +115,8 @@ def test_playlist_download(runner, capsys):
     assert video_count == 21, f"Expected 21 videos, but got {video_count}"
     assert subtitle_count >= 20970, f"Expected 20970 subtitles, but got {subtitle_count}"
 
-    shutil.rmtree(CONFIG_DIR)
-    shutil.copytree(src=f"{CONFIG_DIR}_backup", dst=CONFIG_DIR)
+
 
 
 if __name__ == "__main__":
     pytest.main([__file__])
-
