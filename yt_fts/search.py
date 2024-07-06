@@ -1,9 +1,18 @@
 import sys
 from pprint import pprint
-from .db_utils import *
-from .utils import *
 from rich.console import Console
 from rich.text import Text
+
+from .utils import time_to_secs, bold_query_matches
+
+from .db_utils import (
+    search_all,
+    get_channel_id_from_input,
+    search_channel,
+    search_video,
+    get_channel_name_from_video_id,
+    get_metadata_from_db
+)
 
 
 # full text search
