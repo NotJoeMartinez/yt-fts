@@ -7,6 +7,16 @@ from yt_fts.yt_fts import download, cli
 
 CONFIG_DIR = os.path.expanduser('~/.config/yt-fts')
 
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_after_tests():
+    yield
+    if os.path.exists(CONFIG_DIR):
+        shutil.rmtree(CONFIG_DIR)
+    if os.path.exists(f"{CONFIG_DIR}_backup"):
+        shutil.move(f"{CONFIG_DIR}_backup", CONFIG_DIR)
+
+
 @pytest.fixture
 def runner():
     return CliRunner()
@@ -15,7 +25,13 @@ def runner():
 def reset_testing_env():
     if os.path.exists(CONFIG_DIR):
         if os.environ.get('YT_FTS_TEST_RESET', 'true').lower() == 'true':
+
+            if os.path.exists(CONFIG_DIR):
+                if not os.path.exists(f"{CONFIG_DIR}_backup"):
+                    shutil.copytree(CONFIG_DIR, f"{CONFIG_DIR}_backup")
+
             shutil.rmtree(CONFIG_DIR)
+
         else:
             print('running tests with existing db')
 
@@ -100,6 +116,7 @@ def test_playlist_download(runner, capsys):
     assert subtitle_count >= 20970, f"Expected 20970 subtitles, but got {subtitle_count}"
 
 
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
-
