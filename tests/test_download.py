@@ -15,7 +15,13 @@ def runner():
 def reset_testing_env():
     if os.path.exists(CONFIG_DIR):
         if os.environ.get('YT_FTS_TEST_RESET', 'true').lower() == 'true':
+
+            if os.path.exists(CONFIG_DIR):
+                if not os.path.exists(f"{CONFIG_DIR}_backup"):
+                    shutil.copytree(CONFIG_DIR, f"{CONFIG_DIR}_backup")
+
             shutil.rmtree(CONFIG_DIR)
+
         else:
             print('running tests with existing db')
 
@@ -98,6 +104,9 @@ def test_playlist_download(runner, capsys):
 
     assert video_count == 21, f"Expected 21 videos, but got {video_count}"
     assert subtitle_count >= 20970, f"Expected 20970 subtitles, but got {subtitle_count}"
+
+    shutil.rmtree(CONFIG_DIR)
+    shutil.copytree(src=f"{CONFIG_DIR}_backup", dst=CONFIG_DIR)
 
 
 if __name__ == "__main__":
