@@ -1,4 +1,5 @@
 import sys
+import traceback
 
 from openai import OpenAI
 
@@ -12,46 +13,46 @@ from .get_embeddings import get_embedding
 from .utils import time_to_secs
 from .config import get_chroma_client
 
-def run_llm(openai_api_key: str, prompt: str, channel: str) -> None:
 
-    channel_id = get_channel_id_from_input(channel)
+def init_llm(openai_api_key: str, prompt: str, channel: str) -> None:
     openai_client = OpenAI(api_key=openai_api_key)
+    channel_id = get_channel_id_from_input(channel)
+    messages = start_llm(openai_client, prompt, channel_id)
+
+    print(messages[len(messages) - 1]["content"])
+    while True:
+        user_input = input("> ")
+        if user_input == "exit":
+            sys.exit(0)
+        messages.append({"role": "user", "content": user_input})
+        messages = continue_llm(openai_client, channel_id, messages)
+        print(messages[len(messages) - 1]["content"])
+
+
+def start_llm(openai_client: object, prompt: str, channel_id: str) -> list:
+
     try:
-        # Create a chat completion using the question and context
         context = create_context(
             text=prompt,
             channel_id=channel_id,
             openai_client=openai_client
         )
 
-
         user_str = f"Context: {context}\n\n---\n\nQuestion: {prompt}\nAnswer:"
-
 
         system_prompt = """
                         Answer the question based on the context below, The context are 
                         subtitles and timestamped links from videos related to the question. 
                         In your answer, provide the link to the video where the answer can 
                         be found. and if the question can't be answered based on the context, 
-                        say \"I don't know\"\n\n
+                        say \"I don't know\" AND ONLY I don't know\n\n
                         """
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_str},
             ]
 
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            temperature=0,
-            max_tokens=2000,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
-        )
-
-        response_text = response.choices[0].message.content
+        response_text = get_completion(openai_client, messages)
 
         if "i don't know" in response_text.lower():
             expanded_query = get_expand_context_query(messages, openai_client)
@@ -62,31 +63,63 @@ def run_llm(openai_api_key: str, prompt: str, channel: str) -> None:
                 "role": "user",
                 "content": f"Okay here is some more context:\n---\n\n{expanded_context}\n\n---"
             })
-            response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=messages,
-                temperature=0,
-                max_tokens=2000,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
-                stop=None,
-            )
 
+            response_text = get_completion(openai_client, messages)
 
-            response_text = response.choices[0].message.content
+            messages.append({
+                "role": "assistant",
+                "content": response_text
+            })
 
-            print(response_text)
+            return messages
 
-        print(response_text)
+        messages.append({
+            "role": "assistant",
+            "content": response_text
+        })
+        return messages
 
     except Exception as e:
-        print(e)
+        traceback.print_exc()
+        print(f"Error: {e}")
         sys.exit(1)
 
 
+def continue_llm(openai_client: object, channel_id: str, messages: list) -> list:
+    
+    try:
+        response_text = get_completion(openai_client, messages)
 
-def create_context(text: str, channel_id: str, openai_client) -> str:
+        if "i don't know" in response_text.lower():
+            expanded_query = get_expand_context_query(messages, openai_client)
+            print(f"Expanded query: {expanded_query}")
+            expanded_context = create_context(expanded_query, channel_id, openai_client)
+            messages.append({
+                "role": "user",
+                "content": f"Okay here is some more context:\n---\n\n{expanded_context}\n\n---"
+            })
+
+            response_text = get_completion(openai_client, messages)
+            messages.append({
+                "role": "assistant",
+                "content": response_text
+            })
+            return messages
+        else:
+            messages.append({
+                "role": "assistant",
+                "content": response_text
+            })
+            return messages
+
+    except Exception as e:
+        traceback.print_exc()
+        print(f"Error: {e}")
+        sys.exit(1)
+    
+
+
+def create_context(text: str, channel_id: str, openai_client: object) -> str:
 
     chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
@@ -149,6 +182,20 @@ def get_expand_context_query(messages: list, openai_client) -> str:
             {"role": "user", "content": formatted_context},
             ]
         
+        expand_query = get_completion(openai_client, messages)
+
+        return expand_query 
+
+    
+    except Exception as e:
+        traceback.print_exc()
+        print(e)
+        sys.exit(1)
+
+
+def get_completion(openai_client, messages: list) -> str:
+
+    try: 
         response = openai_client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
@@ -158,14 +205,13 @@ def get_expand_context_query(messages: list, openai_client) -> str:
             frequency_penalty=0,
             presence_penalty=0,
             stop=None,
-        )
+            )
 
-        expand_query = response.choices[0].message.content
-        return expand_query 
-
+        return response.choices[0].message.content
     
     except Exception as e:
-        print(e)
+        traceback.print_exc()
+        print(f"Error: {e}")
         sys.exit(1)
 
 

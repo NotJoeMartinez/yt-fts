@@ -383,7 +383,7 @@ def embeddings(channel, openai_api_key, interval=10):
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
 def llm(prompt, channel, openai_api_key=None):
-    from yt_fts.llm import run_llm
+    from yt_fts.llm import init_llm 
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -396,7 +396,7 @@ def llm(prompt, channel, openai_api_key=None):
                       """)
         sys.exit(1)
 
-    run_llm(openai_api_key=openai_api_key,
+    init_llm(openai_api_key=openai_api_key,
             prompt=prompt,
             channel=channel)
 
