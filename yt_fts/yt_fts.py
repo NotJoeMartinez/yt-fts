@@ -366,6 +366,44 @@ def embeddings(channel, openai_api_key, interval=10):
 
 
 @cli.command(
+    name="llm",
+    help="""
+        Interactive LLM chat bot RAG bot, needs to be run on a channel with 
+        Embeddings.
+    """
+)
+@click.argument("prompt", required=True)
+@click.option("-c",
+              "--channel",
+              default=None,
+              required=True,
+              help="The name or id of the channel to generate embeddings for")
+@click.option("--openai-api-key",
+              default=None,
+              help="OpenAI API key. If not provided, the script will attempt to read it from"
+                   " the OPENAI_API_KEY environment variable.")
+def llm(prompt, channel, openai_api_key=None):
+    from yt_fts.llm import run_llm
+
+    if openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+    if openai_api_key is None:
+        console.print("""
+        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+                
+                export OPENAI_API_KEY=<your_key> to set the key
+                      """)
+        sys.exit(1)
+
+    run_llm(openai_api_key=openai_api_key,
+            prompt=prompt,
+            channel=channel)
+
+    sys.exit(0)
+
+
+@cli.command(
     help="""
     Show config settings
     """
