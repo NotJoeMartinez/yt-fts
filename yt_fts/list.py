@@ -110,7 +110,7 @@ def list_channels(channel_id=None):
     console.print("")
 
 
-#  not dry but for some reason importing from embeddings.py causes slow down 
+#  not dry but for some reason importing from get_embeddings.py causes slow down
 def check_ss_enabled(channel_id=None):
     from yt_fts.config import get_db_path
 

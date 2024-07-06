@@ -4,7 +4,7 @@ from rich.console import Console
 from sqlite_utils import Database
 
 from .utils import time_to_secs, bold_query_matches
-from .embeddings import get_embedding
+from .get_embeddings import get_embedding
 from .config import get_chroma_client
 from .db_utils import (
     get_channel_name_from_video_id,

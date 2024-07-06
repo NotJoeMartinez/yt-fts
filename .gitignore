@@ -174,3 +174,4 @@ UCYO_jab_esuFRV4b17AJtAw
 .ignore/
 tests/test_data/
 .idea
+*.sh

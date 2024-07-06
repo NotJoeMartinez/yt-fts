@@ -166,7 +166,7 @@ def delete(channel):
     console.print("[bold]Are you sure you want to delete this channel and all its data?[/bold]")
     confirm = input("(Y/n): ")
 
-    if confirm == "y":
+    if confirm.lower() == "y":
         delete_channel(channel_id)
         print(f"Deleted channel {channel_name}: {channel_url}")
     else:
@@ -303,17 +303,23 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
 @cli.command(
     help="""
     Generate embeddings for a channel using OpenAI's embeddings API.
-
     Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
     """
 )
-@click.option("-c", "--channel", default=None, help="The name or id of the channel to generate embeddings for")
-@click.option("--openai-api-key", default=None,
-              help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
-                   "environment variable.")
-def get_embeddings(channel, openai_api_key):
+@click.option("-c", "--channel",
+              default=None,
+              help="The name or id of the channel to generate embeddings for")
+@click.option("--openai-api-key",
+              default=None,
+              help="OpenAI API key. If not provided, the script will attempt to read it from"
+                   " the OPENAI_API_KEY environment variable.")
+@click.option("-i", "--interval",
+              default=10,
+              type=int,
+              help="Interval in seconds to split the transcripts into chunks")
+def embeddings(channel, openai_api_key, interval=10):
     from yt_fts.db_utils import get_vid_ids_by_channel_id
-    from yt_fts.embeddings import add_embeddings_to_chroma
+    from yt_fts.get_embeddings import add_embeddings_to_chroma
     from yt_fts.utils import split_subtitles, check_ss_enabled, enable_ss
     from openai import OpenAI
 
@@ -342,7 +348,7 @@ def get_embeddings(channel, openai_api_key):
 
     channel_subs = []
     for vid_id in channel_video_ids:
-        split_subs = split_subtitles(vid_id[0])
+        split_subs = split_subtitles(vid_id[0], interval=interval)
         if split_subs is None:
             continue
         for sub in split_subs:

@@ -96,14 +96,17 @@ This requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`
 you can pass the key with the `--openai-api-key` flag. 
 
 
-## `get-embedings`
+## `embeddings`
 Fetches OpenAI embeddings for specified channel
 ```bash
 
 # make sure openAI key is set
 # export OPENAI_API_KEY="[yourOpenAIKey]"
 
-yt-fts get-embeddings --channel "3Blue1Brown"
+yt-fts embeddings --channel "3Blue1Brown"
+
+# specify time interval in seconds to split text by default is 10 
+yt-fts embeddings --interval 60 --channel "3Blue1Brown" 
 ```
 
 After the embeddings are saved you will see a `(ss)` next to the channel name when you 
@@ -111,7 +114,7 @@ list channels and you will be able to use the `vsearch` command for that channel
 
 ## `vsearch` (Semantic Search)
 `vsearch` is for "Vector search". This requires that you enable semantic 
-search for a channel with `get-embeddings`. It has the same options as 
+search for a channel with `embeddings`. It has the same options as 
 `search` but output will be sorted by similarity to the search string and 
 the default return limit is 10. 
 
