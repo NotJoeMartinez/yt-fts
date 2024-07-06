@@ -51,9 +51,34 @@ def run_llm(openai_api_key: str, prompt: str, channel: str) -> None:
             stop=None,
         )
 
-        response = response.choices[0].message.content
-        print(response)
-        sys.exit(0)
+        response_text = response.choices[0].message.content
+
+        if "i don't know" in response_text.lower():
+            expanded_query = get_expand_context_query(messages, openai_client)
+            print(f"Expanded query: {expanded_query}")
+            expanded_context = create_context(expanded_query, channel_id, openai_client)
+
+            messages.append({
+                "role": "user",
+                "content": f"Okay here is some more context:\n---\n\n{expanded_context}\n\n---"
+            })
+            response = openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                temperature=0,
+                max_tokens=2000,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0,
+                stop=None,
+            )
+
+
+            response_text = response.choices[0].message.content
+
+            print(response_text)
+
+        print(response_text)
 
     except Exception as e:
         print(e)
@@ -106,10 +131,60 @@ def create_context(text: str, channel_id: str, openai_client) -> str:
         }
         res.append(match)
 
+    formatted_context = format_context(res)
+
+    return formatted_context 
+
+
+def get_expand_context_query(messages: list, openai_client) -> str:
+    try:
+        system_prompt = """
+                        Your task is to generate a question to input into a vector search 
+                        engine of youtube subitles to find strings that can answer the question
+                        asked in the previous message.
+                        """
+        formatted_context = format_message_history_context(messages)
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": formatted_context},
+            ]
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0,
+            max_tokens=2000,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            stop=None,
+        )
+
+        expand_query = response.choices[0].message.content
+        return expand_query 
+
+    
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+
+def format_message_history_context(messages: list) -> str:
+
+    formatted_context = ""
+    for message in messages:
+        if message["role"] == "system":
+            continue
+        role = message["role"]
+        content = message["content"]
+        formatted_context += f"{role}: {content}\n"
+    return formatted_context
+
+
+def format_context(chroma_res: str) -> str:
     formatted_context = ""
 
-    for obj in res:
-        
+    for obj in chroma_res:
         tmp = f"""
             Video Title: {obj["video_title"]}
             Text: {obj["subs"]}
@@ -119,5 +194,5 @@ def create_context(text: str, channel_id: str, openai_client) -> str:
             -------------------------
         """
         formatted_context += tmp
-
-    return formatted_context 
+    
+    return formatted_context
