@@ -1,5 +1,9 @@
-# llm_class.py
-
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.prompt import Prompt
+from rich.text import Text
+import textwrap
 import sys
 import traceback
 from openai import OpenAI
@@ -12,24 +16,54 @@ from .get_embeddings import get_embedding
 from .utils import time_to_secs
 from .config import get_chroma_client
 
-
 class LLMHandler:
     def __init__(self, openai_api_key: str, channel: str):
         self.openai_client = OpenAI(api_key=openai_api_key)
         self.channel_id = get_channel_id_from_input(channel)
         self.chroma_client = get_chroma_client()
+        self.console = Console()
+        self.max_width = 80 
 
     def init_llm(self, prompt: str):
         messages = self.start_llm(prompt)
-        print(messages[-1]["content"])
+        self.display_message(messages[-1]["content"], "assistant")
         
         while True:
-            user_input = input("> ")
-            if user_input == "exit":
+            user_input = Prompt.ask("> ")
+            if user_input.lower() == "exit":
+                self.console.print("Goodbye!", style="bold red")
                 sys.exit(0)
             messages.append({"role": "user", "content": user_input})
             messages = self.continue_llm(messages)
-            print(messages[-1]["content"])
+            self.display_message(messages[-1]["content"], "assistant")
+
+    def display_message(self, content: str, role: str):
+        if role == "assistant":
+            wrapped_content = self.wrap_text(content)
+            md = Markdown(wrapped_content)
+            # self.console.print(Panel(md, expand=False, border_style="green"))
+            self.console.print(md)
+        else:
+            wrapped_content = self.wrap_text(content)
+            self.console.print(Text(wrapped_content, style="bold blue"))
+    
+    def wrap_text(self, text: str) -> str:
+        lines = text.split('\n')
+        wrapped_lines = []
+        
+        for line in lines:
+            # If the line is a code block, don't wrap it
+            if line.strip().startswith('```') or line.strip().startswith('`'):
+                wrapped_lines.append(line)
+            else:
+                # Wrap the line
+                wrapped = textwrap.wrap(line, width=self.max_width, break_long_words=False, replace_whitespace=False)
+                wrapped_lines.extend(wrapped)
+        
+        
+        # Join the wrapped lines back together
+        return "  \n".join(wrapped_lines)
+
 
     def start_llm(self, prompt: str) -> list:
         try:
@@ -65,9 +99,7 @@ class LLMHandler:
             return messages
         
         except Exception as e:
-            traceback.print_exc()
-            print(f"Error: {e}")
-            sys.exit(1)
+            self.display_error(e)
 
     def continue_llm(self, messages: list) -> list:
         try:
@@ -75,7 +107,7 @@ class LLMHandler:
             
             if "i don't know" in response_text.lower():
                 expanded_query = self.get_expand_context_query(messages)
-                print(f"Expanded query: {expanded_query}")
+                self.console.print(f"[italic]Expanding context with query: {expanded_query}[/italic]")
                 expanded_context = self.create_context(expanded_query)
                 messages.append({
                     "role": "user",
@@ -90,9 +122,12 @@ class LLMHandler:
             return messages
         
         except Exception as e:
-            traceback.print_exc()
-            print(f"Error: {e}")
-            sys.exit(1)
+            self.display_error(e)
+
+    def display_error(self, error: Exception):
+        self.console.print(Panel(str(error), title="Error", border_style="red"))
+        traceback.print_exc()
+        sys.exit(1)
 
     def create_context(self, text: str) -> str:
         collection = self.chroma_client.get_collection(name="subEmbeddings")
@@ -149,9 +184,7 @@ class LLMHandler:
             return self.get_completion(messages)
         
         except Exception as e:
-            traceback.print_exc()
-            print(e)
-            sys.exit(1)
+            self.display_error(e)
 
     def get_completion(self, messages: list) -> str:
         try:
@@ -168,9 +201,7 @@ class LLMHandler:
             return response.choices[0].message.content
         
         except Exception as e:
-            traceback.print_exc()
-            print(f"Error: {e}")
-            sys.exit(1)
+            self.display_error(e)
 
     @staticmethod
     def format_message_history_context(messages: list) -> str:
