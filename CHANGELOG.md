@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.52] - 2024-07-06
+### Added
+- `llm` command for Retrieval-Augmented Generation on channels with embeddings
+    - https://github.com/NotJoeMartinez/yt-fts/pull/156
+- Way to specify time interval when generating embeddings
+    - https://github.com/NotJoeMartinez/yt-fts/pull/155
+- pytest unit testing for basic cli functionality
+    - https://github.com/NotJoeMartinez/yt-fts/pull/151
+### Changed
+- Changed `get-embeddings` command to `embeddings` (it's cleaner) 
+    - https://github.com/NotJoeMartinez/yt-fts/pull/155 
+- Refomatted most files to follow PEP 8 style guides 
+    - https://github.com/NotJoeMartinez/yt-fts/pull/153
+- Most of the commands now exit with status code 
+    - https://github.com/NotJoeMartinez/yt-fts/pull/152
+- Refactored to not use `import *`
+    - https://github.com/NotJoeMartinez/yt-fts/pull/154
+## Fixed
+- Removed Regex warning when first running cli
+- Delete not working if you use a capital Y 
+
 ## [0.1.51] - 2024-07-04
 ### Fixed 
 - Fixed broken `get_channel_id` function cause by YouTube change to video page html
@@ -53,7 +74,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Added 
   - [yt-fts-132](https://github.com/NotJoeMartinez/yt-fts/pull/132)
-    - Github actions integration
+    - GitHub actions integration
 
   
 
@@ -86,7 +107,7 @@ Special thanks to [@danlamanna](https://github.com/danlamanna) for these fixes
 ## [0.1.39] - 2023-12-31
 ### Fixed
   - [yt-fts-118](https://github.com/NotJoeMartinez/yt-fts/pull/118)
-    - Major: Fixed bug where download will fail if channel does not have live stream page
+    - Major: Fixed bug where download will fail if channel does not have live-stream page
 
 ## [0.1.38] - 2023-12-29
 ### Added 
@@ -106,7 +127,7 @@ Special thanks to [@danlamanna](https://github.com/danlamanna) for these fixes
 ## [0.1.36] - 2023-12-25
 ### Fixed 
 - [yt-fts-112](https://github.com/NotJoeMartinez/yt-fts/pull/112)
-  - Medium: Fixed issue with download command not downloading live streamed videos
+  - Medium: Fixed issue with download command not downloading live-streamed videos
 
 ### Added
 - [yt-fts-111](https://github.com/NotJoeMartinez/yt-fts/pull/111)
@@ -176,5 +197,5 @@ Special thanks to [@danlamanna](https://github.com/danlamanna) for these fixes
 
 - [yt-fts-67](https://github.com/NotJoeMartinez/yt-fts/issues/67)
 
-  Minor: YouTube URL validation now allows for /@channelName and /channle/channelID
+  Minor: YouTube URL validation now allows for /@channelName and /channel/channelID
   instead of forcing /@channel/videos. 

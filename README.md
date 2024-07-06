@@ -1,12 +1,15 @@
 
-# yt-fts - Youtube Full Text Search 
-`yt-fts` is a command line program that uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to scrape all of a youtube channels subtitles and load them into an sqlite database that is searchable from the command line. It allows you to query a channel for specific key word or phrase and will generate time stamped youtube urls to
+# yt-fts - YouTube Full Text Search 
+`yt-fts` is a command line program that uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to scrape all of a YouTube 
+channels subtitles and load them into a sqlite database that is searchable from the command line. It allows you to
+query a channel for specific key word or phrase and will generate time stamped YouTube urls to
 the video containing the keyword. 
 
 It also supports semantic search via the [OpenAI embeddings API](https://beta.openai.com/docs/api-reference/) using [chromadb](https://github.com/chroma-core/chroma).
 
 - [Blog Post](https://notjoemartinez.com/blog/youtube_full_text_search/)
-- [Semantic Search](#Semantic-Search-via-OpenAI-embeddings-API) 
+- [LLM/RAG Chat Bot](#llm-chat-bot)
+- [Semantic Search](#vsearch-semantic-search)
 - [CHANGELOG](CHANGELOG.md)
 
 https://github.com/NotJoeMartinez/yt-fts/assets/39905973/6ffd8962-d060-490f-9e73-9ab179402f14
@@ -90,7 +93,7 @@ yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show"
 ```
 
 
-# Semantic Search 
+# Semantic Search and RAG
 You can enable semantic search for a channel by using the `get-embeddings` command.
 This requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`, or 
 you can pass the key with the `--openai-api-key` flag. 
@@ -106,11 +109,12 @@ Fetches OpenAI embeddings for specified channel
 yt-fts embeddings --channel "3Blue1Brown"
 
 # specify time interval in seconds to split text by default is 10 
+# the larger the interval the more accurate the llm response  
+# but semantic search will have more text for you to read. 
 yt-fts embeddings --interval 60 --channel "3Blue1Brown" 
 ```
-
 After the embeddings are saved you will see a `(ss)` next to the channel name when you 
-list channels and you will be able to use the `vsearch` command for that channel. 
+list channels, and you will be able to use the `vsearch` command for that channel. 
 
 ## `vsearch` (Semantic Search)
 `vsearch` is for "Vector search". This requires that you enable semantic 
@@ -133,11 +137,21 @@ yt-fts vsearch "[search query]" --export --channel "[channel name or id]"
 
 ```
 
+## `llm` (Chat Bot)
+Starts interactive chat session with `gpt-4o` OpenAI model using 
+the semantic search results of your initial prompt as the context
+to answer questions. If it can't answer your question, it has a 
+mechanism to update the context by running targeted query based 
+off the conversation. The channel must have semantic search enabled.
 
+```sh
+yt-fts llm --channel "3Blue1Brown" "How does back propagation work?"
+```
 
 ## How To
 
 **Export search results:**
+
 For both the `search` and `vsearch` commands you can export the results to a csv file with 
 the `--export` flag. and it will save the results to a csv file in the current directory. 
 ```bash
@@ -163,7 +177,8 @@ yt-fts update --channel "3Blue1Brown"
 
 
 **Export all of a channel's transcript:**
-This command will create a directory in current working directory with the youtube 
+
+This command will create a directory in current working directory with the YouTube 
 channel id of the specified channel.
 ```bash
 # Export to vtt

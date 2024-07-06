@@ -26,7 +26,7 @@ from .utils import (
     show_message
 )
 
-YT_FTS_VERSION = "0.1.51"
+YT_FTS_VERSION = "0.1.52"
 console = Console()
 
 
