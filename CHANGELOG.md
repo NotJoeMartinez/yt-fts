@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.53] - 2024-07-06
+### Changed
+- changed model LLM model to gpt-4o
+  - https://github.com/NotJoeMartinez/yt-fts/pull/157
+
 ## [0.1.52] - 2024-07-06
 ### Added
 - `llm` command for Retrieval-Augmented Generation on channels with embeddings
