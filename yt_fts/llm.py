@@ -12,9 +12,10 @@ from .db_utils import (
     get_channel_name_from_video_id,
     get_title_from_db
 )
-from .get_embeddings import EmbeddingsHandler 
+from .get_embeddings import EmbeddingsHandler
 from .utils import time_to_secs
 from .config import get_chroma_client
+
 
 class LLMHandler:
     def __init__(self, openai_api_key: str, channel: str):
@@ -22,12 +23,12 @@ class LLMHandler:
         self.channel_id = get_channel_id_from_input(channel)
         self.chroma_client = get_chroma_client()
         self.console = Console()
-        self.max_width = 80 
+        self.max_width = 80
 
     def init_llm(self, prompt: str):
         messages = self.start_llm(prompt)
         self.display_message(messages[-1]["content"], "assistant")
-        
+
         while True:
             user_input = Prompt.ask("> ")
             if user_input.lower() == "exit":
@@ -41,16 +42,15 @@ class LLMHandler:
         if role == "assistant":
             wrapped_content = self.wrap_text(content)
             md = Markdown(wrapped_content)
-            # self.console.print(Panel(md, expand=False, border_style="green"))
             self.console.print(md)
         else:
             wrapped_content = self.wrap_text(content)
             self.console.print(Text(wrapped_content, style="bold blue"))
-    
+
     def wrap_text(self, text: str) -> str:
         lines = text.split('\n')
         wrapped_lines = []
-        
+
         for line in lines:
             # If the line is a code block, don't wrap it
             if line.strip().startswith('```') or line.strip().startswith('`'):
@@ -59,11 +59,9 @@ class LLMHandler:
                 # Wrap the line
                 wrapped = textwrap.wrap(line, width=self.max_width, break_long_words=False, replace_whitespace=False)
                 wrapped_lines.extend(wrapped)
-        
-        
+
         # Join the wrapped lines back together
         return "  \n".join(wrapped_lines)
-
 
     def start_llm(self, prompt: str) -> list:
         try:
@@ -80,47 +78,47 @@ class LLMHandler:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_str},
             ]
-            
+
             response_text = self.get_completion(messages)
-            
+
             if "i don't know" in response_text.lower():
                 expanded_query = self.get_expand_context_query(messages)
+                self.console.print(f"Expanding context with query: [italic]{expanded_query}[/italic]")
                 expanded_context = self.create_context(expanded_query)
                 messages.append({
                     "role": "user",
                     "content": f"Okay here is some more context:\n---\n\n{expanded_context}\n\n---"
                 })
                 response_text = self.get_completion(messages)
-            
+
             messages.append({
                 "role": "assistant",
                 "content": response_text
             })
             return messages
-        
+
         except Exception as e:
             self.display_error(e)
 
     def continue_llm(self, messages: list) -> list:
         try:
             response_text = self.get_completion(messages)
-            
+
             if "i don't know" in response_text.lower():
                 expanded_query = self.get_expand_context_query(messages)
-                self.console.print(f"[italic]Expanding context with query: {expanded_query}[/italic]")
                 expanded_context = self.create_context(expanded_query)
                 messages.append({
                     "role": "user",
                     "content": f"Okay here is some more context:\n---\n\n{expanded_context}\n\n---"
                 })
                 response_text = self.get_completion(messages)
-            
+
             messages.append({
                 "role": "assistant",
                 "content": response_text
             })
             return messages
-        
+
         except Exception as e:
             self.display_error(e)
 
@@ -135,17 +133,17 @@ class LLMHandler:
         embeddings_handler = EmbeddingsHandler()
         search_embedding = embeddings_handler.get_embedding(text, "text-embedding-ada-002", self.openai_client)
         scope_options = {"channel_id": self.channel_id}
-        
+
         chroma_res = collection.query(
             query_embeddings=[search_embedding],
             n_results=10,
             where=scope_options,
         )
-        
+
         documents = chroma_res["documents"][0]
         metadata = chroma_res["metadatas"][0]
         distances = chroma_res["distances"][0]
-        
+
         res = []
         for i in range(len(documents)):
             text = documents[i]
@@ -154,9 +152,11 @@ class LLMHandler:
             link = f"https://youtu.be/{video_id}?t={time_to_secs(start_time)}"
             channel_name = get_channel_name_from_video_id(video_id)
             channel_id = metadata[i]["channel_id"]
+            date_posted = metadata[i]["video_date"]
             title = get_title_from_db(video_id)
-            
+
             match = {
+                "date_posted": date_posted,
                 "distance": distances[i],
                 "channel_name": channel_name,
                 "channel_id": channel_id,
@@ -167,14 +167,14 @@ class LLMHandler:
                 "link": link,
             }
             res.append(match)
-        
+
         return self.format_context(res)
 
     def get_expand_context_query(self, messages: list) -> str:
         try:
             system_prompt = """
                             Your task is to generate a question to input into a vector search 
-                            engine of youtube subitles to find strings that can answer the question
+                            engine of youtube subtitles to find strings that can answer the question
                             asked in the previous message.
                             """
             formatted_context = self.format_message_history_context(messages)
@@ -182,9 +182,9 @@ class LLMHandler:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": formatted_context},
             ]
-            
+
             return self.get_completion(messages)
-        
+
         except Exception as e:
             self.display_error(e)
 
@@ -201,7 +201,7 @@ class LLMHandler:
                 stop=None,
             )
             return response.choices[0].message.content
-        
+
         except Exception as e:
             self.display_error(e)
 
@@ -221,12 +221,16 @@ class LLMHandler:
         formatted_context = ""
         for obj in chroma_res:
             tmp = f"""
+                ---
                 Video Title: {obj["video_title"]}
-                Text: {obj["subs"]}
-                Time: {obj["start_time"]}
-                Similarity: {obj["distance"]}
+                Date Posted: {obj["date_posted"]}
                 Link: {obj["link"]}
-                -------------------------
+                ---
+
+                {obj["subs"]}
+
+                ----------------------------------------
             """
+
             formatted_context += tmp
         return formatted_context
