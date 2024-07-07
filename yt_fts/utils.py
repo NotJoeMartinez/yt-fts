@@ -4,7 +4,7 @@ This is where I'm putting all the functions that don't belong anywhere else
 import datetime
 import re
 import sqlite3
-
+import webvtt
 
 
 def show_message(code):
@@ -25,9 +25,6 @@ def time_to_secs(time_str):
     """
     converts timestamp to seconds youtube urls. Subtracts 3 seconds to give a buffer. 
     """
-    # TODO: Figure out why we get syntax warning on first run
-    #  SyntaxWarning: invalid escape sequence '\d'
-    #  time_rex = re.search("^(\d\d):(\d\d):(\d\d)",time_str)
     time_rex = re.search(r"^(\d\d):(\d\d):(\d\d)", time_str)
     hours = int(time_rex.group(1)) * 3600
     mins = int(time_rex.group(2)) * 60
@@ -37,7 +34,37 @@ def time_to_secs(time_str):
     return total_secs - 3
 
 
-def parse_vtt(file_path):
+def parse_vtt(vtt_path):
+
+    result = word_level_vtt_parser(vtt_path)
+
+    if len(result) == 0:
+        result = normal_vtt_parser(vtt_path)
+    
+    if len(result) == 0:
+        print(f"Error: Failed to parse subtitles for: {vtt_path}")
+
+    return result
+
+
+def normal_vtt_parser(vtt_path):
+
+    result = []
+
+    for caption in webvtt.read(vtt_path):
+        start_time = caption.start
+        stop_time = caption.end
+        text = caption.text
+        result.append({
+            'start_time': start_time,
+            'stop_time': stop_time,
+            'text': text,
+        })
+
+    return result
+
+
+def word_level_vtt_parser(vtt_path):
     """
     extracts start time and text from vtt file and return a list of dicts
     """
@@ -45,7 +72,7 @@ def parse_vtt(file_path):
 
     time_pattern = "^(.*) align:start position:0%"
 
-    with open(file_path, "r") as f:
+    with open(vtt_path, "r") as f:
         lines = f.readlines()
 
     for count, line in enumerate(lines):

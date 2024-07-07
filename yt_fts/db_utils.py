@@ -115,9 +115,26 @@ def get_channels():
 def search_channel(channel_id, text, limit=None):
     db = Database(get_db_path())
 
-    query = f"video_id IN (SELECT video_id FROM Videos WHERE channel_id = '{channel_id}')"
-    return list(db["Subtitles"].search(text,
-                                       where=query,
+    words = text.split()
+    processed_words = []
+    for word in words:
+        if '"' in word:
+            processed_words.append(word.replace('"', '""'))
+        else:
+            processed_words.append(f'"{word}"')
+
+    processed_query = ' '.join(processed_words)
+
+    sql = f"""
+        video_id IN (
+            SELECT video_id 
+            FROM Videos 
+            WHERE channel_id = '{channel_id}'
+            )
+    """
+
+    return list(db["Subtitles"].search(processed_query,
+                                       where=sql,
                                        limit=limit))
 
 
@@ -132,10 +149,17 @@ def search_video(video_id, text, limit=None):
 def search_all(text, limit=None):
     db = Database(get_db_path())
 
-    # TODO: handle quotes
-    # this thing breaks if the user puts quotes in their
-    # search query
-    return list(db["Subtitles"].search(text, limit=limit))
+    words = text.split()
+    processed_words = []
+    for word in words:
+        if '"' in word:
+            processed_words.append(word.replace('"', '""'))
+        else:
+            processed_words.append(f'"{word}"')
+
+    processed_query = ' '.join(processed_words)
+
+    return list(db["Subtitles"].search(processed_query, limit=limit))
 
 
 def get_title_from_db(video_id):
