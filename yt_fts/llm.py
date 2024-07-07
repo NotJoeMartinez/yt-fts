@@ -189,7 +189,7 @@ class LLMHandler:
     def get_completion(self, messages: list) -> str:
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-4o",
                 messages=messages,
                 temperature=0,
                 max_tokens=2000,
