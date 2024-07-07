@@ -368,7 +368,7 @@ def embeddings(channel, openai_api_key, interval=10):
 @cli.command(
     name="llm",
     help="""
-        Interactive LLM chat bot RAG bot, needs to be run on a channel with 
+        Interactive LLM/RAG chat bot, needs to be run on a channel with 
         Embeddings.
     """
 )
