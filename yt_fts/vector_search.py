@@ -4,7 +4,7 @@ from rich.console import Console
 from sqlite_utils import Database
 
 from .utils import time_to_secs, bold_query_matches
-from .get_embeddings import get_embedding
+from .get_embeddings import EmbeddingsHandler 
 from .config import get_chroma_client
 from .db_utils import (
     get_channel_name_from_video_id,
@@ -23,7 +23,9 @@ def search_chroma_db(
     chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
-    search_embedding = get_embedding(text, "text-embedding-ada-002", openai_client)
+    embeddings_handler = EmbeddingsHandler()
+
+    search_embedding = embeddings_handler.get_embedding(text, "text-embedding-ada-002", openai_client)
 
     scope_options = {}
 

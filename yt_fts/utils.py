@@ -146,65 +146,65 @@ def enable_ss(channel_id):
     con.close()
 
 
-def split_subtitles(video_id, interval=60):
-    from datetime import datetime
-    from .db_utils import (
-        get_subs_by_video_id,
-        get_channel_name_from_video_id,
-        get_metadata_from_db
-    )
+# def split_subtitles(video_id, interval=60):
+#     from datetime import datetime
+#     from .db_utils import (
+#         get_subs_by_video_id,
+#         get_channel_name_from_video_id,
+#         get_metadata_from_db
+#     )
 
-    def time_to_seconds(time_str):
-        """ Convert time string to total seconds """
-        time_obj = datetime.strptime(time_str, '%H:%M:%S.%f').time()
-        return (time_obj.hour * 3600 +
-                time_obj.minute * 60 +
-                time_obj.second +
-                time_obj.microsecond / 1e6)
+#     def time_to_seconds(time_str):
+#         """ Convert time string to total seconds """
+#         time_obj = datetime.strptime(time_str, '%H:%M:%S.%f').time()
+#         return (time_obj.hour * 3600 +
+#                 time_obj.minute * 60 +
+#                 time_obj.second +
+#                 time_obj.microsecond / 1e6)
 
-    video_meta_data = get_metadata_from_db(video_id)
-    video_title = video_meta_data['video_title']
-    video_date = video_meta_data['video_date']
-    channel_name = get_channel_name_from_video_id(video_id)
+#     video_meta_data = get_metadata_from_db(video_id)
+#     video_title = video_meta_data['video_title']
+#     video_date = video_meta_data['video_date']
+#     channel_name = get_channel_name_from_video_id(video_id)
 
-    subs = get_subs_by_video_id(video_id)
+#     subs = get_subs_by_video_id(video_id)
 
-    if len(subs) == 0:
-        print("Video is too short to split")
-        return None
+#     if len(subs) == 0:
+#         print("Video is too short to split")
+#         return None
 
-    total_seconds = time_to_secs(subs[-1][1])
+#     total_seconds = time_to_secs(subs[-1][1])
 
-    if total_seconds < 10:
-        print("Video is too short to split")
+#     if total_seconds < 10:
+#         print("Video is too short to split")
 
-    # Convert times to seconds and store texts
-    converted_data = []
-    for start, end, text in subs:
-        start_seconds = time_to_seconds(start)
+#     # Convert times to seconds and store texts
+#     converted_data = []
+#     for start, end, text in subs:
+#         start_seconds = time_to_seconds(start)
 
 
-        converted_data.append((start_seconds, start, text))
+#         converted_data.append((start_seconds, start, text))
 
-    interval_texts = {}
-    for start, start_time_str, text in converted_data:
-        split_interval = int(start // interval) * interval
+#     interval_texts = {}
+#     for start, start_time_str, text in converted_data:
+#         split_interval = int(start // interval) * interval
 
-        if split_interval not in interval_texts:
-            interval_texts[split_interval] = {
-                'start_time': start_time_str,
-                'texts': []
-            }
+#         if split_interval not in interval_texts:
+#             interval_texts[split_interval] = {
+#                 'start_time': start_time_str,
+#                 'texts': []
+#             }
 
-        interval_texts[split_interval]['texts'].append(text)
+#         interval_texts[split_interval]['texts'].append(text)
 
-    result = []
-    for data in interval_texts.values():
-        start_time = data['start_time']
-        combined_text = ' '.join(data['texts']).strip()
-        result.append((start_time, combined_text))
+#     result = []
+#     for data in interval_texts.values():
+#         start_time = data['start_time']
+#         combined_text = ' '.join(data['texts']).strip()
+#         result.append((start_time, combined_text))
 
-    return result
+# return result
 
 
 def bold_query_matches(text, query):

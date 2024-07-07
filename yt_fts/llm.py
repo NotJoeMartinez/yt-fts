@@ -12,7 +12,7 @@ from .db_utils import (
     get_channel_name_from_video_id,
     get_title_from_db
 )
-from .get_embeddings import get_embedding
+from .get_embeddings import EmbeddingsHandler 
 from .utils import time_to_secs
 from .config import get_chroma_client
 
@@ -131,7 +131,9 @@ class LLMHandler:
 
     def create_context(self, text: str) -> str:
         collection = self.chroma_client.get_collection(name="subEmbeddings")
-        search_embedding = get_embedding(text, "text-embedding-ada-002", self.openai_client)
+
+        embeddings_handler = EmbeddingsHandler()
+        search_embedding = embeddings_handler.get_embedding(text, "text-embedding-ada-002", self.openai_client)
         scope_options = {"channel_id": self.channel_id}
         
         chroma_res = collection.query(
