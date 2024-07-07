@@ -318,8 +318,7 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
               type=int,
               help="Interval in seconds to split the transcripts into chunks")
 def embeddings(channel, openai_api_key, interval=10):
-    from yt_fts.db_utils import get_vid_ids_by_channel_id
-    from yt_fts.get_embeddings import EmbeddingsHandler 
+    from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
 
     from openai import OpenAI
@@ -343,34 +342,9 @@ def embeddings(channel, openai_api_key, interval=10):
         sys.exit(1)
 
     embeddings_handler = EmbeddingsHandler(interval=interval)
-
     embeddings_handler.add_embeddings_to_chroma(channel_id)
 
-    # openai_client = OpenAI(api_key=openai_api_key)
-    # channel_video_ids = get_vid_ids_by_channel_id(channel_id)
-    # channel_video_ids = [video_id[0] for video_id in channel_video_ids]
-
-    # subs = []
-    # for video_id in channel_video_ids:
-
-    #     split_subs = split_subtitles(video_id, interval=interval)
-
-    #     if split_subs is None:
-    #         continue
-
-    #     for sub in split_subs:
-    #         start_time = sub[0]
-    #         text = sub[1]
-    #         subs.append({
-    #             'channel_id': channel_id,
-    #             'video_id': video_id,
-    #             'start_time': start_time,
-    #             'text': text
-    #         })
-
-    # add_embeddings_to_chroma(subs, openai_client)
-
-    # mark the channel as enabled for semantic search 
+    # mark the channel as enabled for semantic search
     enable_ss(channel_id)
     console.print("[green]Embeddings generated[/green]")
     sys.exit(0)

@@ -105,11 +105,12 @@ class EmbeddingsHandler:
     def split_subtitles(self, video_id):
 
         raw_subtitles = get_subs_by_video_id(video_id)
-        total_seconds = time_to_secs(raw_subtitles[-1][1])
 
         if len(raw_subtitles) == 0:
-            print("Video is too short to split")
+            print(f"Error: No subtitles found for video: {video_id}")
             return None
+
+        total_seconds = time_to_secs(raw_subtitles[-1][1])
 
         if total_seconds < self.interval:
             print("Video is too short to split")
