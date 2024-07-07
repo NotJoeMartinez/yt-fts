@@ -314,14 +314,13 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
 @click.option("-i", "--interval",
-              default=10,
+              default=30,
               type=int,
               help="Interval in seconds to split the transcripts into chunks")
-def embeddings(channel, openai_api_key, interval=10):
+def embeddings(channel, openai_api_key, interval=30):
     from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
 
-    from openai import OpenAI
     channel_id = get_channel_id_from_input(channel)
 
     # verify that embeddings have not already been created for the channel

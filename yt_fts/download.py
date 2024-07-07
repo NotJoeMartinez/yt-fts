@@ -1,4 +1,5 @@
 import yt_dlp
+import shutil
 import tempfile
 import sys
 import re
@@ -79,7 +80,7 @@ def get_videos_list(channel_url):  # download, update
     Scrapes list of all video urls from the channel
     """
 
-    with console.status("[bold green]Scraping video urls, this might take a little...") as status:
+    with console.status("[bold green]Scraping video urls ...") as status:
         ydl_opts = {
             'extract_flat': True,
             'quiet': True,
@@ -107,7 +108,7 @@ def get_playlist_data(playlist_url):  # download
     Returns a list of channel ids and video ids from a playlist
     """
 
-    with console.status("[bold green]Scraping video urls, this might take a little...") as status:
+    with console.status("[bold green]Scraping video urls...") as status:
         ydl_opts = {
             'quiet': True,
             'extract_flat': True,

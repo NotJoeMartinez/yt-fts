@@ -22,6 +22,7 @@ class EmbeddingsHandler:
     def __init__(self, interval: Optional[int] = 10) -> None:
 
         self.interval = interval
+        self.console = Console()
 
     def add_embeddings_to_chroma(self, channel_id: str) -> None:
 
@@ -113,7 +114,7 @@ class EmbeddingsHandler:
         total_seconds = time_to_secs(raw_subtitles[-1][1])
 
         if total_seconds < self.interval:
-            print("Video is too short to split")
+            self.console.print(f"https://youtu.be/{video_id} is too short to split with the given interval.")
             return None
 
         # Convert timestamps to seconds and store texts
