@@ -5,15 +5,15 @@ from rich.console import Console
 from .config import get_chroma_client
 
 
-def add_embeddings_to_chroma(subs, openai_client):
+def add_embeddings_to_chroma(subs: list, openai_client: object) -> None:
     chroma_client = get_chroma_client()
     collection = chroma_client.get_or_create_collection(name="subEmbeddings")
 
     for sub in track(subs, description="Getting embeddings"):
-        channel_id = sub[0]
-        video_id = sub[1]
-        start_time = sub[2]
-        text = sub[3]
+        channel_id = sub['channel_id']
+        video_id = sub['video_id']
+        start_time = sub['start_time']
+        text = sub['text'] 
 
         if text == '':
             continue

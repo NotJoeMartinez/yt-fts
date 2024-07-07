@@ -268,10 +268,6 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):  # 
         list_of_videos_urls = get_videos_list(channel_url)
 
         console.print(f"[green][bold]Downloading [red]{len(list_of_videos_urls)}[/red] vtt files[/bold][/green]\n")
-        console.print(
-            "[green]I would normally show a progress bar here, but multithreading and progress bars don't play nice.["
-            "/green]\n")
-
         download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
         add_channel_info(channel_id, channel_name, channel_url)
         vtt_to_db(tmp_dir)

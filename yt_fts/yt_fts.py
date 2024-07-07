@@ -345,19 +345,27 @@ def embeddings(channel, openai_api_key, interval=10):
     openai_client = OpenAI(api_key=openai_api_key)
 
     channel_video_ids = get_vid_ids_by_channel_id(channel_id)
+    channel_video_ids = [video_id[0] for video_id in channel_video_ids]
 
-    channel_subs = []
-    for vid_id in channel_video_ids:
-        split_subs = split_subtitles(vid_id[0], interval=interval)
+    subs = []
+    for video_id in channel_video_ids:
+
+        split_subs = split_subtitles(video_id, interval=interval)
+
         if split_subs is None:
             continue
+
         for sub in split_subs:
             start_time = sub[0]
             text = sub[1]
-            embedding_subs = (channel_id, vid_id[0], start_time, text)
-            channel_subs.append(embedding_subs)
+            subs.append({
+                'channel_id': channel_id,
+                'video_id': video_id,
+                'start_time': start_time,
+                'text': text
+            })
 
-    add_embeddings_to_chroma(channel_subs, openai_client)
+    add_embeddings_to_chroma(subs, openai_client)
 
     # mark the channel as enabled for semantic search 
     enable_ss(channel_id)
