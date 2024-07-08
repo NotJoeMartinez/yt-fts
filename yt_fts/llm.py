@@ -32,7 +32,7 @@ class LLMHandler:
         while True:
             user_input = Prompt.ask("> ")
             if user_input.lower() == "exit":
-                self.console.print("Goodbye!", style="bold red")
+                self.console.print("Bye!", style="bold red")
                 sys.exit(0)
             messages.append({"role": "user", "content": user_input})
             messages = self.continue_llm(messages)

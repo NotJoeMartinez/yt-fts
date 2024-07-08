@@ -108,13 +108,24 @@ Fetches OpenAI embeddings for specified channel
 
 yt-fts embeddings --channel "3Blue1Brown"
 
-# specify time interval in seconds to split text by default is 10 
+# specify time interval in seconds to split text by default is 30 
 # the larger the interval the more accurate the llm response  
 # but semantic search will have more text for you to read. 
 yt-fts embeddings --interval 60 --channel "3Blue1Brown" 
 ```
 After the embeddings are saved you will see a `(ss)` next to the channel name when you 
 list channels, and you will be able to use the `vsearch` command for that channel. 
+
+## `llm` (Chat Bot)
+Starts interactive chat session with `gpt-4o` OpenAI model using 
+the semantic search results of your initial prompt as the context
+to answer questions. If it can't answer your question, it has a 
+mechanism to update the context by running targeted query based 
+off the conversation. The channel must have semantic search enabled.
+
+```sh
+yt-fts llm --channel "3Blue1Brown" "How does back propagation work?"
+```
 
 ## `vsearch` (Semantic Search)
 `vsearch` is for "Vector search". This requires that you enable semantic 
@@ -135,17 +146,6 @@ yt-fts vsearch "[search query]" --limit "[number of results]" --channel "[channe
 # export results to csv
 yt-fts vsearch "[search query]" --export --channel "[channel name or id]" 
 
-```
-
-## `llm` (Chat Bot)
-Starts interactive chat session with `gpt-4o` OpenAI model using 
-the semantic search results of your initial prompt as the context
-to answer questions. If it can't answer your question, it has a 
-mechanism to update the context by running targeted query based 
-off the conversation. The channel must have semantic search enabled.
-
-```sh
-yt-fts llm --channel "3Blue1Brown" "How does back propagation work?"
 ```
 
 ## How To
