@@ -68,11 +68,8 @@ class LLMHandler:
             context = self.create_context(prompt)
             user_str = f"Context: {context}\n\n---\n\nQuestion: {prompt}\nAnswer:"
             system_prompt = """
-                            Answer the question based on the context below, The context are 
-                            subtitles and timestamped links from videos related to the question. 
-                            In your answer, provide the link to the video where the answer can 
-                            be found. and if the question can't be answered based on the context, 
-                            say \"I don't know\" AND ONLY I don't know\n\n
+                            Answer the question based on the context below, and if the question can't be answered based on the context, 
+                            say \"I don't know\"\n\n
                             """
             messages = [
                 {"role": "system", "content": system_prompt},
@@ -81,7 +78,8 @@ class LLMHandler:
 
             response_text = self.get_completion(messages)
 
-            if "i don't know" in response_text.lower():
+
+            if response_text.lower().startswith("i don't know"):
                 expanded_query = self.get_expand_context_query(messages)
                 self.console.print(f"Expanding context with query: [italic]{expanded_query}[/italic]")
                 expanded_context = self.create_context(expanded_query)
@@ -104,8 +102,9 @@ class LLMHandler:
         try:
             response_text = self.get_completion(messages)
 
-            if "i don't know" in response_text.lower():
+            if response_text.lower().startswith("i don't know"): 
                 expanded_query = self.get_expand_context_query(messages)
+                self.console.print(f"Expanding context with query: [italic]{expanded_query}[/italic]")
                 expanded_context = self.create_context(expanded_query)
                 messages.append({
                     "role": "user",
@@ -175,7 +174,8 @@ class LLMHandler:
             system_prompt = """
                             Your task is to generate a question to input into a vector search 
                             engine of youtube subtitles to find strings that can answer the question
-                            asked in the previous message.
+                            asked in the previous message. Just respond with the question you would
+                            ask to find the answer.
                             """
             formatted_context = self.format_message_history_context(messages)
             messages = [
@@ -193,7 +193,7 @@ class LLMHandler:
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=messages,
-                temperature=0,
+                temperature=0.5,
                 max_tokens=2000,
                 top_p=1,
                 frequency_penalty=0,

@@ -257,11 +257,6 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
     from yt_fts.vector_search import search_chroma_db, print_vector_search_results
     from yt_fts.export import export_vector_search
 
-    if len(text) > 80:
-        show_message("search_too_long")
-        sys.exit(1)
-
-    # get api key for openai
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
 
