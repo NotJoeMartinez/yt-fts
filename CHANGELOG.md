@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.54] - 2024-07-09
+### Fixed
+- vtt parsing now handles normal vtt and word level time stamps
+  - https://github.com/NotJoeMartinez/yt-fts/pull/159
+
+### Changed 
+- Embeddings now include segment metadata 
+  - https://github.com/NotJoeMartinez/yt-fts/pull/158
+
 ## [0.1.53] - 2024-07-06
 ### Changed
 - changed model LLM model to gpt-4o
