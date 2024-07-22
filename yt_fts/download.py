@@ -148,8 +148,10 @@ def download_vtts(number_of_jobs, video_ids, language, tmp_dir):  # download, up
 
 def quiet_progress_hook(d):  # download
     if d['status'] == 'finished':
-        filename = Path(d['filename']).name
-        print(f" -> {filename}")
+        # TODO: Add verbose flag to show full path
+        print(f" -> {d['filename']}")
+        # filename = Path(d['filename']).name
+        # print(f" -> {filename}")
 
 
 def get_vtt(tmp_dir, video_url, language):  # download
@@ -264,6 +266,7 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):  # 
     import tempfile
     from yt_fts.db_utils import add_channel_info
 
+    # TODO: Allow for partial downloads
     with tempfile.TemporaryDirectory() as tmp_dir:
         channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
         list_of_videos_urls = get_videos_list(channel_url)
@@ -275,6 +278,7 @@ def download_channel(channel_id, channel_name, language, number_of_jobs, s):  # 
     return True
 
 
+# TODO: Allow for partial downloads
 def download_playlist(playlist_url, s, language=None, number_of_jobs=None):  # yt-fts
     """
         Downloads all subtitles from playlist, making new channels where needed
