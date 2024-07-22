@@ -155,19 +155,24 @@ def quiet_progress_hook(d):  # download
 
 
 def get_vtt(tmp_dir, video_url, language):  # download
-    ydl_opts = {
-        'outtmpl': f'{tmp_dir}/%(id)s',
-        'writeinfojson': True,
-        'writeautomaticsub': True,
-        'subtitlesformat': 'vtt',
-        'skip_download': True,
-        'subtitleslangs': [language, '-live_chat'],
-        'quiet': True,
-        'progress_hooks': [quiet_progress_hook]
-    }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([video_url])
+    try: 
+        ydl_opts = {
+            'outtmpl': f'{tmp_dir}/%(id)s',
+            'writeinfojson': True,
+            'writeautomaticsub': True,
+            'subtitlesformat': 'vtt',
+            'skip_download': True,
+            'subtitleslangs': [language, '-live_chat'],
+            'quiet': True,
+            'progress_hooks': [quiet_progress_hook]
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_url])
+
+    except Exception as e:
+        console.print(f"Failed to get: {video_url}\n{e}")
 
 
 def vtt_to_db(dir_path):  # download, update
