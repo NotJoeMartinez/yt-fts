@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yt-fts"
-version = "0.1.54"
+version = "0.1.55"
 description = "Search all of a YouTube channel from the command line"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -23,11 +23,11 @@ dependencies = [
     "click==8.1.7",
     "openai==1.35.3",
     "chromadb==0.5.2",
-    "requests==2.31.0",
+    "requests>=2.32.2,<3",
     "rich==13.7.1",
     "sqlite-utils==3.36",
     "beautifulsoup4==4.12.3",
-    "yt-dlp==2024.5.27",
+    "yt-dlp==2024.7.16",
     "webvtt-py==0.5.1"
 ]
 
