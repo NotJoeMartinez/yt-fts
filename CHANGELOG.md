@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.55] - 2024-07-22
+### Fixed
+- After running download, there's nothing in the DB
+  - https://github.com/NotJoeMartinez/yt-fts/issues/161
+  - https://github.com/NotJoeMartinez/yt-fts/pull/162
+
+- `nsig extraction failed` error
+  - https://github.com/NotJoeMartinez/yt-fts/pull/162
+
+
 ## [0.1.54] - 2024-07-09
 ### Fixed
 - vtt parsing now handles normal vtt and word level time stamps
