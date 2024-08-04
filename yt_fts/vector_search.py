@@ -19,13 +19,14 @@ def search_chroma_db(
         channel_id=None,
         video_id=None,
         limit=10,
+        embedding=None,
         openai_client=None):
     chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
-    embeddings_handler = EmbeddingsHandler()
+    embeddings_handler = EmbeddingsHandler(embedding=embedding, openai_client=openai_client)
 
-    search_embedding = embeddings_handler.get_embedding(text, "text-embedding-ada-002", openai_client)
+    search_embedding = embeddings_handler.get_embedding(text, embedding, openai_client)
 
     scope_options = {}
 
