@@ -8,7 +8,7 @@ from rich.progress import track
 from rich.console import Console
 from .config import get_chroma_client
 from .utils import time_to_secs
-
+from chromadb.errors import InvalidDimensionException
 from .db_utils import (
     get_subs_by_video_id,
     get_metadata_from_db,
@@ -19,10 +19,12 @@ from .db_utils import (
 
 class EmbeddingsHandler:
 
-    def __init__(self, interval: Optional[int] = 10) -> None:
+    def __init__(self, embedding, openai_client, interval: Optional[int] = 10,) -> None:
 
         self.interval = interval
         self.console = Console()
+        self.embedding = embedding
+        self.openai_client = openai_client
 
     def add_embeddings_to_chroma(self, channel_id: str) -> None:
 
@@ -66,7 +68,8 @@ class EmbeddingsHandler:
 
             embedding = self.get_embedding(
                 segment_object['text_with_meta_data'],
-                "text-embedding-ada-002"
+                self.embedding,
+                self.openai_client
             )
 
             meta_data = {
@@ -77,13 +80,23 @@ class EmbeddingsHandler:
                 "video_title": segment_object['video_title'],
                 "video_date": segment_object['video_date'],
             }
-
-            collection.add(
-                documents=[segment_object['text']],
-                embeddings=[embedding],
-                metadatas=[meta_data],
-                ids=[f"{uuid.uuid4()}"],
-            )
+            try:
+                collection.add(
+                    documents=[segment_object['text']],
+                    embeddings=[embedding],
+                    metadatas=[meta_data],
+                    ids=[f"{uuid.uuid4()}"],
+                )
+            except InvalidDimensionException:
+                print("Invalid Dimension Exception. Deleting collection and trying again.")
+                # Error occurrs when there is dimension mismatch between embeddings and the collection caused using different models
+                chroma_client.delete_collection()
+                collection.add(
+                    documents=[segment_object['text']],
+                    embeddings=[embedding],
+                    metadatas=[meta_data],
+                    ids=[f"{uuid.uuid4()}"],
+                )
 
     def add_meta_data_to_text(self,
                               channel_name,
@@ -152,7 +165,7 @@ class EmbeddingsHandler:
 
         return combined_intervals
 
-    def get_embedding(self, text, model="text-embedding-ada-002", client=None):
+    def get_embedding(self, text, model, client=None):
 
         if client is None:
             client = OpenAI()

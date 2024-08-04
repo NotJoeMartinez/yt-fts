@@ -18,8 +18,13 @@ from .config import get_chroma_client
 
 
 class LLMHandler:
-    def __init__(self, openai_api_key: str, channel: str):
-        self.openai_client = OpenAI(api_key=openai_api_key)
+    def __init__(self,model: str, embedding: str, ollama:bool, ollama_host: str, openai_api_key: str, channel: str):
+        if ollama:
+            self.openai_client = OpenAI(api_key='ollama', base_url = ollama_host)
+        else:
+            self.openai_client = OpenAI(api_key=openai_api_key)
+        self.model = model
+        self.embedding = embedding
         self.channel_id = get_channel_id_from_input(channel)
         self.chroma_client = get_chroma_client()
         self.console = Console()
@@ -129,8 +134,8 @@ class LLMHandler:
     def create_context(self, text: str) -> str:
         collection = self.chroma_client.get_collection(name="subEmbeddings")
 
-        embeddings_handler = EmbeddingsHandler()
-        search_embedding = embeddings_handler.get_embedding(text, "text-embedding-ada-002", self.openai_client)
+        embeddings_handler = EmbeddingsHandler(self.embedding, self.openai_client)
+        search_embedding = embeddings_handler.get_embedding(text, self.embedding, self.openai_client)
         scope_options = {"channel_id": self.channel_id}
 
         chroma_res = collection.query(
@@ -191,7 +196,7 @@ class LLMHandler:
     def get_completion(self, messages: list) -> str:
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
+                model=self.model,
                 messages=messages,
                 temperature=0.5,
                 max_tokens=2000,

@@ -1,8 +1,8 @@
 import os
 import sys
-
 import click
 import requests
+from openai import OpenAI
 from rich.console import Console
 
 from .config import get_config_path, get_db_path, get_or_make_chroma_path
@@ -253,7 +253,6 @@ def search(text, channel, video, export, limit):
               help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
                    "environment variable.")
 def vsearch(text, channel, video, limit, export, openai_api_key):
-    from openai import OpenAI
     from yt_fts.vector_search import search_chroma_db, print_vector_search_results
     from yt_fts.export import export_vector_search
 
@@ -282,6 +281,7 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
                            channel_id=channel,
                            video_id=video,
                            limit=limit,
+                           embedding=embeddings,
                            openai_client=openai_client)
 
     print_vector_search_results(res, query=text)
@@ -301,6 +301,8 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
     Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
     """
 )
+@click.option("--openai", is_flag=True, default=False, help="Use OpenAI API for llm")
+@click.option("--ollama", is_flag=True, default=False, help="Use Ollama API for llm")
 @click.option("-c", "--channel",
               default=None,
               help="The name or id of the channel to generate embeddings for")
@@ -312,9 +314,45 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
               default=30,
               type=int,
               help="Interval in seconds to split the transcripts into chunks")
-def embeddings(channel, openai_api_key, interval=30):
+@click.option("--embedding", help="The name of the embedding model to use")
+def embeddings(channel, openai, ollama, embedding, openai_api_key, interval=30):
     from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
+
+    if not (openai or ollama):
+        console.print("Please specify an API to use for LLM --openai or --ollama")
+        sys.exit(1)
+    if openai:
+        if embedding not in ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"]:
+            console.print(f"Invalid model {embedding}")
+            sys.exit(1)
+        if openai_api_key is None:
+            openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+        if openai_api_key is None:
+            console.print("""
+            [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+                    
+                    export OPENAI_API_KEY=<your_key> to set the key
+                        """)
+            sys.exit(1)
+        ollama_host = ""
+        openai_client = OpenAI(api_key=openai)
+    elif ollama:
+        ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434/v1")
+        console.print(f"Using Ollama API at {ollama_host}")
+        try:
+            openai_client = OpenAI(base_url=ollama_host, api_key="ollama")
+        except:
+            console.print(f"Run the Ollama API server or set the OLLAMA_HOST environment variable for Remote Ollama server")
+            sys.exit(1)
+        models = openai_client.models.list()
+        if embedding is None:
+            console.print("Please specify the embedding model to use with --embedding")
+            sys.exit(1)
+        if embedding not in [m.id for m in models.data]:
+            console.print(f"Invalid embedding model {embedding}")
+            sys.exit(1)
 
     channel_id = get_channel_id_from_input(channel)
 
@@ -323,19 +361,7 @@ def embeddings(channel, openai_api_key, interval=30):
         console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
         sys.exit(1)
 
-    # get api key for openai
-    if openai_api_key is None:
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-    if openai_api_key is None:
-        console.print("""
-        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
-                
-                export OPENAI_API_KEY=<your_key> to set the key
-                      """)
-        sys.exit(1)
-
-    embeddings_handler = EmbeddingsHandler(interval=interval)
+    embeddings_handler = EmbeddingsHandler(interval=interval, embedding=embedding, openai_client=openai_client)
     embeddings_handler.add_embeddings_to_chroma(channel_id)
 
     # mark the channel as enabled for semantic search
@@ -351,6 +377,10 @@ def embeddings(channel, openai_api_key, interval=30):
         Embeddings.
     """
 )
+@click.option("--openai", is_flag=True, default=False, help="Use OpenAI API for llm")
+@click.option("--ollama", is_flag=True, default=False, help="Use Ollama API for llm")
+@click.option("-m", "--model", default="gpt4o", help="The model to use for llm")
+@click.option("--embedding", default=None, help="The name of the embedding model to use")
 @click.argument("prompt", required=True)
 @click.option("-c",
               "--channel",
@@ -361,21 +391,47 @@ def embeddings(channel, openai_api_key, interval=30):
               default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
-def llm(prompt, channel, openai_api_key=None):
+def llm(openai, ollama, model, embedding, prompt, channel, openai_api_key=None):
     from yt_fts.llm import LLMHandler 
 
-    if openai_api_key is None:
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-    if openai_api_key is None:
-        console.print("""
-        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
-                
-                export OPENAI_API_KEY=<your_key> to set the key
-                      """)
+    if not (openai or ollama):
+        console.print("Please specify an API to use for LLM --openai or --ollama")
         sys.exit(1)
+    if openai:
+        if model not in ["gpt4o-mini", "gpt4o", "gpt4", "gpt-3.5-turbo"]:
+            console.print(f"Invalid model {model}")
+            sys.exit(1)
+        if openai_api_key is None:
+            openai_api_key = os.environ.get("OPENAI_API_KEY")
 
-    llm_handler = LLMHandler(openai_api_key, channel)
+        if openai_api_key is None:
+            console.print("""
+            [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+                    
+                    export OPENAI_API_KEY=<your_key> to set the key
+                        """)
+            sys.exit(1)
+        embedding = "text-embedding-ada-002"
+        ollama_host = None
+    elif ollama:
+        ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434/v1")
+        try:
+            openai_client = OpenAI(base_url=ollama_host, api_key="ollama")
+        except:
+            console.print(f"Run the Ollama API server or set the OLLAMA_HOST environment variable for Remote Ollama server")
+            sys.exit(1)
+        models = openai_client.models.list()
+        if model not in [m.id for m in models.data]:
+            console.print(f"Invalid model {model}")
+            sys.exit(1)
+        if embedding is None:
+            console.print("Please specify the embedding model to use with --embedding")
+            sys.exit(1)
+        if embedding not in [m.id for m in models.data]:
+            console.print(f"Invalid embedding model {embedding}")
+            sys.exit(1)
+        
+    llm_handler = LLMHandler(model, embedding,  ollama, ollama_host, openai_api_key, channel)
     llm_handler.init_llm(prompt)
 
     sys.exit(0)
