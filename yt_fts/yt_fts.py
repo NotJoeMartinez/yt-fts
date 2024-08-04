@@ -379,7 +379,7 @@ def embeddings(channel, openai, ollama, embedding, openai_api_key, interval=30):
 )
 @click.option("--openai", is_flag=True, default=False, help="Use OpenAI API for llm")
 @click.option("--ollama", is_flag=True, default=False, help="Use Ollama API for llm")
-@click.option("-m", "--model", default="gpt4o", help="The model to use for llm")
+@click.option("-m", "--model", default="gpt-4o", help="The model to use for llm")
 @click.option("--embedding", default=None, help="The name of the embedding model to use")
 @click.argument("prompt", required=True)
 @click.option("-c",
@@ -398,7 +398,7 @@ def llm(openai, ollama, model, embedding, prompt, channel, openai_api_key=None):
         console.print("Please specify an API to use for LLM --openai or --ollama")
         sys.exit(1)
     if openai:
-        if model not in ["gpt4o-mini", "gpt4o", "gpt4", "gpt-3.5-turbo"]:
+        if model not in ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]:
             console.print(f"Invalid model {model}")
             sys.exit(1)
         if openai_api_key is None:
