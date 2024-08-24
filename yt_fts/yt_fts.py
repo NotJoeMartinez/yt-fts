@@ -303,19 +303,21 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
 )
 @click.option("--openai", is_flag=True, default=False, help="Use OpenAI API for llm")
 @click.option("--ollama", is_flag=True, default=False, help="Use Ollama API for llm")
-@click.option("-c", "--channel",
+@click.option( "--channel", "-c",
               default=None,
               help="The name or id of the channel to generate embeddings for")
 @click.option("--openai-api-key",
               default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
-@click.option("-i", "--interval",
+@click.option("--interval", "-i", 
               default=30,
               type=int,
               help="Interval in seconds to split the transcripts into chunks")
-@click.option("--embedding", help="The name of the embedding model to use")
-def embeddings(channel, openai, ollama, embedding, openai_api_key, interval=30):
+@click.option("--model",
+              default="text-embedding-3-large",
+              help="The name of the embedding model to use")
+def embeddings(channel, openai, ollama, model, openai_api_key, interval=30):
     from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
 
@@ -323,8 +325,8 @@ def embeddings(channel, openai, ollama, embedding, openai_api_key, interval=30):
         console.print("Please specify an API to use for LLM --openai or --ollama")
         sys.exit(1)
     if openai:
-        if embedding not in ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"]:
-            console.print(f"Invalid model {embedding}")
+        if model not in ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"]:
+            console.print(f"Invalid model {model}")
             sys.exit(1)
         if openai_api_key is None:
             openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -347,11 +349,11 @@ def embeddings(channel, openai, ollama, embedding, openai_api_key, interval=30):
             console.print(f"Run the Ollama API server or set the OLLAMA_HOST environment variable for Remote Ollama server")
             sys.exit(1)
         models = openai_client.models.list()
-        if embedding is None:
-            console.print("Please specify the embedding model to use with --embedding")
+        if model is None:
+            console.print("Please specify the embedding model to use with --model")
             sys.exit(1)
-        if embedding not in [m.id for m in models.data]:
-            console.print(f"Invalid embedding model {embedding}")
+        if model not in [m.id for m in models.data]:
+            console.print(f"Invalid embedding model {model}")
             sys.exit(1)
 
     channel_id = get_channel_id_from_input(channel)
@@ -361,7 +363,7 @@ def embeddings(channel, openai, ollama, embedding, openai_api_key, interval=30):
         console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
         sys.exit(1)
 
-    embeddings_handler = EmbeddingsHandler(interval=interval, embedding=embedding, openai_client=openai_client)
+    embeddings_handler = EmbeddingsHandler(interval=interval, embedding=model, openai_client=openai_client)
     embeddings_handler.add_embeddings_to_chroma(channel_id)
 
     # mark the channel as enabled for semantic search
