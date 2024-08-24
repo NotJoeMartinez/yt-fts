@@ -337,7 +337,7 @@ def embeddings(channel, openai, ollama, embedding, openai_api_key, interval=30):
                         """)
             sys.exit(1)
         ollama_host = ""
-        openai_client = OpenAI(api_key=openai)
+        openai_client = OpenAI(api_key=openai_api_key)
     elif ollama:
         ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434/v1")
         console.print(f"Using Ollama API at {ollama_host}")

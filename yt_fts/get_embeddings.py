@@ -90,7 +90,8 @@ class EmbeddingsHandler:
             except InvalidDimensionException:
                 print("Invalid Dimension Exception. Deleting collection and trying again.")
                 # Error occurrs when there is dimension mismatch between embeddings and the collection caused using different models
-                chroma_client.delete_collection()
+                print(f"Deleting collection: {collection.name}")
+                chroma_client.delete_collection(name=collection.name)
                 collection.add(
                     documents=[segment_object['text']],
                     embeddings=[embedding],
