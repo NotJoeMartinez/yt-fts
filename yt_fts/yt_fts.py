@@ -372,7 +372,7 @@ def embeddings(channel, api, model, openai_api_key, interval=30):
 
     embeddings_handler = EmbeddingsHandler(
         interval=interval,
-        embedding=model,
+        embedding_model=model,
         openai_client=openai_client
         )
     embeddings_handler.add_embeddings_to_chroma(channel_id)

@@ -24,7 +24,7 @@ def search_chroma_db(
     chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
-    embeddings_handler = EmbeddingsHandler(embedding=embedding, openai_client=openai_client)
+    embeddings_handler = EmbeddingsHandler(embedding_model=embedding, openai_client=openai_client)
 
     search_embedding = embeddings_handler.get_embedding(text, embedding, openai_client)
 

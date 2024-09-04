@@ -1,4 +1,5 @@
 import uuid
+import sys
 from typing import Optional, Any
 from openai import OpenAI
 from datetime import datetime
@@ -19,11 +20,11 @@ from .db_utils import (
 
 class EmbeddingsHandler:
 
-    def __init__(self, embedding, openai_client, interval: Optional[int] = 10,) -> None:
+    def __init__(self, embedding_model, openai_client, interval: Optional[int] = 10,) -> None:
 
         self.interval = interval
         self.console = Console()
-        self.embedding = embedding
+        self.embedding_model = embedding_model 
         self.openai_client = openai_client
 
     def add_embeddings_to_chroma(self, channel_id: str) -> None:
@@ -60,7 +61,34 @@ class EmbeddingsHandler:
                 })
 
         chroma_client = get_chroma_client()
-        collection = chroma_client.get_or_create_collection(name="subEmbeddings")
+
+        # self.console.print(dir(chroma_client))
+        self.console.print("count_collections", chroma_client.count_collections())
+
+        collections = chroma_client.list_collections()
+
+        if len(collections) > 0:
+            collection = collections[0]
+            collection_model = collection.metadata['model']
+            if collection_model != self.embedding_model:
+                error_msg = "[red]Error:[/red] Collection model mismatch. "
+                error_msg += f"\nSpecified embedding model \"{self.embedding_model}\" "
+                error_msg += f"does not match model of current collection "
+                error_msg += f"\"{collection_model}\""
+                self.console.print(error_msg)
+                sys.exit(1)
+                
+
+        collection = chroma_client.get_or_create_collection(
+            name="subEmbeddings",
+            metadata={
+                "model": self.embedding_model
+            })
+
+        print("collection:" , collection)
+        print("dir collection: ", dir(collection))
+        print("count: ", collection.count())
+        print("get_model: ", collection.get_model())
 
         for segment_object in track(formatted_segments, description="Getting embeddings"):
             if segment_object['text'] == '':
@@ -68,7 +96,7 @@ class EmbeddingsHandler:
 
             embedding = self.get_embedding(
                 segment_object['text_with_meta_data'],
-                self.embedding,
+                self.embedding_model,
                 self.openai_client
             )
 
@@ -89,7 +117,8 @@ class EmbeddingsHandler:
                 )
             except InvalidDimensionException:
                 print("Invalid Dimension Exception. Deleting collection and trying again.")
-                # Error occurrs when there is dimension mismatch between embeddings and the collection caused using different models
+                # Error occurrs when there is dimension mismatch between embeddings and 
+                # the collection caused using different models
                 print(f"Deleting collection: {collection.name}")
                 chroma_client.delete_collection(name=collection.name)
                 collection.add(
