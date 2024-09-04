@@ -8,6 +8,7 @@ from rich.table import Table
 from .utils import show_message, get_date
 from .config import get_db_path
 
+console = Console()
 
 def make_db(db_path):
     db = Database(db_path)
@@ -348,5 +349,5 @@ def get_channel_id_from_input(channel_input):  # yt_fts, export, search, vector_
     elif name_res is not None:
         return name_res
     else:
-        show_message("channel_not_found")
+        console.print("[bold red]Error:[/bold red] Channel not found.")
         sys.exit(1)
