@@ -12,13 +12,16 @@ from .db_utils import (
     get_channel_name_from_id,
     delete_channel
 )
-from .download import (
-    get_channel_id,
-    get_channel_name,
-    validate_channel_url,
-    download_channel,
-    download_playlist
-)
+# from .download import (
+#     get_channel_id,
+#     get_channel_name,
+#     validate_channel_url,
+#     download_channel,
+#     download_playlist
+# )
+
+from .download import DownloadHandler
+
 from .list import list_channels
 from .update import update_channel
 from .utils import (
@@ -53,18 +56,25 @@ def download(url, playlist, language, number_of_jobs):
     s = requests.session()
     handle_reject_consent_cookie(url, s)
 
+    download_handler = DownloadHandler()
+
     if playlist:
         if "playlist?" not in url:
             console.print(f"\n[bold red]Error:[/bold red] Invalid playlist url {url}")
             print("\nYouTube playlists have this format: https://www.youtube.com/playlist?list=<playlist_id>\n")
             sys.exit(1)
-        download_playlist(url, s, language, number_of_jobs)
+        
+        download_handler.download_playlist(url, s, language, number_of_jobs)
+
+        # download_playlist(url, s, language, number_of_jobs)
         sys.exit(0)
 
+
+    download_handler.get_channel_id()
     # find out if the channel exists on the internet 
     with console.status("[bold green]Getting Channel ID..."):
-        url = validate_channel_url(url)
-        channel_id = get_channel_id(url, s)
+        url = download_handler.validate_channel_url(url)
+        channel_id = download_handler.get_channel_id(url, s)
 
     if channel_id is None:
         console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
@@ -79,13 +89,13 @@ def download(url, playlist, language, number_of_jobs):
         console.print(error)
         sys.exit(1)
 
-    channel_name = get_channel_name(channel_id, s)
+    channel_name = download_handler.get_channel_name(channel_id, s)
 
     if channel_name is None:
         console.print("[bold red]Error:[/bold red] The channel does not exist.")
         sys.exit(1)
 
-    dl_status = download_channel(channel_id, channel_name, language, number_of_jobs, s)
+    dl_status = download_handler.download_channel(channel_id, channel_name, language, number_of_jobs, s)
 
     if dl_status is None:
         console.print("[bold red]Error:[/bold red] Unable to download channel.")
