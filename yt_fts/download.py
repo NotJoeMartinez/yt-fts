@@ -11,7 +11,14 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 from .config import get_db_path
-from .db_utils import add_video, add_channel_info, check_if_channel_exists
+from .db_utils import (
+    add_video,
+    add_channel_info,
+    check_if_channel_exists,
+    get_channel_id_from_input,
+    get_num_vids,
+    get_vid_ids_by_channel_id
+    )
 from .list import list_channels
 from .utils import parse_vtt, get_date, handle_reject_consent_cookie
 
@@ -19,7 +26,9 @@ from rich.progress import track
 from rich.console import Console
 
 class DownloadHandler:
-    def __init__(self):
+    def __init__(self, cookies_from_browser=None,):
+
+        self.cookies_from_browser = cookies_from_browser
         self.console = Console()
         self.number_of_jobs = 1
         self.session = None
@@ -82,6 +91,49 @@ class DownloadHandler:
             self.tmp_dir = tmp_dir
             self.download_vtts()
             self.vtt_to_db()
+
+
+    def update_channel(self, target_channel, language, number_of_jobs):
+        self.language = language
+        self.number_of_jobs = number_of_jobs
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.tmp_dir = tmp_dir
+            self.channel_id = get_channel_id_from_input(target_channel)
+            channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
+            self.session = self.init_session(channel_url)
+            self.channel_name = self.get_channel_name(self.channel_id) 
+            public_video_ids = self.get_videos_list(channel_url)
+            num_public_vids = len(public_video_ids)
+            num_local_vids = get_num_vids(self.channel_id)
+
+            if num_public_vids == num_local_vids:
+                self.console.print("[yellow]No new videos to download[/yellow]")
+                sys.exit(0)
+
+            local_vid_ids = get_vid_ids_by_channel_id(self.channel_id)
+            local_vid_ids = [i[0] for i in local_vid_ids]
+
+            fresh_videos = [i for i in public_video_ids if i not in local_vid_ids]
+            self.video_ids = fresh_videos
+
+            self.console.print(f"Found {len(fresh_videos)} videos on \"{self.channel_name}\" not in the database")
+            self.console.print(f"Downloading {len(fresh_videos)} new videos from \"{self.channel_name}\"")
+
+            self.download_vtts()
+
+            vtt_to_parse = os.listdir(self.tmp_dir)
+
+            if len(vtt_to_parse) == 0:
+                self.console.print("No new videos saved")
+                self.console.print(f"{len(fresh_videos)} videos on \"{self.channel_name}\" do not have subtitles")
+                sys.exit(0)
+
+            self.vtt_to_db()
+
+            self.console.print(f"Added {len(vtt_to_parse)} new videos from \"{self.channel_name}\" to the database")
+
+
 
     def init_session(self, url):
         s = requests.session()
@@ -209,8 +261,11 @@ class DownloadHandler:
                 'skip_download': True,
                 'subtitleslangs': [language, '-live_chat'],
                 'quiet': True,
-                'progress_hooks': [self.quiet_progress_hook]
+                'progress_hooks': [self.quiet_progress_hook],
             }
+
+            if self.cookies_from_browser is not None: 
+                ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([video_url])
@@ -293,9 +348,6 @@ class DownloadHandler:
         self.console.print("    - https://www.youtube.com/channel/[yellow]channelId[/yellow]")
         self.console.print("")
         sys.exit(1)
-
-
-
 
     
     def handle_channel_exists(self):

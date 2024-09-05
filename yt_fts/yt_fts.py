@@ -1,30 +1,25 @@
 import os
 import sys
-
 import click
-import requests
+
 from rich.console import Console
 
-from .config import get_config_path, get_db_path, get_or_make_chroma_path
+from .download import DownloadHandler
+from .list import list_channels
+from .utils import show_message
+from .config import (
+    get_config_path,
+    get_db_path, 
+    get_or_make_chroma_path
+)
 from .db_utils import (
-    check_if_channel_exists,
     get_channel_id_from_input,
     get_channel_name_from_id,
     delete_channel
 )
 
-from .download import DownloadHandler
-
-from .list import list_channels
-from .update import update_channel
-from .utils import (
-    handle_reject_consent_cookie,
-    show_message
-)
-
 YT_FTS_VERSION = "0.1.56"
 console = Console()
-
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -45,9 +40,14 @@ def cli():
 @click.option("-p", "--playlist", is_flag=True, required=False)
 @click.option("-l", "--language", default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def download(url, playlist, language, number_of_jobs):
+@click.option("--cookies-from-browser",
+              default=None,
+              help="Browser to extract cookies from. Ex: chrome, firefox") 
+def download(url, playlist, language, number_of_jobs, cookies_from_browser):
 
-    download_handler = DownloadHandler()
+    download_handler = DownloadHandler(
+        cookies_from_browser=cookies_from_browser
+    )
 
     if playlist:
         if "playlist?" not in url:
@@ -95,19 +95,22 @@ def list(transcript, channel, library):
     will still attempt to download subtitles as subtitles are sometimes added later.
     """
 )
-@click.option("-c", "--channel", default=None, required=True, help="The name or id of the channel to update.")
-@click.option("-l", "--language", default="en", help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def update(channel, language, number_of_jobs):
-    channel_id = get_channel_id_from_input(channel)
-    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+@click.option("-c", "--channel",
+              default=None, required=True, help="The name or id of the channel to update.")
+@click.option("-l", "--language",
+              default="en", help="Language of the subtitles to download")
+@click.option("-j", "--number-of-jobs",
+              type=int, default=1, help="Optional number of jobs to parallelize the run")
+@click.option("--cookies-from-browser",
+                default=None,
+                help="Browser to extract cookies from. Ex: chrome, firefox")
+def update(channel, language, number_of_jobs, cookies_from_browser):
 
-    s = requests.session()
-    handle_reject_consent_cookie(channel_url, s)
+    update_handler = DownloadHandler(
+        cookies_from_browser=cookies_from_browser
+    )
+    update_handler.update_channel(channel, language, number_of_jobs)
 
-    channel_name = get_channel_name(channel_id, s)
-
-    update_channel(channel_id, channel_name, language, number_of_jobs, s)
     sys.exit(0)
 
 
