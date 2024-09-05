@@ -1,5 +1,6 @@
 import sqlite3
 import sys
+import re
 
 from sqlite_utils import Database
 from rich.console import Console
@@ -112,10 +113,37 @@ def get_channels():
     return db.execute("SELECT ROWID, channel_id, channel_name, channel_url FROM Channels").fetchall()
 
 
+def escape_fts5_query(query):
+    special_chars = ['"', '*', '(', ')', '-', '+']
+    for char in special_chars:
+        query = query.replace(char, f'"{char}"')
+    return query
+
+
+def escape_fts5_term(term):
+    special_chars = ['"', '*', '(', ')', '+', '-']
+    for char in special_chars:
+        term = term.replace(char, f'"{char}"')
+    return f'"{term}"'
+
+
+def parse_query(query):
+    terms = re.findall(r'"[^"]*"|\S+', query)
+    parsed_query = []
+    for term in terms:
+        if term.upper() in ('AND', 'OR'):
+            parsed_query.append(term.upper())
+        else:
+            parsed_query.append(escape_fts5_term(term.strip('"')))
+    return ' '.join(parsed_query)
+
+
 def search_channel(channel_id, text, limit=None):
     conn = sqlite3.connect(get_db_path())
     curr = conn.cursor()
     
+    fts5_query = parse_query(text)
+
     query = """
         SELECT 
             s.rowid,
@@ -139,9 +167,9 @@ def search_channel(channel_id, text, limit=None):
     
     if limit is not None:
         query += " LIMIT ?"
-        curr.execute(query, (text, channel_id, limit))
+        curr.execute(query, (fts5_query, channel_id, limit))
     else:
-        curr.execute(query, (text, channel_id))
+        curr.execute(query, (fts5_query, channel_id))
 
     res = curr.fetchall()
     formatted_res = []
@@ -157,6 +185,7 @@ def search_channel(channel_id, text, limit=None):
     conn.close()
 
     return formatted_res
+
 
 def search_video(video_id, text, limit=None):
     db = Database(get_db_path())
