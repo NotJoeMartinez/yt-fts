@@ -118,6 +118,14 @@ def search_channel(channel_id, text, limit=None):
     words = text.split()
     processed_words = []
     for word in words:
+        if word == "OR":
+            processed_words.append("OR")
+            continue
+
+        if word == "AND":
+            processed_words.append("AND")
+            continue
+
         if '"' in word:
             processed_words.append(word.replace('"', '""'))
         else:
@@ -125,6 +133,7 @@ def search_channel(channel_id, text, limit=None):
 
     processed_query = ' '.join(processed_words)
 
+    print(processed_query)
     sql = f"""
         video_id IN (
             SELECT video_id 
@@ -133,9 +142,44 @@ def search_channel(channel_id, text, limit=None):
             )
     """
 
-    return list(db["Subtitles"].search(processed_query,
-                                       where=sql,
-                                       limit=limit))
+    conn = sqlite3.connect(get_db_path())
+    curr = conn.cursor()
+    curr.execute(
+        """
+            SELECT 
+                s.rowid,
+                s.subtitle_id,
+                s.video_id,
+                s.start_time,
+                s.stop_time,
+                s.text
+            FROM 
+                Subtitles_fts fts
+            JOIN 
+                Subtitles s ON fts.rowid = s.rowid
+            JOIN 
+                Videos v ON s.video_id = v.video_id
+            WHERE 
+                fts.text MATCH ?
+                AND v.channel_id = ? 
+            ORDER BY 
+                rank
+    """, (text, channel_id))
+
+    res = curr.fetchall()
+    foo = []
+    for row in res:
+        foo.append({
+            "rowid": row[0],
+            "subtitle_id": row[1],
+            "video_id": row[2],
+            "start_time": row[3],
+            "stop_time": row[4],
+            "text": row[5]
+        })
+    conn.close()
+
+    return foo 
 
 
 def search_video(video_id, text, limit=None):

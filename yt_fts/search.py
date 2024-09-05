@@ -147,7 +147,8 @@ def print_fts_res(res, query):
     num_channels = len(set(channel_names))
     num_videos = len(set([quote["video_id"] for quote in res]))
 
-    summary_str = f"Found [bold]{num_matches}[/bold] matches in [bold]{num_videos}[/bold] videos from [bold]{num_channels}[/bold] channel"
+    summary_str = f"Found [bold]{num_matches}[/bold] matches in [bold]{num_videos}[/bold] "
+    summary_str += f"videos from [bold]{num_channels}[/bold] channel"
 
     if num_channels > 1:
         summary_str += "s"
