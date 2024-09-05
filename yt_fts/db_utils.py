@@ -196,19 +196,59 @@ def search_video(video_id, text, limit=None):
 
 
 def search_all(text, limit=None):
-    db = Database(get_db_path())
+    try:
+        conn = sqlite3.connect(get_db_path())
+        curr = conn.cursor()
+        fts5_query = parse_query(text)
 
-    words = text.split()
-    processed_words = []
-    for word in words:
-        if '"' in word:
-            processed_words.append(word.replace('"', '""'))
+        sql = """
+            SELECT 
+                s.rowid,
+                s.subtitle_id,
+                s.video_id,
+                s.start_time,
+                s.stop_time,
+                s.text
+            FROM
+                Subtitles_fts fts
+            JOIN
+                Subtitles s ON fts.rowid = s.rowid
+            WHERE
+                fts.text MATCH ?
+            ORDER BY
+                rank
+        """
+
+        if limit is not None:
+            sql += " LIMIT ?"
+            curr.execute(sql, (fts5_query, limit))
         else:
-            processed_words.append(f'"{word}"')
+            curr.execute(sql, (fts5_query,))
 
-    processed_query = ' '.join(processed_words)
 
-    return list(db["Subtitles"].search(processed_query, limit=limit))
+        res = curr.fetchall()
+
+        formatted_res = []
+
+        for row in res:
+            formatted_res.append({
+                "rowid": row[0],
+                "subtitle_id": row[1],
+                "video_id": row[2],
+                "start_time": row[3],
+                "stop_time": row[4],
+                "text": row[5]
+            })
+
+        conn.close()
+        return formatted_res
+
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+    
+    finally:
+        conn.close()
 
 
 def get_title_from_db(video_id):
