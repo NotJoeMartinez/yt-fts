@@ -1,5 +1,6 @@
 import sqlite3
 import sys
+import re
 
 from sqlite_utils import Database
 from rich.console import Console
@@ -112,54 +113,188 @@ def get_channels():
     return db.execute("SELECT ROWID, channel_id, channel_name, channel_url FROM Channels").fetchall()
 
 
-def search_channel(channel_id, text, limit=None):
-    db = Database(get_db_path())
+def escape_fts5_query(query):
+    special_chars = ['"', '*', '(', ')', '-', '+']
+    for char in special_chars:
+        query = query.replace(char, f'"{char}"')
+    return query
 
-    words = text.split()
-    processed_words = []
-    for word in words:
-        if '"' in word:
-            processed_words.append(word.replace('"', '""'))
+
+def escape_fts5_term(term):
+    special_chars = ['"', '*', '(', ')', '+', '-']
+    for char in special_chars:
+        term = term.replace(char, f'"{char}"')
+    return f'"{term}"'
+
+
+def parse_query(query):
+    terms = re.findall(r'"[^"]*"|\S+', query)
+    parsed_query = []
+    for term in terms:
+        if term in ('AND', 'OR'):
+            parsed_query.append(term.upper())
         else:
-            processed_words.append(f'"{word}"')
+            parsed_query.append(escape_fts5_term(term.strip('"')))
+    return ' '.join(parsed_query)
 
-    processed_query = ' '.join(processed_words)
 
-    sql = f"""
-        video_id IN (
-            SELECT video_id 
-            FROM Videos 
-            WHERE channel_id = '{channel_id}'
-            )
+def search_channel(channel_id, text, limit=None):
+    conn = sqlite3.connect(get_db_path())
+    curr = conn.cursor()
+    
+    fts5_query = parse_query(text)
+
+    query = """
+        SELECT 
+            s.rowid,
+            s.subtitle_id,
+            s.video_id,
+            s.start_time,
+            s.stop_time,
+            s.text
+        FROM 
+            Subtitles_fts fts
+        JOIN 
+            Subtitles s ON fts.rowid = s.rowid
+        JOIN 
+            Videos v ON s.video_id = v.video_id
+        WHERE 
+            fts.text MATCH ?
+            AND v.channel_id = ? 
+        ORDER BY 
+            rank
     """
+    
+    if limit is not None:
+        query += " LIMIT ?"
+        curr.execute(query, (fts5_query, channel_id, limit))
+    else:
+        curr.execute(query, (fts5_query, channel_id))
 
-    return list(db["Subtitles"].search(processed_query,
-                                       where=sql,
-                                       limit=limit))
+    res = curr.fetchall()
+    formatted_res = []
+    for row in res:
+        formatted_res.append({
+            "rowid": row[0],
+            "subtitle_id": row[1],
+            "video_id": row[2],
+            "start_time": row[3],
+            "stop_time": row[4],
+            "text": row[5]
+        })
+    conn.close()
+
+    return formatted_res
 
 
 def search_video(video_id, text, limit=None):
-    db = Database(get_db_path())
+    try:
+        conn = sqlite3.connect(get_db_path())
+        curr = conn.cursor()
 
-    return list(db["Subtitles"].search(text,
-                                       where=f"video_id = '{video_id}'",
-                                       limit=limit))
+        fts5_query = parse_query(text)
+        sql = """
+        SELECT 
+            s.rowid,
+            s.subtitle_id,
+            s.video_id,
+            s.start_time,
+            s.stop_time,
+            s.text 
+        FROM
+            Subtitles_fts fts
+        JOIN
+            Subtitles s ON fts.rowid = s.rowid 
+        WHERE
+            s.video_id = ?
+        AND
+            fts.text MATCH ?
+        """
+
+        if limit is not None:
+            sql += " LIMIT ?"
+            curr.execute(sql, (video_id, fts5_query, limit))
+        else:
+            curr.execute(sql, (video_id, fts5_query))
+        
+        res = curr.fetchall()
+
+        formatted_res = []
+
+        for row in res:
+            formatted_res.append({
+                "rowid": row[0],
+                "subtitle_id": row[1],
+                "video_id": row[2],
+                "start_time": row[3],
+                "stop_time": row[4],
+                "text": row[5]
+            })
+        
+        conn.close()
+        return formatted_res 
+
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+    finally:
+        conn.close()
 
 
 def search_all(text, limit=None):
-    db = Database(get_db_path())
+    try:
+        conn = sqlite3.connect(get_db_path())
+        curr = conn.cursor()
+        fts5_query = parse_query(text)
 
-    words = text.split()
-    processed_words = []
-    for word in words:
-        if '"' in word:
-            processed_words.append(word.replace('"', '""'))
+        sql = """
+            SELECT 
+                s.rowid,
+                s.subtitle_id,
+                s.video_id,
+                s.start_time,
+                s.stop_time,
+                s.text
+            FROM
+                Subtitles_fts fts
+            JOIN
+                Subtitles s ON fts.rowid = s.rowid
+            WHERE
+                fts.text MATCH ?
+            ORDER BY
+                rank
+        """
+
+        if limit is not None:
+            sql += " LIMIT ?"
+            curr.execute(sql, (fts5_query, limit))
         else:
-            processed_words.append(f'"{word}"')
+            curr.execute(sql, (fts5_query,))
 
-    processed_query = ' '.join(processed_words)
 
-    return list(db["Subtitles"].search(processed_query, limit=limit))
+        res = curr.fetchall()
+
+        formatted_res = []
+
+        for row in res:
+            formatted_res.append({
+                "rowid": row[0],
+                "subtitle_id": row[1],
+                "video_id": row[2],
+                "start_time": row[3],
+                "stop_time": row[4],
+                "text": row[5]
+            })
+
+        conn.close()
+        return formatted_res
+
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+    
+    finally:
+        conn.close()
 
 
 def get_title_from_db(video_id):
