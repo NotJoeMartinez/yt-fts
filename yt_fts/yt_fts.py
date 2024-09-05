@@ -1,34 +1,25 @@
 import os
 import sys
-
 import click
-import requests
+
 from rich.console import Console
 
-from .config import get_config_path, get_db_path, get_or_make_chroma_path
+from .download import DownloadHandler
+from .list import list_channels
+from .utils import show_message
+from .config import (
+    get_config_path,
+    get_db_path, 
+    get_or_make_chroma_path
+)
 from .db_utils import (
-    check_if_channel_exists,
     get_channel_id_from_input,
     get_channel_name_from_id,
     delete_channel
 )
-from .download import (
-    get_channel_id,
-    get_channel_name,
-    validate_channel_url,
-    download_channel,
-    download_playlist
-)
-from .list import list_channels
-from .update import update_channel
-from .utils import (
-    handle_reject_consent_cookie,
-    show_message
-)
 
 YT_FTS_VERSION = "0.1.56"
 console = Console()
-
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -36,8 +27,8 @@ def cli():
     pass
 
 
-# download
 @cli.command(
+    name="download",
     help="""
     Download subtitles from a specified YouTube channel.
 
@@ -46,57 +37,36 @@ def cli():
     """
 )
 @click.argument("url", required=True)
-@click.option("-p", "--playlist", is_flag=True, required=False)
-@click.option("-l", "--language", default="en", help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def download(url, playlist, language, number_of_jobs):
-    s = requests.session()
-    handle_reject_consent_cookie(url, s)
+@click.option("-p", "--playlist", is_flag=True, required=False,
+              help="Download all videos from a playlist")
+@click.option("-l", "--language", default="en",
+              help="Language of the subtitles to download")
+@click.option("-j", "--number-of-jobs", type=int, default=1,
+              help="Optional number of jobs to parallelize the run")
+@click.option("--cookies-from-browser", default=None,
+              help="Browser to extract cookies from. Ex: chrome, firefox") 
+def download(url, playlist, language, number_of_jobs, cookies_from_browser):
+
+    download_handler = DownloadHandler(
+        number_of_jobs=number_of_jobs,
+        language=language,
+        cookies_from_browser=cookies_from_browser
+    )
 
     if playlist:
         if "playlist?" not in url:
-            console.print(f"\n[bold red]Error:[/bold red] Invalid playlist url {url}")
-            print("\nYouTube playlists have this format: https://www.youtube.com/playlist?list=<playlist_id>\n")
+            console.print(f"\n[bold red]Error:[/bold red] Invalid playlist url {url}\n")
+            console.print("YouTube playlists have this format: "
+                          "\"https://www.youtube.com/playlist?list=<playlist_id>\"\n")
             sys.exit(1)
-        download_playlist(url, s, language, number_of_jobs)
+        download_handler.download_playlist(url, language, number_of_jobs)
         sys.exit(0)
 
-    # find out if the channel exists on the internet 
-    with console.status("[bold green]Getting Channel ID..."):
-        url = validate_channel_url(url)
-        channel_id = get_channel_id(url, s)
-
-    if channel_id is None:
-        console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
-        sys.exit(1)
-
-    channel_exists = check_if_channel_exists(channel_id)
-
-    if channel_exists:
-        list_channels(channel_id)
-        error = "[bold red]Error:[/bold red] Channel already exists in database."
-        error += " Use update command to update the channel"
-        console.print(error)
-        sys.exit(1)
-
-    channel_name = get_channel_name(channel_id, s)
-
-    if channel_name is None:
-        console.print("[bold red]Error:[/bold red] The channel does not exist.")
-        sys.exit(1)
-
-    dl_status = download_channel(channel_id, channel_name, language, number_of_jobs, s)
-
-    if dl_status is None:
-        console.print("[bold red]Error:[/bold red] Unable to download channel.")
-        sys.exit(1)
-    else:
-        console.print("[green]Download complete[/green]")
-
-    sys.exit(0)
+    download_handler.download_channel(url) 
 
 
 @cli.command(
+    name="list",
     help="""
     View library, transcripts and channel video list 
     """
@@ -122,37 +92,46 @@ def list(transcript, channel, library):
 
 # update
 @cli.command(
+    name="update",
     help="""
-    Updates a specified YouTube channel.
-
-    You must provide the ID of the channel as an argument.
-    Keep in mind some might not have subtitles enabled. This command
-    will still attempt to download subtitles as subtitles are sometimes added later.
+    Update subtitles for all channels in the library or a specific channel. 
+    
+    Keep in mind some might not have subtitles enabled. This command will 
+    still attempt to download subtitles as subtitles are sometimes added later.
     """
 )
-@click.option("-c", "--channel", default=None, required=True, help="The name or id of the channel to update.")
-@click.option("-l", "--language", default="en", help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-def update(channel, language, number_of_jobs):
-    channel_id = get_channel_id_from_input(channel)
-    channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
+@click.option("-c", "--channel",
+              default=None, help="The name or id of the channel to update.")
+@click.option("-l", "--language",
+              default="en", help="Language of the subtitles to download")
+@click.option("-j", "--number-of-jobs",
+              type=int, default=1, help="Optional number of jobs to parallelize the run")
+@click.option("--cookies-from-browser",
+                default=None,
+                help="Browser to extract cookies from. Ex: chrome, firefox")
+def update(channel, language, number_of_jobs, cookies_from_browser):
 
-    s = requests.session()
-    handle_reject_consent_cookie(channel_url, s)
+    update_handler = DownloadHandler(
+        language=language,
+        number_of_jobs=number_of_jobs,
+        cookies_from_browser=cookies_from_browser
+    )
 
-    channel_name = get_channel_name(channel_id, s)
+    if channel is not None:
+        update_handler.update_channel(channel)
+        sys.exit(0)
+    
+    update_handler.update_all_channels()
 
-    update_channel(channel_id, channel_name, language, number_of_jobs, s)
     sys.exit(0)
 
 
-# Delete
 @cli.command(
+    name="delete",
     help="""
     Delete a channel and all its data. 
 
     You must provide the name or the id of the channel you want to delete as an argument. 
-
     The command will ask for confirmation before performing the deletion. 
     """
 )
@@ -176,13 +155,15 @@ def delete(channel):
 
 
 @cli.command(
+    name="export",
     help="""
         export transcripts
         """
 )
 @click.option("-c", "--channel", default=None, required=True,
               help="The name or id of the channel to export transcripts for")
-@click.option("-f", "--format", default="txt", help="The format to export transcripts to. Supported formats: txt, vtt")
+@click.option("-f", "--format", default="txt",
+              help="The format to export transcripts to. Supported formats: txt, vtt")
 def export(channel, format):
     output_dir = None
     from .export import export_channel_to_txt, export_channel_to_vtt
@@ -200,8 +181,8 @@ def export(channel, format):
         sys.exit(0)
 
 
-# search
 @cli.command(
+    name="search",
     help="""
         Search for a specified text within a channel, a specific video, or across all channels.
         """
@@ -237,8 +218,8 @@ def search(text, channel, video, export, limit):
     sys.exit(0)
 
 
-# vsearch
 @cli.command(
+    name="vsearch",
     help="""
             Vector search. Requires embeddings to be generated for the channel
             and environment variable OPENAI_API_KEY to be set.
@@ -294,24 +275,20 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
     sys.exit(0)
 
 
-# get-embeddings
 @cli.command(
+    name="embeddings",
     help="""
     Generate embeddings for a channel using OpenAI's embeddings API.
     Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
     """
 )
-@click.option("-c", "--channel",
-              default=None,
+@click.option("-c", "--channel", default=None,
               help="The name or id of the channel to generate embeddings for")
-@click.option("--openai-api-key",
-              default=None,
+@click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
-@click.option("-i", "--interval",
-              default=30,
-              type=int,
-              help="Interval in seconds to split the transcripts into chunks")
+@click.option("-i", "--interval", default=30, type=int,
+              help="Interval in seconds to split the transcripts into chunks. Default 30s.")
 def embeddings(channel, openai_api_key, interval=30):
     from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
@@ -352,13 +329,9 @@ def embeddings(channel, openai_api_key, interval=30):
     """
 )
 @click.argument("prompt", required=True)
-@click.option("-c",
-              "--channel",
-              default=None,
-              required=True,
+@click.option("-c", "--channel", default=None, required=True,
               help="The name or id of the channel to generate embeddings for")
-@click.option("--openai-api-key",
-              default=None,
+@click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
 def llm(prompt, channel, openai_api_key=None):
