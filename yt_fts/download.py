@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 
 from .config import get_db_path
 from .db_utils import add_video, add_channel_info, check_if_channel_exists
+from .list import list_channels
 from .utils import parse_vtt, get_date, handle_reject_consent_cookie
 
 from rich.progress import track
@@ -34,11 +35,16 @@ class DownloadHandler:
 
     def download_channel(self, url, language, number_of_jobs):
 
+        self.validate_channel_url(url)
         self.number_of_jobs = number_of_jobs
         self.language = language
         self.session = self.init_session(url)
         self.channel_id = self.get_channel_id(url)
         self.channel_name = self.get_channel_name(self.channel_id)
+
+        if check_if_channel_exists(self.channel_id):
+            self.handle_channel_exists()
+            sys.exit(1)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
@@ -53,9 +59,9 @@ class DownloadHandler:
 
             self.download_vtts()
             add_channel_info(self.channel_id, self.channel_name, channel_url)
-            self.vtt_to_db(tmp_dir)
-        return True
+            self.vtt_to_db()
 
+        self.console.print(f"[green]Finished downloading subtitles for {self.channel_name}[/green]")
 
 
     def init_session(self, url):
@@ -107,8 +113,9 @@ class DownloadHandler:
             channel_name = data['itemListElement'][0]['item']['name']
             return channel_name
         else:
-            print("we couldn't get the channel name")
-            return None
+            self.console.print("[red]Error:[/red] "
+                               "couldn't get the channel name or channel doesn't exist")
+            sys.exit(1)
 
     def get_videos_list(self, channel_url):
         with self.console.status("[bold green]Scraping video urls ...") as status:
@@ -282,3 +289,10 @@ class DownloadHandler:
             self.console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] vtt files[/bold][/green]\n")
             self.download_vtts(number_of_jobs, video_ids, language, tmp_dir)
             self.vtt_to_db(tmp_dir)
+    
+    def handle_channel_exists(self):
+        list_channels(self.channel_id)
+        error = "[bold red]Error:[/bold red] Channel already exists in database."
+        error += " Use the \"update\" command to update the channel\n"
+        self.console.print(error)
+        sys.exit(1)

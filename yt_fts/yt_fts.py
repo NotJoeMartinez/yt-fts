@@ -63,45 +63,9 @@ def download(url, playlist, language, number_of_jobs):
             sys.exit(1)
         
         download_handler.download_playlist(url, s, language, number_of_jobs)
-
-        # download_playlist(url, s, language, number_of_jobs)
         sys.exit(0)
 
-
     download_handler.download_channel(url, language, number_of_jobs) 
-
-    sys.exit(0)
-    # find out if the channel exists on the internet 
-    with console.status("[bold green]Getting Channel ID..."):
-        url = download_handler.validate_channel_url(url)
-        channel_id = download_handler.get_channel_id(url, s)
-
-    if channel_id is None:
-        console.print("[bold red]Error:[/bold red] Invalid channel URL or unable to extract channel ID.")
-        sys.exit(1)
-
-    channel_exists = check_if_channel_exists(channel_id)
-
-    if channel_exists:
-        list_channels(channel_id)
-        error = "[bold red]Error:[/bold red] Channel already exists in database."
-        error += " Use update command to update the channel"
-        console.print(error)
-        sys.exit(1)
-
-    channel_name = download_handler.get_channel_name(channel_id, s)
-
-    if channel_name is None:
-        console.print("[bold red]Error:[/bold red] The channel does not exist.")
-        sys.exit(1)
-
-    dl_status = download_handler.download_channel(channel_id, channel_name, language, number_of_jobs, s)
-
-    if dl_status is None:
-        console.print("[bold red]Error:[/bold red] Unable to download channel.")
-        sys.exit(1)
-    else:
-        console.print("[green]Download complete[/green]")
 
     sys.exit(0)
 
