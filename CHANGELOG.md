@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.56] - 2024-09-04
+## Fixed
+- `OR`, `AND` and Quoted searches not working
+  - https://github.com/NotJoeMartinez/yt-fts/issues/164
+  - https://github.com/NotJoeMartinez/yt-fts/pull/170
+
 ## [0.1.55] - 2024-07-22
 ### Fixed
 - After running download, there's nothing in the DB
