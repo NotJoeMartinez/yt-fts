@@ -90,7 +90,6 @@ def list(transcript, channel, library):
     sys.exit(0)
 
 
-# update
 @cli.command(
     name="update",
     help="""
@@ -193,7 +192,7 @@ def export(channel, format):
 @click.option("-l", "--limit", default=None, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 def search(text, channel, video, export, limit):
-    from yt_fts.search import fts_search, print_fts_res
+    from yt_fts.search import SearchHandler 
     from yt_fts.export import export_fts
 
     if len(text) > 40:
@@ -206,9 +205,15 @@ def search(text, channel, video, export, limit):
         scope = "video"
     else:
         scope = "all"
+    search_handler = SearchHandler(
+        scope=scope,
+        export=export
+    )
 
-    res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
-    print_fts_res(res, text)
+    search_handler.full_text_search(text)
+
+    # res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
+    # print_fts_res(res, text)
 
     if export:
         export_fts(text, scope, channel_id=channel, video_id=video)

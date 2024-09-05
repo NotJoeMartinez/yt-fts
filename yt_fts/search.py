@@ -19,7 +19,19 @@ class SearchHandler:
         self.scope = scope 
         self.export = export
         self.console = Console()
-        
+        self.channel_id = None
+        self.video_id = None
+        self.limit = None
+        self.limit = None
+        self.response = []
+
+    def full_text_search(self, text): 
+        if self.scope == 'all':
+            self.res = search_all(text, self.limit)
+        if self.scope == 'channel':
+            pass
+        if self.scope == 'video':
+            pass
 
 
     # full text search
