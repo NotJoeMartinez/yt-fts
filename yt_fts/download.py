@@ -26,24 +26,24 @@ from rich.progress import track
 from rich.console import Console
 
 class DownloadHandler:
-    def __init__(self, cookies_from_browser=None,):
+    def __init__(self, number_of_jobs=1, language='en', cookies_from_browser=None):
+
+        self.console = Console()
 
         self.cookies_from_browser = cookies_from_browser
-        self.console = Console()
-        self.number_of_jobs = 1
+        self.number_of_jobs = number_of_jobs
+        self.language = language 
+
         self.session = None
         self.channl_id = None
         self.channel_name = None
-        self.language = None
         self.video_ids = None
         self.tmp_dir = None
 
 
-    def download_channel(self, url, language, number_of_jobs):
+    def download_channel(self, url):
 
         self.validate_channel_url(url)
-        self.number_of_jobs = number_of_jobs
-        self.language = language
         self.session = self.init_session(url)
         self.channel_id = self.get_channel_id(url)
         self.channel_name = self.get_channel_name(self.channel_id)
@@ -93,9 +93,7 @@ class DownloadHandler:
             self.vtt_to_db()
 
 
-    def update_channel(self, target_channel, language, number_of_jobs):
-        self.language = language
-        self.number_of_jobs = number_of_jobs
+    def update_channel(self, target_channel):
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir

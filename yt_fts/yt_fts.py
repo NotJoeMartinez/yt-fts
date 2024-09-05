@@ -46,6 +46,8 @@ def cli():
 def download(url, playlist, language, number_of_jobs, cookies_from_browser):
 
     download_handler = DownloadHandler(
+        number_of_jobs=number_of_jobs,
+        language=language,
         cookies_from_browser=cookies_from_browser
     )
 
@@ -58,7 +60,7 @@ def download(url, playlist, language, number_of_jobs, cookies_from_browser):
         download_handler.download_playlist(url, language, number_of_jobs)
         sys.exit(0)
 
-    download_handler.download_channel(url, language, number_of_jobs) 
+    download_handler.download_channel(url) 
 
 
 @cli.command(
@@ -107,14 +109,15 @@ def list(transcript, channel, library):
 def update(channel, language, number_of_jobs, cookies_from_browser):
 
     update_handler = DownloadHandler(
+        language=language,
+        number_of_jobs=number_of_jobs,
         cookies_from_browser=cookies_from_browser
     )
-    update_handler.update_channel(channel, language, number_of_jobs)
+    update_handler.update_channel(channel)
 
     sys.exit(0)
 
 
-# Delete
 @cli.command(
     help="""
     Delete a channel and all its data. 
