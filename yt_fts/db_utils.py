@@ -113,63 +113,40 @@ def get_channels():
 
 
 def search_channel(channel_id, text, limit=None):
-    db = Database(get_db_path())
-
-    words = text.split()
-    processed_words = []
-    for word in words:
-        if word == "OR":
-            processed_words.append("OR")
-            continue
-
-        if word == "AND":
-            processed_words.append("AND")
-            continue
-
-        if '"' in word:
-            processed_words.append(word.replace('"', '""'))
-        else:
-            processed_words.append(f'"{word}"')
-
-    processed_query = ' '.join(processed_words)
-
-    print(processed_query)
-    sql = f"""
-        video_id IN (
-            SELECT video_id 
-            FROM Videos 
-            WHERE channel_id = '{channel_id}'
-            )
-    """
-
     conn = sqlite3.connect(get_db_path())
     curr = conn.cursor()
-    curr.execute(
-        """
-            SELECT 
-                s.rowid,
-                s.subtitle_id,
-                s.video_id,
-                s.start_time,
-                s.stop_time,
-                s.text
-            FROM 
-                Subtitles_fts fts
-            JOIN 
-                Subtitles s ON fts.rowid = s.rowid
-            JOIN 
-                Videos v ON s.video_id = v.video_id
-            WHERE 
-                fts.text MATCH ?
-                AND v.channel_id = ? 
-            ORDER BY 
-                rank
-    """, (text, channel_id))
+    
+    query = """
+        SELECT 
+            s.rowid,
+            s.subtitle_id,
+            s.video_id,
+            s.start_time,
+            s.stop_time,
+            s.text
+        FROM 
+            Subtitles_fts fts
+        JOIN 
+            Subtitles s ON fts.rowid = s.rowid
+        JOIN 
+            Videos v ON s.video_id = v.video_id
+        WHERE 
+            fts.text MATCH ?
+            AND v.channel_id = ? 
+        ORDER BY 
+            rank
+    """
+    
+    if limit is not None:
+        query += " LIMIT ?"
+        curr.execute(query, (text, channel_id, limit))
+    else:
+        curr.execute(query, (text, channel_id))
 
     res = curr.fetchall()
-    foo = []
+    formatted_res = []
     for row in res:
-        foo.append({
+        formatted_res.append({
             "rowid": row[0],
             "subtitle_id": row[1],
             "video_id": row[2],
@@ -179,8 +156,7 @@ def search_channel(channel_id, text, limit=None):
         })
     conn.close()
 
-    return foo 
-
+    return formatted_res
 
 def search_video(video_id, text, limit=None):
     db = Database(get_db_path())
