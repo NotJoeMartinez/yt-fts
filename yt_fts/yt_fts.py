@@ -303,7 +303,7 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
     """
 )
 @click.option("--api",
-              default="openai",
+              default=None,
               help="The API to use for embeddings, openai or ollama")
 @click.option( "--channel", "-c",
               default=None,
@@ -317,28 +317,41 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
               type=int,
               help="Interval in seconds to split the transcripts into chunks")
 @click.option("--model",
-              default="text-embedding-3-large",
+              default=None,
               help="The name of the embedding model to use")
 def embeddings(channel, api, model, openai_api_key, interval=30):
     from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
 
-    openai_embedding_models = ["text-embedding-3-small", "text-embedding-3-large", "text-embedding-ada-002"]
+    if api is None: 
+        console.print("[yellow]No API specified:[/yellow] " 
+                      "Using openai as default API. Use --api flag to specify an API.")
+        api = "openai"
+
 
     if api == 'openai':
-        if model not in openai_embedding_models:
-            console.print(f"[bold][red]Error:[/red][/bold] Invalid model {model}")
-            sys.exit(1)
         if openai_api_key is None:
             openai_api_key = os.environ.get("OPENAI_API_KEY")
 
         if openai_api_key is None:
-            console.print("""
-            [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
-                    
-                    export OPENAI_API_KEY=<your_key> to set the key
-                        """)
+            console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n"
+                          "Run \"export OPENAI_API_KEY=<your_key>\" to set the key")
             sys.exit(1)
+
+        if model is None:
+            console.print("[yellow]No model specified:[/yellow] "
+                          "using default openai model \"text-embedding-ada-002\".")
+            model = "text-embedding-ada-002"
+
+        openai_embedding_models = [
+            "text-embedding-3-small",
+            "text-embedding-3-large", 
+            "text-embedding-ada-002"
+            ]
+        if model not in openai_embedding_models:
+            console.print(f"[bold][red]Error:[/red][/bold] Invalid OpenAI model \"{model}\"")
+            sys.exit(1)
+
         openai_client = OpenAI(api_key=openai_api_key)
     else:
         ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434/v1")

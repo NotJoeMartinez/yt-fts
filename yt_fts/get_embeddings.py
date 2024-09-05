@@ -26,6 +26,7 @@ class EmbeddingsHandler:
         self.console = Console()
         self.embedding_model = embedding_model 
         self.openai_client = openai_client
+        self.chroma_client = get_chroma_client()
 
     def add_embeddings_to_chroma(self, channel_id: str) -> None:
 
@@ -62,17 +63,14 @@ class EmbeddingsHandler:
 
         chroma_client = get_chroma_client()
 
-        # self.console.print(dir(chroma_client))
-        self.console.print("count_collections", chroma_client.count_collections())
-
         collections = chroma_client.list_collections()
 
         if len(collections) > 0:
             collection = collections[0]
             collection_model = collection.metadata['model']
             if collection_model != self.embedding_model:
-                error_msg = "[red]Error:[/red] Collection model mismatch. "
-                error_msg += f"\nSpecified embedding model \"{self.embedding_model}\" "
+                error_msg = "[red]Error:[/red] Collection model mismatch.\n"
+                error_msg += f"Specified embedding model \"{self.embedding_model}\" "
                 error_msg += f"does not match model of current collection "
                 error_msg += f"\"{collection_model}\""
                 self.console.print(error_msg)
@@ -85,10 +83,6 @@ class EmbeddingsHandler:
                 "model": self.embedding_model
             })
 
-        print("collection:" , collection)
-        print("dir collection: ", dir(collection))
-        print("count: ", collection.count())
-        print("get_model: ", collection.get_model())
 
         for segment_object in track(formatted_segments, description="Getting embeddings"):
             if segment_object['text'] == '':
@@ -116,6 +110,7 @@ class EmbeddingsHandler:
                     ids=[f"{uuid.uuid4()}"],
                 )
             except InvalidDimensionException:
+                # don't delete collection if it's has a different model lol
                 print("Invalid Dimension Exception. Deleting collection and trying again.")
                 # Error occurrs when there is dimension mismatch between embeddings and 
                 # the collection caused using different models
@@ -204,6 +199,17 @@ class EmbeddingsHandler:
         text_embedding = client.embeddings.create(input=[text], model=model).data[0].embedding
 
         return text_embedding
+
+    def get_collection_model_if_exists(self):
+        collections = self.chroma_client.list_collections()
+
+        if len(collections) == 0:
+            return None
+
+        collection = collections[0]
+        collection_model = collection.metadata['model']
+        return collection_model
+
 
     def time_to_seconds(self, time_str):
         """ Convert time string to total seconds """
