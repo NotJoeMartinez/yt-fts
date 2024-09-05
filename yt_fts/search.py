@@ -33,14 +33,11 @@ def fts_search(text, scope, channel_id=None, video_id=None, limit=None):
         res = search_video(video_id, text, limit)
 
     if len(res) == 0:
-        console.print("- Try shortening the search to specific words")
-        console.print("- Try using the wildcard operator [bold]*[/bold] to search for partial words")
-        console.print("- Try using the [bold]OR[/bold] operator to search for multiple words")
-        if len(text.split(" ")) > 1:
-            example_or = text.replace(" ", " OR ")
-            console.print(f"    - EX: \"[bold]{example_or}[/bold]\"")
-        else:
-            console.print(f"    - EX: \"[bold]foo OR [bold]bar[/bold]\"")
+        console.print(f"[yellow]No matches found[/yellow]\n"
+                        "- Try shortening the search to specific words\n"
+                        "- Try using the wildcard operator [bold]*[/bold] to search for partial words\n"
+                        "- Try using the [bold]OR[/bold] operator to search for multiple words\n"
+                        "   - EX: \"foo OR bar\"")
         sys.exit(1)
 
     return res
