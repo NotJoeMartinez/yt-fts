@@ -1,14 +1,11 @@
 import yt_dlp
-import shutil
 import tempfile
 import sys
-import re
 import os
 import sqlite3
 import json
 import requests
 
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
@@ -64,6 +61,28 @@ class DownloadHandler:
         self.console.print(f"[green]Finished downloading subtitles for {self.channel_name}[/green]")
 
 
+    def download_playlist(self, playlist_url, language, number_of_jobs):
+        self.language = language
+        self.number_of_jobs = number_of_jobs
+
+        playlist_data = self.get_playlist_data(playlist_url)
+
+        for video in playlist_data:
+            channel_name = video["channel_name"]
+            channel_id = video["channel_id"]
+            channel_url = video["channel_url"]
+            if not check_if_channel_exists(channel_id):
+                add_channel_info(channel_id, channel_name, channel_url)
+
+        self.video_ids = list(set(video["video_id"] for video in playlist_data))
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] " 
+                               "vtt files[/bold][/green]\n")
+            self.tmp_dir = tmp_dir
+            self.download_vtts()
+            self.vtt_to_db()
+
     def init_session(self, url):
         s = requests.session()
         handle_reject_consent_cookie(url, s)
@@ -92,6 +111,7 @@ class DownloadHandler:
             self.console.print(f'Error: {e}')
             sys.exit(1)
 
+
     def get_channel_name(self, channel_id):
 
         session = self.session
@@ -116,6 +136,7 @@ class DownloadHandler:
             self.console.print("[red]Error:[/red] "
                                "couldn't get the channel name or channel doesn't exist")
             sys.exit(1)
+
 
     def get_videos_list(self, channel_url):
         with self.console.status("[bold green]Scraping video urls ...") as status:
@@ -230,8 +251,10 @@ class DownloadHandler:
                 start_time = sub['start_time']
                 stop_time = sub['stop_time']
                 text = sub['text']
-                cur.execute(f"INSERT INTO Subtitles (video_id, start_time, stop_time, text) VALUES (?, ?, ?, ?)",
-                            (vid_id, start_time, stop_time, text))
+                cur.execute("""
+                            INSERT INTO Subtitles (video_id, start_time, stop_time, text) 
+                            VALUES (?, ?, ?, ?)
+                            """, (vid_id, start_time, stop_time, text))
 
             con.commit()
 
@@ -273,22 +296,7 @@ class DownloadHandler:
 
 
 
-    def download_playlist(self, playlist_url, s, language=None, number_of_jobs=None):
-        playlist_data = self.get_playlist_data(playlist_url)
 
-        for video in playlist_data:
-            channel_name = video["channel_name"]
-            channel_id = video["channel_id"]
-            channel_url = video["channel_url"]
-            if not check_if_channel_exists(channel_id):
-                add_channel_info(channel_id, channel_name, channel_url)
-
-        video_ids = list(set(video["video_id"] for video in playlist_data))
-
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            self.console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] vtt files[/bold][/green]\n")
-            self.download_vtts(number_of_jobs, video_ids, language, tmp_dir)
-            self.vtt_to_db(tmp_dir)
     
     def handle_channel_exists(self):
         list_channels(self.channel_id)

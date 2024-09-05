@@ -12,13 +12,6 @@ from .db_utils import (
     get_channel_name_from_id,
     delete_channel
 )
-# from .download import (
-#     get_channel_id,
-#     get_channel_name,
-#     validate_channel_url,
-#     download_channel,
-#     download_playlist
-# )
 
 from .download import DownloadHandler
 
@@ -58,16 +51,14 @@ def download(url, playlist, language, number_of_jobs):
 
     if playlist:
         if "playlist?" not in url:
-            console.print(f"\n[bold red]Error:[/bold red] Invalid playlist url {url}")
-            print("\nYouTube playlists have this format: https://www.youtube.com/playlist?list=<playlist_id>\n")
+            console.print(f"\n[bold red]Error:[/bold red] Invalid playlist url {url}\n")
+            console.print("YouTube playlists have this format: "
+                          "\"https://www.youtube.com/playlist?list=<playlist_id>\"\n")
             sys.exit(1)
-        
-        download_handler.download_playlist(url, s, language, number_of_jobs)
+        download_handler.download_playlist(url, language, number_of_jobs)
         sys.exit(0)
 
     download_handler.download_channel(url, language, number_of_jobs) 
-
-    sys.exit(0)
 
 
 @cli.command(
