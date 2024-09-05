@@ -17,7 +17,8 @@ from .db_utils import (
     check_if_channel_exists,
     get_channel_id_from_input,
     get_num_vids,
-    get_vid_ids_by_channel_id
+    get_vid_ids_by_channel_id,
+    get_channels
     )
 from .list import list_channels
 from .utils import parse_vtt, get_date, handle_reject_consent_cookie
@@ -95,19 +96,21 @@ class DownloadHandler:
 
     def update_channel(self, target_channel):
 
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
             self.channel_id = get_channel_id_from_input(target_channel)
             channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
             self.session = self.init_session(channel_url)
             self.channel_name = self.get_channel_name(self.channel_id) 
+            self.console.print(f"Updating channel: {self.channel_name}")
             public_video_ids = self.get_videos_list(channel_url)
             num_public_vids = len(public_video_ids)
             num_local_vids = get_num_vids(self.channel_id)
 
             if num_public_vids == num_local_vids:
                 self.console.print("[yellow]No new videos to download[/yellow]")
-                sys.exit(0)
+                return
 
             local_vid_ids = get_vid_ids_by_channel_id(self.channel_id)
             local_vid_ids = [i[0] for i in local_vid_ids]
@@ -125,12 +128,22 @@ class DownloadHandler:
             if len(vtt_to_parse) == 0:
                 self.console.print("No new videos saved")
                 self.console.print(f"{len(fresh_videos)} videos on \"{self.channel_name}\" do not have subtitles")
-                sys.exit(0)
+                return
 
             self.vtt_to_db()
 
             self.console.print(f"Added {len(vtt_to_parse)} new videos from \"{self.channel_name}\" to the database")
 
+    def update_all_channels(self):
+
+        self.console.print("Updating all channels in the database")
+        all_channels = get_channels()
+        all_channel_row_ids = [i[0] for i in all_channels]
+
+        for channel_row_id in all_channel_row_ids:
+            self.update_channel(channel_row_id)
+        
+        self.console.print("[green]Finished updating all channels[/green]")
 
 
     def init_session(self, url):
@@ -207,7 +220,7 @@ class DownloadHandler:
                     if len(live_stream_urls) > 0:
                         list_of_videos_urls.extend(live_stream_urls)
             except Exception:
-                self.console.print("[bold red]No streams found")
+                self.console.print("No streams found")
 
         return list_of_videos_urls
 

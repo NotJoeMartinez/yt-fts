@@ -27,8 +27,8 @@ def cli():
     pass
 
 
-# download
 @cli.command(
+    name="download",
     help="""
     Download subtitles from a specified YouTube channel.
 
@@ -37,11 +37,13 @@ def cli():
     """
 )
 @click.argument("url", required=True)
-@click.option("-p", "--playlist", is_flag=True, required=False)
-@click.option("-l", "--language", default="en", help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
-@click.option("--cookies-from-browser",
-              default=None,
+@click.option("-p", "--playlist", is_flag=True, required=False,
+              help="Download all videos from a playlist")
+@click.option("-l", "--language", default="en",
+              help="Language of the subtitles to download")
+@click.option("-j", "--number-of-jobs", type=int, default=1,
+              help="Optional number of jobs to parallelize the run")
+@click.option("--cookies-from-browser", default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox") 
 def download(url, playlist, language, number_of_jobs, cookies_from_browser):
 
@@ -64,6 +66,7 @@ def download(url, playlist, language, number_of_jobs, cookies_from_browser):
 
 
 @cli.command(
+    name="list",
     help="""
     View library, transcripts and channel video list 
     """
@@ -89,16 +92,16 @@ def list(transcript, channel, library):
 
 # update
 @cli.command(
+    name="update",
     help="""
-    Updates a specified YouTube channel.
-
-    You must provide the ID of the channel as an argument.
-    Keep in mind some might not have subtitles enabled. This command
-    will still attempt to download subtitles as subtitles are sometimes added later.
+    Update subtitles for all channels in the library or a specific channel. 
+    
+    Keep in mind some might not have subtitles enabled. This command will 
+    still attempt to download subtitles as subtitles are sometimes added later.
     """
 )
 @click.option("-c", "--channel",
-              default=None, required=True, help="The name or id of the channel to update.")
+              default=None, help="The name or id of the channel to update.")
 @click.option("-l", "--language",
               default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs",
@@ -113,17 +116,22 @@ def update(channel, language, number_of_jobs, cookies_from_browser):
         number_of_jobs=number_of_jobs,
         cookies_from_browser=cookies_from_browser
     )
-    update_handler.update_channel(channel)
+
+    if channel is not None:
+        update_handler.update_channel(channel)
+        sys.exit(0)
+    
+    update_handler.update_all_channels()
 
     sys.exit(0)
 
 
 @cli.command(
+    name="delete",
     help="""
     Delete a channel and all its data. 
 
     You must provide the name or the id of the channel you want to delete as an argument. 
-
     The command will ask for confirmation before performing the deletion. 
     """
 )
@@ -147,13 +155,15 @@ def delete(channel):
 
 
 @cli.command(
+    name="export",
     help="""
         export transcripts
         """
 )
 @click.option("-c", "--channel", default=None, required=True,
               help="The name or id of the channel to export transcripts for")
-@click.option("-f", "--format", default="txt", help="The format to export transcripts to. Supported formats: txt, vtt")
+@click.option("-f", "--format", default="txt",
+              help="The format to export transcripts to. Supported formats: txt, vtt")
 def export(channel, format):
     output_dir = None
     from .export import export_channel_to_txt, export_channel_to_vtt
@@ -171,8 +181,8 @@ def export(channel, format):
         sys.exit(0)
 
 
-# search
 @cli.command(
+    name="search",
     help="""
         Search for a specified text within a channel, a specific video, or across all channels.
         """
@@ -208,8 +218,8 @@ def search(text, channel, video, export, limit):
     sys.exit(0)
 
 
-# vsearch
 @cli.command(
+    name="vsearch",
     help="""
             Vector search. Requires embeddings to be generated for the channel
             and environment variable OPENAI_API_KEY to be set.
@@ -265,24 +275,20 @@ def vsearch(text, channel, video, limit, export, openai_api_key):
     sys.exit(0)
 
 
-# get-embeddings
 @cli.command(
+    name="embeddings",
     help="""
     Generate embeddings for a channel using OpenAI's embeddings API.
     Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
     """
 )
-@click.option("-c", "--channel",
-              default=None,
+@click.option("-c", "--channel", default=None,
               help="The name or id of the channel to generate embeddings for")
-@click.option("--openai-api-key",
-              default=None,
+@click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
-@click.option("-i", "--interval",
-              default=30,
-              type=int,
-              help="Interval in seconds to split the transcripts into chunks")
+@click.option("-i", "--interval", default=30, type=int,
+              help="Interval in seconds to split the transcripts into chunks. Default 30s.")
 def embeddings(channel, openai_api_key, interval=30):
     from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
@@ -323,13 +329,9 @@ def embeddings(channel, openai_api_key, interval=30):
     """
 )
 @click.argument("prompt", required=True)
-@click.option("-c",
-              "--channel",
-              default=None,
-              required=True,
+@click.option("-c", "--channel", default=None, required=True,
               help="The name or id of the channel to generate embeddings for")
-@click.option("--openai-api-key",
-              default=None,
+@click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
 def llm(prompt, channel, openai_api_key=None):
