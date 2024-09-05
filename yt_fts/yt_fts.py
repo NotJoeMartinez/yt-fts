@@ -53,8 +53,6 @@ def cli():
 @click.option("-l", "--language", default="en", help="Language of the subtitles to download")
 @click.option("-j", "--number-of-jobs", type=int, default=1, help="Optional number of jobs to parallelize the run")
 def download(url, playlist, language, number_of_jobs):
-    s = requests.session()
-    handle_reject_consent_cookie(url, s)
 
     download_handler = DownloadHandler()
 
@@ -70,7 +68,9 @@ def download(url, playlist, language, number_of_jobs):
         sys.exit(0)
 
 
-    download_handler.get_channel_id()
+    download_handler.download_channel(url, language, number_of_jobs) 
+
+    sys.exit(0)
     # find out if the channel exists on the internet 
     with console.status("[bold green]Getting Channel ID..."):
         url = download_handler.validate_channel_url(url)

@@ -23,7 +23,40 @@ from rich.console import Console
 class DownloadHandler:
     def __init__(self):
         self.console = Console()
+        self.number_of_jobs = 1
         self.session = None
+        self.channl_id = None
+        self.channel_name = None
+        self.language = None
+        self.video_ids = None
+        self.tmp_dir = None
+
+
+    def download_channel(self, url, language, number_of_jobs):
+
+        self.number_of_jobs = number_of_jobs
+        self.language = language
+        self.session = self.init_session(url)
+        self.channel_id = self.get_channel_id(url)
+        self.channel_name = self.get_channel_name(self.channel_id)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            self.tmp_dir = tmp_dir
+            channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
+            self.video_ids = self.get_videos_list(channel_url)
+
+            self.console.print(
+                f"[green]Downloading [red]{len(self.video_ids)}[/red] "
+                "vtt files[/green]"
+                )
+
+
+            self.download_vtts()
+            add_channel_info(self.channel_id, self.channel_name, channel_url)
+            self.vtt_to_db(tmp_dir)
+        return True
+
+
 
     def init_session(self, url):
         s = requests.session()
@@ -53,8 +86,10 @@ class DownloadHandler:
             self.console.print(f'Error: {e}')
             sys.exit(1)
 
-    def get_channel_name(self, channel_id, s):
-        res = s.get(f"https://www.youtube.com/channel/{channel_id}/videos")
+    def get_channel_name(self, channel_id):
+
+        session = self.session
+        res = session.get(f"https://www.youtube.com/channel/{channel_id}/videos")
 
         if res.status_code == 200:
             html = res.text
@@ -120,16 +155,16 @@ class DownloadHandler:
 
         return playlist_data
 
-    def download_vtts(self, number_of_jobs, video_ids, language, tmp_dir):
-        executor = ThreadPoolExecutor(number_of_jobs)
+    def download_vtts(self):
+        executor = ThreadPoolExecutor(self.number_of_jobs)
         futures = []
 
-        for video_id in video_ids:
+        for video_id in self.video_ids:
             video_url = f'https://www.youtube.com/watch?v={video_id}'
-            future = executor.submit(self.get_vtt, tmp_dir, video_url, language)
+            future = executor.submit(self.get_vtt, self.tmp_dir, video_url, self.language)
             futures.append(future)
 
-        for i in range(len(video_ids)):
+        for i in range(len(self.video_ids)):
             futures[i].result()
 
     def quiet_progress_hook(self, d):
@@ -155,9 +190,12 @@ class DownloadHandler:
         except Exception as e:
             self.console.print(f"Failed to get: {video_url}\n{e}")
 
-    def vtt_to_db(self, dir_path):
-        items = os.listdir(dir_path)
-        file_paths = [os.path.join(dir_path, item) for item in items if item.endswith('.vtt')]
+    def vtt_to_db(self):
+
+        tmp_dir = self.tmp_dir
+
+        items = os.listdir(tmp_dir)
+        file_paths = [os.path.join(tmp_dir, item) for item in items if item.endswith('.vtt')]
 
         con = sqlite3.connect(get_db_path())
         cur = con.cursor()
@@ -226,16 +264,7 @@ class DownloadHandler:
         self.console.print("")
         sys.exit(1)
 
-    def download_channel(self, channel_id, channel_name, language, number_of_jobs, s):
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
-            list_of_videos_urls = self.get_videos_list(channel_url)
 
-            self.console.print(f"[green][bold]Downloading [red]{len(list_of_videos_urls)}[/red] vtt files[/bold][/green]\n")
-            self.download_vtts(number_of_jobs, list_of_videos_urls, language, tmp_dir)
-            add_channel_info(channel_id, channel_name, channel_url)
-            self.vtt_to_db(tmp_dir)
-        return True
 
     def download_playlist(self, playlist_url, s, language=None, number_of_jobs=None):
         playlist_data = self.get_playlist_data(playlist_url)

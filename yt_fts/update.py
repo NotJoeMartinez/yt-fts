@@ -2,7 +2,7 @@ import tempfile
 import os
 import sys
 
-from .download import get_videos_list, download_vtts, vtt_to_db
+from .download import DownloadHandler 
 from .db_utils import add_channel_info, get_num_vids, get_vid_ids_by_channel_id
 
 
