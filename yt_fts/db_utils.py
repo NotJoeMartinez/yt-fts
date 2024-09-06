@@ -87,9 +87,10 @@ def add_video(channel_id, video_id, video_title, video_url, video_date):
                                  (video_id,)).fetchone()
 
     if existing_video is None:
-        cur.execute(
-            "INSERT INTO Videos (video_id, video_title, video_url, video_date, channel_id) VALUES (?, ?, ?, ?, ?)",
-            (video_id, video_title, video_url, video_date, channel_id))
+        cur.execute("""
+                    INSERT INTO Videos (video_id, video_title, video_url, video_date, channel_id)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,(video_id, video_title, video_url, video_date, channel_id))
         conn.commit()
 
     else:
@@ -357,6 +358,7 @@ def delete_channel_from_chroma(channel_id):
     collection.delete(
         where={"channel_id": channel_id}
     )
+
 
 def get_channel_id_from_rowid(rowid):
     db = Database(get_db_path())
