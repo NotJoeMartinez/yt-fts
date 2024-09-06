@@ -2,6 +2,7 @@ import os
 import sys
 import sqlite3
 import tempfile
+import textwrap
 
 import yt_dlp
 from rich.console import Console
@@ -11,20 +12,6 @@ from urllib.parse import urlparse, parse_qs
 from .config import get_db_path
 from .utils import parse_vtt
 
-# determine if input_video is url or video id 
-# if it's a url get the video id 
-# check if the video id is in database
-# if video id is in database get the full transcript
-# if the video id is not in the database download the transcript
-# feed the transcript to an llm and print the summary
-
-# https://www.youtube.com/watch?v=Xjk6d5fPs_k
-# https://youtu.be/Xjk6d5fPs_k?si=BBb2URutUT2gG4th
-# https://youtu.be/Xjk6d5fPs_k
-# https://www.youtube.com/watch?v=Xjk6d5fPs_k&si=BBb2URutUT2gG4th
-# https://youtu.be/YWClyxKcSG0?t=142
-
-
 class SummarizeHandler:
     def __init__(self, openai_client, model, input_video):
 
@@ -32,6 +19,7 @@ class SummarizeHandler:
         self.model = model
         self.openai_client = openai_client
         self.input_video = input_video
+        self.max_width = 80
 
         if "https" in input_video:
             self.video_id = self.get_video_id_from_url(input_video)
@@ -60,12 +48,15 @@ class SummarizeHandler:
             {"role": "user", "content": transcript_text},
         ]
 
-        summary_text = self.get_completion(messages)
-        md = Markdown(summary_text)
-        self.console.print(md)
+
+        with console.status("[green]Generating summary..."):
+            summary_text = self.get_completion(messages)
+            md = Markdown(summary_text)
+            console.print(md)
     
 
     def get_completion(self, messages: list) -> str:
+        console = self.console
         try:
             response = self.openai_client.chat.completions.create(
                 model=self.model,
@@ -77,10 +68,14 @@ class SummarizeHandler:
                 presence_penalty=0,
                 stop=None,
             )
-            return response.choices[0].message.content
+
+            response_text = response.choices[0].message.content
+            wrapped_text = self.wrap_text(response_text)
+            return wrapped_text
 
         except Exception as e:
-            self.display_error(e)
+            console.print(f"[red]Error:[/red] {e}")
+            sys.exit(1)
         
     def download_transcript(self):
         console = self.console
@@ -228,4 +223,20 @@ class SummarizeHandler:
         console = self.console
         if d['status'] == 'finished':
             console.print(f" -> \"{d['filename']}\"")
+
+    def wrap_text(self, text: str) -> str:
+        lines = text.split('\n')
+        wrapped_lines = []
+
+        for line in lines:
+            # If the line is a code block, don't wrap it
+            if line.strip().startswith('```') or line.strip().startswith('`'):
+                wrapped_lines.append(line)
+            else:
+                # Wrap the line
+                wrapped = textwrap.wrap(line, width=self.max_width, break_long_words=False, replace_whitespace=False)
+                wrapped_lines.extend(wrapped)
+
+        # Join the wrapped lines back together
+        return "  \n".join(wrapped_lines)
 
