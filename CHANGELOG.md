@@ -4,8 +4,23 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.57] - 2024-09-06
+
+### Added
+- Added `summarize` command for video summaries
+  - https://github.com/NotJoeMartinez/yt-fts/pull/175
+- Added `--cookies-from-browser` flag to bypass rate limiting
+
+### Changed
+- `--number-of-jobs` flag is now `--jobs`
+- `update` command now updates all channels by default
+- `export` `vsearch` and `search` commands OOP refactor 
+
+### Fixed
+- Quieted warnings on download
+
 ## [0.1.56] - 2024-09-04
-## Fixed
+### Fixed
 - `OR`, `AND` and Quoted searches not working
   - https://github.com/NotJoeMartinez/yt-fts/issues/164
   - https://github.com/NotJoeMartinez/yt-fts/pull/170
