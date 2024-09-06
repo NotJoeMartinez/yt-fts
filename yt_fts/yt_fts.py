@@ -63,6 +63,7 @@ def download(url, playlist, language, jobs, cookies_from_browser):
         sys.exit(0)
 
     download_handler.download_channel(url)
+    sys.exit(0)
 
 
 @cli.command(
@@ -163,20 +164,16 @@ def delete(channel):
 @click.option("-f", "--format", default="txt",
               help="The format to export transcripts to. Supported formats: txt, vtt")
 def export(channel, format):
-    output_dir = None
-    from .export import export_channel_to_txt, export_channel_to_vtt
+    from .export import ExportHandler 
 
-    channel_id = get_channel_id_from_input(channel)
+    export_handler = ExportHandler(
+        scope = "channel",
+        format=format,
+        channel=channel
+    )
+    
+    export_handler.export()
 
-    if format == "txt":
-        output_dir = export_channel_to_txt(channel_id)
-
-    if format == "vtt":
-        output_dir = export_channel_to_vtt(channel_id)
-
-    if output_dir is not None:
-        console.print(f"Exported to [green][bold]{output_dir}[/bold][/green]")
-        sys.exit(0)
 
 
 @cli.command(

@@ -24,10 +24,12 @@ pip install yt-fts
 ## `download`
 Download subtitles for a channel. 
 
-Takes a channel url or id as an argument. Specify the number of jobs to parallelize the download with the `--jobs` option. 
+Takes a channel url as an argument. Specify the number of jobs to parallelize the download with the `--jobs` option. Use the `--cookies-from-browser` to use cookies from your browser in the requests, will help if you're 
+getting errors that request you to sign in.
 
 ```bash
 yt-fts download --jobs 5 "https://www.youtube.com/@3blue1brown"
+yt-fts download --cookies-from-browser "https://www.youtube.com/@3blue1brown"
 ```
 
 ## `list`
