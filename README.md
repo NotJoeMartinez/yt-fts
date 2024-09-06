@@ -31,7 +31,7 @@ that request you to sign in. You can also run the `update` command several times
 
 ```bash
 yt-fts download --jobs 5 "https://www.youtube.com/@3blue1brown"
-yt-fts download --cookies-from-browser "https://www.youtube.com/@3blue1brown"
+yt-fts download --cookies-from-browser firefox "https://www.youtube.com/@3blue1brown"
 ```
 
 ## `list`
