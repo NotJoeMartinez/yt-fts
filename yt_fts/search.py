@@ -1,9 +1,8 @@
 import sys
-from pprint import pprint
 from rich.console import Console
-from rich.text import Text
 
 from .utils import time_to_secs, bold_query_matches
+from .export import export_fts
 
 from .db_utils import (
     search_all,
@@ -15,43 +14,41 @@ from .db_utils import (
 )
 
 class SearchHandler:
-    def __init__(self, scope='all', export=False):
-        self.scope = scope 
-        self.export = export
+    def __init__(self, 
+        scope='all', 
+        channel=None, 
+        video_id=None, 
+        export=False, 
+        limit=None
+        ):
+
         self.console = Console()
+        self.scope = scope 
+        self.channel = channel
+        self.video_id = video_id 
+        self.export = export
+        self.limit = limit 
         self.channel_id = None
-        self.video_id = None
-        self.limit = None
-        self.limit = None
+        self.query = '' 
         self.response = []
 
-    def full_text_search(self, text): 
+    def full_text_search(self, query): 
+
+        console = self.console
+        self.query = query
+
         if self.scope == 'all':
-            self.res = search_all(text, self.limit)
+            self.res = search_all(query, self.limit)
+
         if self.scope == 'channel':
-            pass
+            self.channel_id = get_channel_id_from_input(self.channel)
+            self.res = search_channel(self.channel_id, self.query, self.limit)
+
         if self.scope == 'video':
-            pass
+            self.res = search_video(self.video_id, self.query, self.limit)
 
 
-    # full text search
-    def fts_search(self, text, scope, channel_id=None, video_id=None, limit=None):
-        """
-        Calls search functions and prints the results 
-        """
-        console = Console()
-
-        if scope == "all":
-            res = search_all(text, limit)
-
-        if scope == "channel":
-            channel_id = get_channel_id_from_input(channel_id)
-            res = search_channel(channel_id, text, limit)
-
-        if scope == "video":
-            res = search_video(video_id, text, limit)
-
-        if len(res) == 0:
+        if len(self.res) == 0:
             console.print(f"[yellow]No matches found[/yellow]\n"
                             "- Try shortening the search to specific words\n"
                             "- Try using the wildcard operator [bold]*[/bold] to search for partial words\n"
@@ -59,13 +56,20 @@ class SearchHandler:
                             "   - EX: \"foo OR bar\"")
             sys.exit(1)
 
-        return res
+
+        self.print_fts_res()
+        if self.export:
+            export_fts(self.query, self.scope, self.channel, self.video_id)
+
+        console.print(f"Query '{self.query}' ")
+        console.print(f"Scope: {self.scope}")
 
 
-    # pretty print search results
-    def print_fts_res(self, res, query):
+    def print_fts_res(self):
         console = Console()
 
+        query = self.query
+        res = self.res
         fts_res = []
         channel_names = []
 

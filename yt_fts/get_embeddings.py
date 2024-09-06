@@ -3,7 +3,6 @@ from typing import Optional, Any
 from openai import OpenAI
 from datetime import datetime
 
-from pprint import pprint
 from rich.progress import track
 from rich.console import Console
 from .config import get_chroma_client
