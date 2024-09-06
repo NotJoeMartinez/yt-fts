@@ -189,7 +189,7 @@ def export(channel, format):
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in.")
 @click.option("-v", "--video-id", default=None, help="The id of the video to search in.")
-@click.option("-l", "--limit", default=None, type=int, help="Number of results to return")
+@click.option("-l", "--limit", default=10, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 def search(text, channel, video_id, export, limit):
     from yt_fts.search import SearchHandler 
@@ -226,51 +226,46 @@ def search(text, channel, video_id, export, limit):
 )
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in")
-@click.option("-v", "--video", default=None, help="The id of the video to search in.")
+@click.option("-v", "--video-id", default=None, help="The id of the video to search in.")
 @click.option("-l", "--limit", default=10, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 @click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
                    "environment variable.")
-def vsearch(text, channel, video, limit, export, openai_api_key):
+def vsearch(text, channel, video_id, limit, export, openai_api_key):
     from openai import OpenAI
-    from yt_fts.vector_search import search_chroma_db, print_vector_search_results
-    from yt_fts.export import export_vector_search
+    from .search import SearchHandler
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
 
     if openai_api_key is None:
-        console.print("""
-        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
-                
-                export OPENAI_API_KEY=<your_key> to set the key
-                      """)
+        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n" 
+                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or pass "
+                      "one in with --openai-api-key")
         sys.exit(1)
 
-    openai_client = OpenAI(api_key=openai_api_key)
 
     if channel:
         scope = "channel"
-    elif video:
+    elif video_id:
         scope = "video"
     else:
         scope = "all"
 
-    res = search_chroma_db(text,
-                           scope,
-                           channel_id=channel,
-                           video_id=video,
-                           limit=limit,
-                           openai_client=openai_client)
+    openai_client = OpenAI(api_key=openai_api_key)
 
-    print_vector_search_results(res, query=text)
+    vsearch_handler = SearchHandler(
+        scope=scope,
+        channel=channel,
+        video_id=video_id,
+        export=export,
+        limit=limit,
+        openai_client=openai_client
+    )
 
-    if export:
-        export_vector_search(res, text, scope)
-
-    console.print(f"Query '{text}' ")
-    console.print(f"Scope: {scope}")
+    vsearch_handler.vector_search(query=text)
+    
     sys.exit(0)
 
 

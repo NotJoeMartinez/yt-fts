@@ -1,16 +1,18 @@
 import sys
+
 from rich.console import Console
-
+from .config import get_chroma_client
+from .export import export_fts, export_vector_search
 from .utils import time_to_secs, bold_query_matches
-from .export import export_fts
-
+from .get_embeddings import EmbeddingsHandler 
 from .db_utils import (
     search_all,
     get_channel_id_from_input,
     search_channel,
     search_video,
     get_channel_name_from_video_id,
-    get_metadata_from_db
+    get_metadata_from_db,
+    get_title_from_db,
 )
 
 class SearchHandler:
@@ -19,7 +21,8 @@ class SearchHandler:
         channel=None, 
         video_id=None, 
         export=False, 
-        limit=None
+        limit=None,
+        openai_client=None
         ):
 
         self.console = Console()
@@ -31,6 +34,7 @@ class SearchHandler:
         self.channel_id = None
         self.query = '' 
         self.response = []
+        self.openai_client = openai_client
 
     def full_text_search(self, query): 
 
@@ -65,6 +69,66 @@ class SearchHandler:
         console.print(f"Scope: {self.scope}")
 
 
+    def vector_search(self, query):
+        console = self.console
+        self.query = query
+        scope_options = {}
+        if self.scope == "all":
+            scope_options = {}
+        if self.scope == "channel":
+            scope_options = {"channel_id": get_channel_id_from_input(self.channel)}
+        if self.scope == "video":
+            scope_options = {"video_id": self.video_id}
+
+        chroma_client = get_chroma_client()
+        collection = chroma_client.get_collection(name="subEmbeddings")
+
+        embeddings_handler = EmbeddingsHandler()
+        search_embedding = embeddings_handler.get_embedding(query, "text-embedding-ada-002", self.openai_client)
+        chroma_res = collection.query(
+            query_embeddings=[search_embedding],
+            n_results=self.limit,
+            where=scope_options,
+        )
+
+        documents = chroma_res["documents"][0]
+        metadata = chroma_res["metadatas"][0]
+        distances = chroma_res["distances"][0]
+
+        res = []
+
+        for i in range(len(documents)):
+            text = documents[i]
+            video_id = metadata[i]["video_id"]
+            start_time = metadata[i]["start_time"]
+            link = f"https://youtu.be/{video_id}?t={time_to_secs(start_time)}"
+            channel_name = get_channel_name_from_video_id(video_id)
+            channel_id = metadata[i]["channel_id"]
+            title = get_title_from_db(video_id)
+
+            match = {
+                "distance": distances[i],
+                "channel_name": channel_name,
+                "channel_id": channel_id,
+                "video_title": title,
+                "subs": text,
+                "start_time": start_time,
+                "video_id": video_id,
+                "link": link,
+            }
+            res.append(match)
+
+        self.res = res
+
+        self.print_vector_search_results()
+        if self.export:
+            export_vector_search(self.res, self.query, self.scope)
+        
+        console.print(f"Query '{self.query}' ")
+        console.print(f"Scope: {self.scope}")
+
+
+
     def print_fts_res(self):
         console = Console()
 
@@ -90,33 +154,6 @@ class SearchHandler:
             quote_match["link"] = link
 
             fts_res.append(quote_match)
-
-        """
-        need to resturcutre the data to be able to print it in a nice way
-
-        fts_dict = {
-            "channel_name": {
-                "video_name": [
-                    {
-                        "quote": "quote",
-                        "time_stamp": "time_stamp",
-                        "link": "link"
-                    }
-                ]
-            }
-        }
-
-        original format is:
-        fts_res = [
-            {
-                "channel_name": "channel_name",
-                "video_name": "video_name",
-                "quote": "quote",
-                "time_stamp": "time_stamp",
-                "link": "link"
-            }
-        ]
-        """
 
         fts_dict = {}
         for quote in fts_res:
@@ -174,3 +211,55 @@ class SearchHandler:
             summary_str += "s"
 
         console.print(summary_str)
+
+
+    def print_vector_search_results(self):
+        console = Console()
+
+        channel_names = []
+
+        res = self.res
+        query = self.query
+
+        for match in reversed(res):
+            distance = match["distance"]
+            link = match["link"]
+            text = bold_query_matches(match["subs"], query)
+            time_stamp = match["start_time"]
+            channel_id = match["channel_id"]
+            video_id = match["video_id"]
+            title = match["video_title"]
+            channel_name = match["channel_name"]
+            channel_names.append(channel_name)
+
+            console.print(f"[magenta][italic]\"[link={link}]{text}[/link]\"[/italic][/magenta]\n")
+            console.print(f"    Distance: {distance}", style="none")
+            console.print(f"    Channel: {channel_name} - ({channel_id})", style="none")
+            console.print(f"    Title: {title}")
+            console.print(f"    Time Stamp: {time_stamp}")
+            console.print(f"    Video ID: {video_id}")
+            console.print(f"    Link: {link}")
+            console.print("")
+
+        num_matches = len(res)
+        num_channels = len(set(channel_names))
+        num_videos = len(set([quote["video_id"] for quote in res]))
+
+        summary_str = f"Found [bold]{num_matches}[/bold] matches in "
+        summary_str += f"[bold]{num_videos}[/bold] videos from [bold]{num_channels}[/bold] channel"
+
+        if num_channels > 1:
+            summary_str += "s"
+
+        console.print(summary_str)
+
+
+    def delete_channel_from_chroma(self, channel_id):
+        chroma_client = get_chroma_client()
+        collection = chroma_client.get_collection(name="subEmbeddings")
+
+        print(f"deleting channel {channel_id} from chroma")
+        collection.delete(
+            where={"channel_id": channel_id}
+        )
+
