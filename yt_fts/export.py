@@ -4,23 +4,51 @@ import os
 
 from rich.console import Console
 
+from .utils import time_to_secs, show_message
 from .db_utils import (
-    search_channel, search_video, search_all,
-    get_channel_name_from_video_id, get_metadata_from_db,
-    get_channel_id_from_input
+    search_channel,
+    search_video,
+    search_all,
+    get_channel_name_from_video_id,
+    get_metadata_from_db,
+    get_channel_id_from_input,
+    get_vid_ids_by_channel_id,
+    get_subs_by_video_id
 )
 
-from .utils import time_to_secs, show_message
 
 class ExportHandler:
-    def __init__(self):
+    def __init__(self, scope="channel", format="txt", channel=None):
         self.console = Console()
+        self.format = format
+        self.scope = scope
+
+        if channel is not None:
+            self.channel_id = get_channel_id_from_input(channel)
+        else:
+            self.channel_id = None
+
         
+    
+    def export(self):
+        console = self.console
+        output_dir = None
+
+        if self.format == "txt":
+            output_dir = self.export_channel_to_txt(self.channel_id)
+        if self.format == "vtt":
+            output_dir = self.export_channel_to_vtt(self.channel_id)
+
+        if output_dir is not None:
+            console.print(f"Exported to [green][bold]{output_dir}[/bold][/green]")
+
+
 
     def export_fts(self, text, scope, channel_id=None, video_id=None):
         """
         Calls search functions and exports the results to a csv file
         """
+        console = self.console
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -60,7 +88,6 @@ class ExportHandler:
                     f"https://youtu.be/{video_id}?t={time}"
                 ])
 
-        console = Console()
 
         console.print(f"[bold]{len(res)}[/bold] matches found for text: \"[italic]{text}[/italic]\"")
         console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")
@@ -97,33 +124,8 @@ class ExportHandler:
         console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")
 
 
-    def export_transcripts(self, channel_id):
-        """
-        Exports video transcripts from a channel to a text file 
-        """
-
-        channel_id = get_channel_id_from_input(channel_id)
-
-        from .db_utils import get_vid_ids_by_channel_id, get_transcript_by_video_id
-        videos = get_vid_ids_by_channel_id(channel_id)
-
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"channel_{channel_id}_{timestamp}.csv"
-
-        for video in videos:
-
-            video_id = video[0]
-            transcript = get_transcript_by_video_id(video_id)
-            str_transcript = ""
-            for i in transcript:
-                str_transcript += i[0] + "\n"
-            with open(f"{video_id}.txt", "w") as f:
-                f.write(str_transcript)
-
-
     def export_channel_to_txt(self, channel_id):
-        from .db_utils import get_vid_ids_by_channel_id, get_subs_by_video_id
-        console = Console()
+        console = self.console
 
         output_dir = f"{channel_id}_txt"
 
@@ -148,8 +150,7 @@ class ExportHandler:
 
 
     def export_channel_to_vtt(self, channel_id):
-        console = Console()
-        from .db_utils import get_vid_ids_by_channel_id, get_subs_by_video_id
+        console = self.console
 
         output_dir = f"{channel_id}_vtt"
         if not os.path.exists(output_dir):
