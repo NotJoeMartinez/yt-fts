@@ -42,13 +42,13 @@ def cli():
               help="Download all videos from a playlist")
 @click.option("-l", "--language", default="en",
               help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs", type=int, default=1,
+@click.option("-j", "--jobs", type=int, default=1,
               help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser", default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
-def download(url, playlist, language, number_of_jobs, cookies_from_browser):
+def download(url, playlist, language, jobs, cookies_from_browser):
     download_handler = DownloadHandler(
-        number_of_jobs=number_of_jobs,
+        number_of_jobs=jobs,
         language=language,
         cookies_from_browser=cookies_from_browser
     )
@@ -59,7 +59,7 @@ def download(url, playlist, language, number_of_jobs, cookies_from_browser):
             console.print("YouTube playlists have this format: "
                           "\"https://www.youtube.com/playlist?list=<playlist_id>\"\n")
             sys.exit(1)
-        download_handler.download_playlist(url, language, number_of_jobs)
+        download_handler.download_playlist(url, language, jobs)
         sys.exit(0)
 
     download_handler.download_channel(url)
@@ -103,15 +103,15 @@ def list(transcript, channel, library):
               default=None, help="The name or id of the channel to update.")
 @click.option("-l", "--language",
               default="en", help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs",
+@click.option("-j", "jobs",
               type=int, default=1, help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser",
               default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
-def update(channel, language, number_of_jobs, cookies_from_browser):
+def update(channel, language, jobs, cookies_from_browser):
     update_handler = DownloadHandler(
         language=language,
-        number_of_jobs=number_of_jobs,
+        number_of_jobs=jobs,
         cookies_from_browser=cookies_from_browser
     )
 

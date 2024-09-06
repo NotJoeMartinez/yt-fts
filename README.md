@@ -25,10 +25,10 @@ pip install yt-fts
 ## `download`
 Download subtitles for a channel. 
 
-Takes a channel url or id as an argument. Specify the number of jobs to parallelize the download with the `--number-of-jobs` option. 
+Takes a channel url or id as an argument. Specify the number of jobs to parallelize the download with the `--jobs` option. 
 
 ```bash
-yt-fts download --number-of-jobs 5 "https://www.youtube.com/@3blue1brown"
+yt-fts download --jobs 5 "https://www.youtube.com/@3blue1brown"
 ```
 
 ## `list`
@@ -67,7 +67,7 @@ yt-fts search "[search query]"
 yt-fts search "[search query]" --channel "[channel name or id]" 
 
 # search in specific video
-yt-fts search "[search query]" --video "[video id]"
+yt-fts search "[search query]" --video-id "[video id]"
 
 # limit results 
 yt-fts search "[search query]" --limit "[number of results]" --channel "[channel name or id]"
@@ -94,7 +94,7 @@ yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show"
 
 
 # Semantic Search and RAG
-You can enable semantic search for a channel by using the `get-embeddings` command.
+You can enable semantic search for a channel by using the `mbeddings` command.
 This requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`, or 
 you can pass the key with the `--openai-api-key` flag. 
 
@@ -138,7 +138,7 @@ the default return limit is 10.
 yt-fts vsearch "[search query]" --channel "[channel name or id]"
 
 # search in specific video
-yt-fts vsearch "[search query]" --video "[video id]"
+yt-fts vsearch "[search query]" --video-id "[video id]"
 
 # limit results 
 yt-fts vsearch "[search query]" --limit "[number of results]" --channel "[channel name or id]"
