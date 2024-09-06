@@ -90,7 +90,6 @@ def list(transcript, channel, library):
     sys.exit(0)
 
 
-# update
 @cli.command(
     name="update",
     help="""
@@ -189,12 +188,11 @@ def export(channel, format):
 )
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in.")
-@click.option("-v", "--video", default=None, help="The id of the video to search in.")
+@click.option("-v", "--video-id", default=None, help="The id of the video to search in.")
 @click.option("-l", "--limit", default=None, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-def search(text, channel, video, export, limit):
-    from yt_fts.search import fts_search, print_fts_res
-    from yt_fts.export import export_fts
+def search(text, channel, video_id, export, limit):
+    from yt_fts.search import SearchHandler 
 
     if len(text) > 40:
         show_message("search_too_long")
@@ -202,19 +200,20 @@ def search(text, channel, video, export, limit):
 
     if channel:
         scope = "channel"
-    elif video:
+    elif video_id:
         scope = "video"
     else:
         scope = "all"
 
-    res = fts_search(text, scope, channel_id=channel, video_id=video, limit=limit)
-    print_fts_res(res, text)
+    search_handler = SearchHandler(
+        scope=scope,
+        video_id=video_id,
+        channel=channel,
+        export=export,
+        limit=limit
+    )
 
-    if export:
-        export_fts(text, scope, channel_id=channel, video_id=video)
-
-    console.print(f"Query '{text}' ")
-    console.print(f"Scope: {scope}")
+    search_handler.full_text_search(text)
     sys.exit(0)
 
 
