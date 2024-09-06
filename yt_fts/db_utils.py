@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .utils import show_message, get_date
-from .config import get_db_path
+from .config import get_db_path, get_chroma_client
 
 
 def make_db(db_path):
@@ -328,7 +328,6 @@ def get_channel_name_from_video_id(video_id):
 # delete all videos, subtitles, and embeddings associated with channel
 def delete_channel(channel_id):
     from .utils import check_ss_enabled
-    from .vector_search import delete_channel_from_chroma
 
     if check_ss_enabled(channel_id):
         delete_channel_from_chroma(channel_id)
@@ -349,6 +348,15 @@ def delete_channel(channel_id):
     conn.commit()
     conn.close()
 
+
+def delete_channel_from_chroma(channel_id):
+    chroma_client = get_chroma_client()
+    collection = chroma_client.get_collection(name="subEmbeddings")
+
+    print(f"deleting channel {channel_id} from chroma")
+    collection.delete(
+        where={"channel_id": channel_id}
+    )
 
 def get_channel_id_from_rowid(rowid):
     db = Database(get_db_path())

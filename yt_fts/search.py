@@ -4,7 +4,7 @@ from rich.console import Console
 from .config import get_chroma_client
 from .export import export_fts, export_vector_search
 from .utils import time_to_secs, bold_query_matches
-from .get_embeddings import EmbeddingsHandler 
+from .get_embeddings import EmbeddingsHandler
 from .db_utils import (
     search_all,
     get_channel_id_from_input,
@@ -15,28 +15,29 @@ from .db_utils import (
     get_title_from_db,
 )
 
+
 class SearchHandler:
-    def __init__(self, 
-        scope='all', 
-        channel=None, 
-        video_id=None, 
-        export=False, 
-        limit=None,
-        openai_client=None
-        ):
+    def __init__(self,
+                 scope='all',
+                 channel=None,
+                 video_id=None,
+                 export=False,
+                 limit=None,
+                 openai_client=None
+                 ):
 
         self.console = Console()
-        self.scope = scope 
+        self.scope = scope
         self.channel = channel
-        self.video_id = video_id 
+        self.video_id = video_id
         self.export = export
-        self.limit = limit 
+        self.limit = limit
         self.channel_id = None
-        self.query = '' 
+        self.query = ''
         self.response = []
         self.openai_client = openai_client
 
-    def full_text_search(self, query): 
+    def full_text_search(self, query):
 
         console = self.console
         self.query = query
@@ -51,15 +52,13 @@ class SearchHandler:
         if self.scope == 'video':
             self.res = search_video(self.video_id, self.query, self.limit)
 
-
         if len(self.res) == 0:
             console.print(f"[yellow]No matches found[/yellow]\n"
-                            "- Try shortening the search to specific words\n"
-                            "- Try using the wildcard operator [bold]*[/bold] to search for partial words\n"
-                            "- Try using the [bold]OR[/bold] operator to search for multiple words\n"
-                            "   - EX: \"foo OR bar\"")
+                          "- Try shortening the search to specific words\n"
+                          "- Try using the wildcard operator [bold]*[/bold] to search for partial words\n"
+                          "- Try using the [bold]OR[/bold] operator to search for multiple words\n"
+                          "   - EX: \"foo OR bar\"")
             sys.exit(1)
-
 
         self.print_fts_res()
         if self.export:
@@ -67,7 +66,6 @@ class SearchHandler:
 
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")
-
 
     def vector_search(self, query):
         console = self.console
@@ -123,11 +121,9 @@ class SearchHandler:
         self.print_vector_search_results()
         if self.export:
             export_vector_search(self.res, self.query, self.scope)
-        
+
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")
-
-
 
     def print_fts_res(self):
         console = Console()
@@ -195,9 +191,8 @@ class SearchHandler:
                     link = quote["link"]
                     time_stamp = quote["time_stamp"]
                     words = quote["quote"]
-                    console.print(
-                        f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> [italic][white]\"{words}\"[/white]["
-                        f"/italic]")
+                    console.print(f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> "
+                                  "[italic][white]\"{words}\"[/white][/italic]")
                 console.print("")
 
         num_matches = len(res)
@@ -211,7 +206,6 @@ class SearchHandler:
             summary_str += "s"
 
         console.print(summary_str)
-
 
     def print_vector_search_results(self):
         console = Console()
@@ -253,13 +247,4 @@ class SearchHandler:
 
         console.print(summary_str)
 
-
-    def delete_channel_from_chroma(self, channel_id):
-        chroma_client = get_chroma_client()
-        collection = chroma_client.get_collection(name="subEmbeddings")
-
-        print(f"deleting channel {channel_id} from chroma")
-        collection.delete(
-            where={"channel_id": channel_id}
-        )
-
+ 

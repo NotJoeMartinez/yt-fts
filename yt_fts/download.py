@@ -19,12 +19,13 @@ from .db_utils import (
     get_num_vids,
     get_vid_ids_by_channel_id,
     get_channels
-    )
+)
 from .list import list_channels
 from .utils import parse_vtt, get_date, handle_reject_consent_cookie
 
 from rich.progress import track
 from rich.console import Console
+
 
 class DownloadHandler:
     def __init__(self, number_of_jobs=1, language='en', cookies_from_browser=None):
@@ -33,14 +34,13 @@ class DownloadHandler:
 
         self.cookies_from_browser = cookies_from_browser
         self.number_of_jobs = number_of_jobs
-        self.language = language 
+        self.language = language
 
         self.session = None
         self.channl_id = None
         self.channel_name = None
         self.video_ids = None
         self.tmp_dir = None
-
 
     def download_channel(self, url):
 
@@ -61,15 +61,13 @@ class DownloadHandler:
             self.console.print(
                 f"[green]Downloading [red]{len(self.video_ids)}[/red] "
                 "vtt files[/green]"
-                )
-
+            )
 
             self.download_vtts()
             add_channel_info(self.channel_id, self.channel_name, channel_url)
             self.vtt_to_db()
 
         self.console.print(f"[green]Finished downloading subtitles for {self.channel_name}[/green]")
-
 
     def download_playlist(self, playlist_url, language, number_of_jobs):
         self.language = language
@@ -87,22 +85,20 @@ class DownloadHandler:
         self.video_ids = list(set(video["video_id"] for video in playlist_data))
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            self.console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] " 
+            self.console.print(f"[green][bold]Downloading [red]{len(playlist_data)}[/red] "
                                "vtt files[/bold][/green]\n")
             self.tmp_dir = tmp_dir
             self.download_vtts()
             self.vtt_to_db()
 
-
     def update_channel(self, target_channel):
-
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
             self.channel_id = get_channel_id_from_input(target_channel)
             channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
             self.session = self.init_session(channel_url)
-            self.channel_name = self.get_channel_name(self.channel_id) 
+            self.channel_name = self.get_channel_name(self.channel_id)
             self.console.print(f"Updating channel: {self.channel_name}")
             public_video_ids = self.get_videos_list(channel_url)
             num_public_vids = len(public_video_ids)
@@ -142,15 +138,13 @@ class DownloadHandler:
 
         for channel_row_id in all_channel_row_ids:
             self.update_channel(channel_row_id)
-        
-        self.console.print("[green]Finished updating all channels[/green]")
 
+        self.console.print("[green]Finished updating all channels[/green]")
 
     def init_session(self, url):
         s = requests.session()
         handle_reject_consent_cookie(url, s)
         return s
-
 
     def get_channel_id(self, url):
 
@@ -173,7 +167,6 @@ class DownloadHandler:
         except Exception as e:
             self.console.print(f'Error: {e}')
             sys.exit(1)
-
 
     def get_channel_name(self, channel_id):
 
@@ -199,7 +192,6 @@ class DownloadHandler:
             self.console.print("[red]Error:[/red] "
                                "couldn't get the channel name or channel doesn't exist")
             sys.exit(1)
-
 
     def get_videos_list(self, channel_url):
         with self.console.status("[bold green]Scraping video urls ...") as status:
@@ -263,7 +255,7 @@ class DownloadHandler:
             print(f" -> {d['filename']}")
 
     def get_vtt(self, tmp_dir, video_url, language):
-        try: 
+        try:
             ydl_opts = {
                 'outtmpl': f'{tmp_dir}/%(id)s',
                 'writeinfojson': True,
@@ -275,7 +267,7 @@ class DownloadHandler:
                 'progress_hooks': [self.quiet_progress_hook],
             }
 
-            if self.cookies_from_browser is not None: 
+            if self.cookies_from_browser is not None:
                 ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -360,7 +352,6 @@ class DownloadHandler:
         self.console.print("")
         sys.exit(1)
 
-    
     def handle_channel_exists(self):
         list_channels(self.channel_id)
         error = "[bold red]Error:[/bold red] Channel already exists in database."

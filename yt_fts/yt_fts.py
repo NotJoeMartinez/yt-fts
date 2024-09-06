@@ -9,7 +9,7 @@ from .list import list_channels
 from .utils import show_message
 from .config import (
     get_config_path,
-    get_db_path, 
+    get_db_path,
     get_or_make_chroma_path
 )
 from .db_utils import (
@@ -20,6 +20,7 @@ from .db_utils import (
 
 YT_FTS_VERSION = "0.1.56"
 console = Console()
+
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -44,9 +45,8 @@ def cli():
 @click.option("-j", "--number-of-jobs", type=int, default=1,
               help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser", default=None,
-              help="Browser to extract cookies from. Ex: chrome, firefox") 
+              help="Browser to extract cookies from. Ex: chrome, firefox")
 def download(url, playlist, language, number_of_jobs, cookies_from_browser):
-
     download_handler = DownloadHandler(
         number_of_jobs=number_of_jobs,
         language=language,
@@ -62,7 +62,7 @@ def download(url, playlist, language, number_of_jobs, cookies_from_browser):
         download_handler.download_playlist(url, language, number_of_jobs)
         sys.exit(0)
 
-    download_handler.download_channel(url) 
+    download_handler.download_channel(url)
 
 
 @cli.command(
@@ -106,10 +106,9 @@ def list(transcript, channel, library):
 @click.option("-j", "--number-of-jobs",
               type=int, default=1, help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser",
-                default=None,
-                help="Browser to extract cookies from. Ex: chrome, firefox")
+              default=None,
+              help="Browser to extract cookies from. Ex: chrome, firefox")
 def update(channel, language, number_of_jobs, cookies_from_browser):
-
     update_handler = DownloadHandler(
         language=language,
         number_of_jobs=number_of_jobs,
@@ -119,7 +118,7 @@ def update(channel, language, number_of_jobs, cookies_from_browser):
     if channel is not None:
         update_handler.update_channel(channel)
         sys.exit(0)
-    
+
     update_handler.update_all_channels()
 
     sys.exit(0)
@@ -146,7 +145,7 @@ def delete(channel):
 
     if confirm.lower() == "y":
         delete_channel(channel_id)
-        print(f"Deleted channel {channel_name}: {channel_url}")
+        console.print(f"Deleted channel \"{channel_name}\": \"{channel_url}\"")
     else:
         print("Exiting")
 
@@ -192,7 +191,7 @@ def export(channel, format):
 @click.option("-l", "--limit", default=10, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 def search(text, channel, video_id, export, limit):
-    from yt_fts.search import SearchHandler 
+    from yt_fts.search import SearchHandler
 
     if len(text) > 40:
         show_message("search_too_long")
@@ -240,11 +239,10 @@ def vsearch(text, channel, video_id, limit, export, openai_api_key):
         openai_api_key = os.environ.get("OPENAI_API_KEY")
 
     if openai_api_key is None:
-        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n" 
+        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n"
                       "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or pass "
                       "one in with --openai-api-key")
         sys.exit(1)
-
 
     if channel:
         scope = "channel"
@@ -265,7 +263,7 @@ def vsearch(text, channel, video_id, limit, export, openai_api_key):
     )
 
     vsearch_handler.vector_search(query=text)
-    
+
     sys.exit(0)
 
 
@@ -329,7 +327,7 @@ def embeddings(channel, openai_api_key, interval=30):
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
 def llm(prompt, channel, openai_api_key=None):
-    from yt_fts.llm import LLMHandler 
+    from yt_fts.llm import LLMHandler
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
