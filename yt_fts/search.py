@@ -2,9 +2,9 @@ import sys
 
 from rich.console import Console
 from .config import get_chroma_client
-from .export import export_fts, export_vector_search
 from .utils import time_to_secs, bold_query_matches
 from .get_embeddings import EmbeddingsHandler
+from .export import ExportHandler
 from .db_utils import (
     search_all,
     get_channel_id_from_input,
@@ -62,7 +62,8 @@ class SearchHandler:
 
         self.print_fts_res()
         if self.export:
-            export_fts(self.query, self.scope, self.channel, self.video_id)
+            export_handler = ExportHandler()
+            export_handler.export_fts(self.query, self.scope, self.channel, self.video_id)
 
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")
@@ -120,7 +121,8 @@ class SearchHandler:
 
         self.print_vector_search_results()
         if self.export:
-            export_vector_search(self.res, self.query, self.scope)
+            export_handler = ExportHandler()
+            export_handler.export_vector_search(self.res, self.query, self.scope)
 
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")

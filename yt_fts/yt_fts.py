@@ -163,16 +163,17 @@ def delete(channel):
 @click.option("-f", "--format", default="txt",
               help="The format to export transcripts to. Supported formats: txt, vtt")
 def export(channel, format):
+    from .export import ExportHandler 
     output_dir = None
-    from .export import export_channel_to_txt, export_channel_to_vtt
 
+    export_handler = ExportHandler()
     channel_id = get_channel_id_from_input(channel)
 
     if format == "txt":
-        output_dir = export_channel_to_txt(channel_id)
+        output_dir = export_handler.export_channel_to_txt(channel_id)
 
     if format == "vtt":
-        output_dir = export_channel_to_vtt(channel_id)
+        output_dir = export_handler.export_channel_to_vtt(channel_id)
 
     if output_dir is not None:
         console.print(f"Exported to [green][bold]{output_dir}[/bold][/green]")

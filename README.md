@@ -1,4 +1,3 @@
-<!-- test -->
 # yt-fts - YouTube Full Text Search 
 `yt-fts` is a command line program that uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to scrape all of a YouTube 
 channels subtitles and load them into a sqlite database that is searchable from the command line. It allows you to
