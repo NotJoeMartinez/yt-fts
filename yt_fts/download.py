@@ -6,6 +6,7 @@ import sqlite3
 import json
 import requests
 
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
@@ -251,8 +252,10 @@ class DownloadHandler:
             futures[i].result()
 
     def quiet_progress_hook(self, d):
+        console = self.console
         if d['status'] == 'finished':
-            print(f" -> {d['filename']}")
+            file_name = Path(d['filename']).name
+            console.print(f" -> \"{file_name}\"")
 
     def get_vtt(self, tmp_dir, video_url, language):
         try:
@@ -264,6 +267,7 @@ class DownloadHandler:
                 'skip_download': True,
                 'subtitleslangs': [language, '-live_chat'],
                 'quiet': True,
+                'no_warnings': True,
                 'progress_hooks': [self.quiet_progress_hook],
             }
 

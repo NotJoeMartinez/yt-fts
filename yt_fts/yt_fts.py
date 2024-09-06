@@ -23,7 +23,7 @@ from .db_utils import (
     delete_channel
 )
 
-YT_FTS_VERSION = "0.1.56"
+YT_FTS_VERSION = "0.1.57"
 console = Console()
 
 
