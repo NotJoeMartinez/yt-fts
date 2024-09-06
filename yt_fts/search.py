@@ -159,6 +159,7 @@ class SearchHandler:
             metadata = quote["metadata"]
             video_name = metadata["video_title"]
             video_date = metadata["video_date"]
+            video_id = quote["video_id"]
             quote_data = {
                 "quote": quote["subs"],
                 "time_stamp": quote["time_stamp"],
@@ -167,8 +168,8 @@ class SearchHandler:
             if channel_name not in fts_dict:
                 fts_dict[channel_name] = {}
             if (video_name, video_date) not in fts_dict[channel_name]:
-                fts_dict[channel_name][(video_name, video_date)] = []
-            fts_dict[channel_name][(video_name, video_date)].append(quote_data)
+                fts_dict[channel_name][(video_name, video_date, video_id)] = []
+            fts_dict[channel_name][(video_name, video_date, video_id)].append(quote_data)
 
         # Sort the list by the total number of quotes in each channel
         channel_list = list(fts_dict.items())
@@ -182,8 +183,8 @@ class SearchHandler:
             video_list = list(videos.items())
             video_list.sort(key=lambda x: len(x[1]))
 
-            for (video_name, video_date), quotes in video_list:
-                console.print(f"    [bold][blue]{video_name}[/blue][/bold] ({video_date})")
+            for (video_name, video_date, video_id), quotes in video_list:
+                console.print(f"{video_id} ({video_date}): \"[bold][blue]{video_name}[/blue][/bold]\"")
                 console.print("")
 
                 # Sort the quotes by timestamp

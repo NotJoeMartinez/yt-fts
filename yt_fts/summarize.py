@@ -5,6 +5,7 @@ import tempfile
 
 import yt_dlp
 from rich.console import Console
+from rich.markdown import Markdown
 from urllib.parse import urlparse, parse_qs
 
 from .config import get_db_path
@@ -60,7 +61,8 @@ class SummarizeHandler:
         ]
 
         summary_text = self.get_completion(messages)
-        console.print(summary_text)
+        md = Markdown(summary_text)
+        self.console.print(md)
     
 
     def get_completion(self, messages: list) -> str:
