@@ -1,38 +1,43 @@
 import sys
+
 from rich.console import Console
-
+from .config import get_chroma_client
+from .export import export_fts, export_vector_search
 from .utils import time_to_secs, bold_query_matches
-from .export import export_fts
-
+from .get_embeddings import EmbeddingsHandler
 from .db_utils import (
     search_all,
     get_channel_id_from_input,
     search_channel,
     search_video,
     get_channel_name_from_video_id,
-    get_metadata_from_db
+    get_metadata_from_db,
+    get_title_from_db,
 )
 
+
 class SearchHandler:
-    def __init__(self, 
-        scope='all', 
-        channel=None, 
-        video_id=None, 
-        export=False, 
-        limit=None
-        ):
+    def __init__(self,
+                 scope='all',
+                 channel=None,
+                 video_id=None,
+                 export=False,
+                 limit=None,
+                 openai_client=None
+                 ):
 
         self.console = Console()
-        self.scope = scope 
+        self.scope = scope
         self.channel = channel
-        self.video_id = video_id 
+        self.video_id = video_id
         self.export = export
-        self.limit = limit 
+        self.limit = limit
         self.channel_id = None
-        self.query = '' 
+        self.query = ''
         self.response = []
+        self.openai_client = openai_client
 
-    def full_text_search(self, query): 
+    def full_text_search(self, query):
 
         console = self.console
         self.query = query
@@ -47,15 +52,13 @@ class SearchHandler:
         if self.scope == 'video':
             self.res = search_video(self.video_id, self.query, self.limit)
 
-
         if len(self.res) == 0:
             console.print(f"[yellow]No matches found[/yellow]\n"
-                            "- Try shortening the search to specific words\n"
-                            "- Try using the wildcard operator [bold]*[/bold] to search for partial words\n"
-                            "- Try using the [bold]OR[/bold] operator to search for multiple words\n"
-                            "   - EX: \"foo OR bar\"")
+                          "- Try shortening the search to specific words\n"
+                          "- Try using the wildcard operator [bold]*[/bold] to search for partial words\n"
+                          "- Try using the [bold]OR[/bold] operator to search for multiple words\n"
+                          "   - EX: \"foo OR bar\"")
             sys.exit(1)
-
 
         self.print_fts_res()
         if self.export:
@@ -64,6 +67,63 @@ class SearchHandler:
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")
 
+    def vector_search(self, query):
+        console = self.console
+        self.query = query
+        scope_options = {}
+        if self.scope == "all":
+            scope_options = {}
+        if self.scope == "channel":
+            scope_options = {"channel_id": get_channel_id_from_input(self.channel)}
+        if self.scope == "video":
+            scope_options = {"video_id": self.video_id}
+
+        chroma_client = get_chroma_client()
+        collection = chroma_client.get_collection(name="subEmbeddings")
+
+        embeddings_handler = EmbeddingsHandler()
+        search_embedding = embeddings_handler.get_embedding(query, "text-embedding-ada-002", self.openai_client)
+        chroma_res = collection.query(
+            query_embeddings=[search_embedding],
+            n_results=self.limit,
+            where=scope_options,
+        )
+
+        documents = chroma_res["documents"][0]
+        metadata = chroma_res["metadatas"][0]
+        distances = chroma_res["distances"][0]
+
+        res = []
+
+        for i in range(len(documents)):
+            text = documents[i]
+            video_id = metadata[i]["video_id"]
+            start_time = metadata[i]["start_time"]
+            link = f"https://youtu.be/{video_id}?t={time_to_secs(start_time)}"
+            channel_name = get_channel_name_from_video_id(video_id)
+            channel_id = metadata[i]["channel_id"]
+            title = get_title_from_db(video_id)
+
+            match = {
+                "distance": distances[i],
+                "channel_name": channel_name,
+                "channel_id": channel_id,
+                "video_title": title,
+                "subs": text,
+                "start_time": start_time,
+                "video_id": video_id,
+                "link": link,
+            }
+            res.append(match)
+
+        self.res = res
+
+        self.print_vector_search_results()
+        if self.export:
+            export_vector_search(self.res, self.query, self.scope)
+
+        console.print(f"Query '{self.query}' ")
+        console.print(f"Scope: {self.scope}")
 
     def print_fts_res(self):
         console = Console()
@@ -90,33 +150,6 @@ class SearchHandler:
             quote_match["link"] = link
 
             fts_res.append(quote_match)
-
-        """
-        need to resturcutre the data to be able to print it in a nice way
-
-        fts_dict = {
-            "channel_name": {
-                "video_name": [
-                    {
-                        "quote": "quote",
-                        "time_stamp": "time_stamp",
-                        "link": "link"
-                    }
-                ]
-            }
-        }
-
-        original format is:
-        fts_res = [
-            {
-                "channel_name": "channel_name",
-                "video_name": "video_name",
-                "quote": "quote",
-                "time_stamp": "time_stamp",
-                "link": "link"
-            }
-        ]
-        """
 
         fts_dict = {}
         for quote in fts_res:
@@ -158,9 +191,8 @@ class SearchHandler:
                     link = quote["link"]
                     time_stamp = quote["time_stamp"]
                     words = quote["quote"]
-                    console.print(
-                        f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> [italic][white]\"{words}\"[/white]["
-                        f"/italic]")
+                    console.print(f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> "
+                                  "[italic][white]\"{words}\"[/white][/italic]")
                 console.print("")
 
         num_matches = len(res)
@@ -174,3 +206,45 @@ class SearchHandler:
             summary_str += "s"
 
         console.print(summary_str)
+
+    def print_vector_search_results(self):
+        console = Console()
+
+        channel_names = []
+
+        res = self.res
+        query = self.query
+
+        for match in reversed(res):
+            distance = match["distance"]
+            link = match["link"]
+            text = bold_query_matches(match["subs"], query)
+            time_stamp = match["start_time"]
+            channel_id = match["channel_id"]
+            video_id = match["video_id"]
+            title = match["video_title"]
+            channel_name = match["channel_name"]
+            channel_names.append(channel_name)
+
+            console.print(f"[magenta][italic]\"[link={link}]{text}[/link]\"[/italic][/magenta]\n")
+            console.print(f"    Distance: {distance}", style="none")
+            console.print(f"    Channel: {channel_name} - ({channel_id})", style="none")
+            console.print(f"    Title: {title}")
+            console.print(f"    Time Stamp: {time_stamp}")
+            console.print(f"    Video ID: {video_id}")
+            console.print(f"    Link: {link}")
+            console.print("")
+
+        num_matches = len(res)
+        num_channels = len(set(channel_names))
+        num_videos = len(set([quote["video_id"] for quote in res]))
+
+        summary_str = f"Found [bold]{num_matches}[/bold] matches in "
+        summary_str += f"[bold]{num_videos}[/bold] videos from [bold]{num_channels}[/bold] channel"
+
+        if num_channels > 1:
+            summary_str += "s"
+
+        console.print(summary_str)
+
+ 
