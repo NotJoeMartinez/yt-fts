@@ -366,7 +366,11 @@ def summarize(video, model, openai_api_key):
         
     openai_client = OpenAI(api_key=openai_api_key)
 
-    summarize_handler = SummarizeHandler(openai_client, video)
+    summarize_handler = SummarizeHandler(
+        openai_client,
+        model=model,
+        input_video=video
+        )
     summarize_handler.summarize_video()
 
 
