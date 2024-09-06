@@ -1,4 +1,3 @@
-
 # yt-fts - YouTube Full Text Search 
 `yt-fts` is a command line program that uses [yt-dlp](https://github.com/yt-dlp/yt-dlp) to scrape all of a YouTube 
 channels subtitles and load them into a sqlite database that is searchable from the command line. It allows you to
@@ -9,6 +8,7 @@ It also supports semantic search via the [OpenAI embeddings API](https://beta.op
 
 - [Blog Post](https://notjoemartinez.com/blog/youtube_full_text_search/)
 - [LLM/RAG Chat Bot](#llm-chat-bot)
+- [Video Summaries](#summarize)
 - [Semantic Search](#vsearch-semantic-search)
 - [CHANGELOG](CHANGELOG.md)
 
@@ -25,10 +25,13 @@ pip install yt-fts
 ## `download`
 Download subtitles for a channel. 
 
-Takes a channel url or id as an argument. Specify the number of jobs to parallelize the download with the `--number-of-jobs` option. 
+Takes a channel url as an argument. Specify the number of jobs to parallelize the download with the `--jobs` flag. 
+Use the `--cookies-from-browser` to use cookies from your browser in the requests, will help if you're getting errors 
+that request you to sign in. You can also run the `update` command several times to gradually get more videos into the database. 
 
 ```bash
-yt-fts download --number-of-jobs 5 "https://www.youtube.com/@3blue1brown"
+yt-fts download --jobs 5 "https://www.youtube.com/@3blue1brown"
+yt-fts download --cookies-from-browser "https://www.youtube.com/@3blue1brown"
 ```
 
 ## `list`
@@ -67,7 +70,7 @@ yt-fts search "[search query]"
 yt-fts search "[search query]" --channel "[channel name or id]" 
 
 # search in specific video
-yt-fts search "[search query]" --video "[video id]"
+yt-fts search "[search query]" --video-id "[video id]"
 
 # limit results 
 yt-fts search "[search query]" --limit "[number of results]" --channel "[channel name or id]"
@@ -94,7 +97,7 @@ yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show"
 
 
 # Semantic Search and RAG
-You can enable semantic search for a channel by using the `get-embeddings` command.
+You can enable semantic search for a channel by using the `mbeddings` command.
 This requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`, or 
 you can pass the key with the `--openai-api-key` flag. 
 
@@ -123,8 +126,32 @@ to answer questions. If it can't answer your question, it has a
 mechanism to update the context by running targeted query based 
 off the conversation. The channel must have semantic search enabled.
 
-```sh
+```bash
 yt-fts llm --channel "3Blue1Brown" "How does back propagation work?"
+```
+
+## `summarize`
+Summarizes a YouTube video transcript, providing time stamped URLS. 
+Requires a valid YouTube video URL or video ID as argument. If the 
+trancript is not in the database it will try to scrape it.
+
+```bash
+yt-fts summarize "https://www.youtube.com/watch?v=9-Jl0dxWQs8"
+# or
+yt-fts summarize "9-Jl0dxWQs8"
+```
+output:
+```
+In this video, 3Blue1Brown explores how large language models (LLMs) like GPT-3 
+might store facts within their vast...                                                         
+
+ 1 Introduction to Fact Storage in LLMs:                                                                                     
+    • The video starts by questioning how LLMs store specific facts and                                                      
+      introduces the idea that these facts might be stored in a particular part of the                                       
+      network known as multi-layer perceptrons (MLPs).                                                                       
+    • 0:00                                                                                                                   
+ 2 Overview of Transformers and MLPs:                                                                                        
+    • Provides a refresher on transformers and explains that the video will focus                                            
 ```
 
 ## `vsearch` (Semantic Search)
@@ -138,7 +165,7 @@ the default return limit is 10.
 yt-fts vsearch "[search query]" --channel "[channel name or id]"
 
 # search in specific video
-yt-fts vsearch "[search query]" --video "[video id]"
+yt-fts vsearch "[search query]" --video-id "[video id]"
 
 # limit results 
 yt-fts vsearch "[search query]" --limit "[number of results]" --channel "[channel name or id]"

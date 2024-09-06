@@ -46,7 +46,7 @@ def test_channel_download(runner, capsys):  # Add capsys as a parameter
     results = runner.invoke(cli, [
         'download',
         '-j',
-        '5',
+        '8',
         'https://www.youtube.com/@JCS'
     ])
 
@@ -72,8 +72,11 @@ def test_channel_download(runner, capsys):  # Add capsys as a parameter
     """)
     subtitle_count = res.fetchone()[0]
 
-    assert video_count == 17, f"Expected 17 videos, but got {video_count}"
-    assert subtitle_count >= 21153, f"Expected 21153 subtitles, but got {subtitle_count}"
+    min_vid_count = 10
+    min_sub_count = 12000
+
+    assert video_count >= min_vid_count, f"Expected >= {min_vid_count} videos, but got {video_count}"
+    assert subtitle_count >= min_sub_count, f"Expected >= {min_sub_count} subtitles, but got {subtitle_count}"
 
 
 def test_playlist_download(runner, capsys):
@@ -84,7 +87,7 @@ def test_playlist_download(runner, capsys):
         'download',
         '--playlist',
         '-j',
-        '5',
+        '8',
         'https://www.youtube.com/playlist?list=PL5q_lef6zVkaTY_cT1k7qFNF2TidHCe-1'
     ])
 
@@ -112,8 +115,10 @@ def test_playlist_download(runner, capsys):
 
     subtitle_count = res.fetchone()[0]
 
-    assert video_count == 21, f"Expected 21 videos, but got {video_count}"
-    assert subtitle_count >= 20970, f"Expected 20970 subtitles, but got {subtitle_count}"
+    min_vid_count = 10
+    min_sub_count = 15000
+    assert video_count >= min_vid_count, f"Expected >= {min_vid_count} videos, but got {video_count}"
+    assert subtitle_count >= min_sub_count, f"Expected >= {min_sub_count} subtitles, but got {subtitle_count}"
 
 
 

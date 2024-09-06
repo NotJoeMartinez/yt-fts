@@ -2,14 +2,19 @@ import os
 import sys
 import click
 
+from openai import OpenAI
 from rich.console import Console
 
 from .download import DownloadHandler
+from .export import ExportHandler 
+from .search import SearchHandler
+from .summarize import SummarizeHandler
+
 from .list import list_channels
 from .utils import show_message
 from .config import (
     get_config_path,
-    get_db_path, 
+    get_db_path,
     get_or_make_chroma_path
 )
 from .db_utils import (
@@ -18,8 +23,9 @@ from .db_utils import (
     delete_channel
 )
 
-YT_FTS_VERSION = "0.1.56"
+YT_FTS_VERSION = "0.1.57"
 console = Console()
+
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
@@ -41,14 +47,13 @@ def cli():
               help="Download all videos from a playlist")
 @click.option("-l", "--language", default="en",
               help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs", type=int, default=1,
+@click.option("-j", "--jobs", type=int, default=1,
               help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser", default=None,
-              help="Browser to extract cookies from. Ex: chrome, firefox") 
-def download(url, playlist, language, number_of_jobs, cookies_from_browser):
-
+              help="Browser to extract cookies from. Ex: chrome, firefox")
+def download(url, playlist, language, jobs, cookies_from_browser):
     download_handler = DownloadHandler(
-        number_of_jobs=number_of_jobs,
+        number_of_jobs=jobs,
         language=language,
         cookies_from_browser=cookies_from_browser
     )
@@ -59,10 +64,11 @@ def download(url, playlist, language, number_of_jobs, cookies_from_browser):
             console.print("YouTube playlists have this format: "
                           "\"https://www.youtube.com/playlist?list=<playlist_id>\"\n")
             sys.exit(1)
-        download_handler.download_playlist(url, language, number_of_jobs)
+        download_handler.download_playlist(url, language, jobs)
         sys.exit(0)
 
-    download_handler.download_channel(url) 
+    download_handler.download_channel(url)
+    sys.exit(0)
 
 
 @cli.command(
@@ -103,23 +109,22 @@ def list(transcript, channel, library):
               default=None, help="The name or id of the channel to update.")
 @click.option("-l", "--language",
               default="en", help="Language of the subtitles to download")
-@click.option("-j", "--number-of-jobs",
+@click.option("-j", "jobs",
               type=int, default=1, help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser",
-                default=None,
-                help="Browser to extract cookies from. Ex: chrome, firefox")
-def update(channel, language, number_of_jobs, cookies_from_browser):
-
+              default=None,
+              help="Browser to extract cookies from. Ex: chrome, firefox")
+def update(channel, language, jobs, cookies_from_browser):
     update_handler = DownloadHandler(
         language=language,
-        number_of_jobs=number_of_jobs,
+        number_of_jobs=jobs,
         cookies_from_browser=cookies_from_browser
     )
 
     if channel is not None:
         update_handler.update_channel(channel)
         sys.exit(0)
-    
+
     update_handler.update_all_channels()
 
     sys.exit(0)
@@ -146,7 +151,7 @@ def delete(channel):
 
     if confirm.lower() == "y":
         delete_channel(channel_id)
-        print(f"Deleted channel {channel_name}: {channel_url}")
+        console.print(f"Deleted channel \"{channel_name}\": \"{channel_url}\"")
     else:
         print("Exiting")
 
@@ -164,20 +169,15 @@ def delete(channel):
 @click.option("-f", "--format", default="txt",
               help="The format to export transcripts to. Supported formats: txt, vtt")
 def export(channel, format):
-    output_dir = None
-    from .export import export_channel_to_txt, export_channel_to_vtt
 
-    channel_id = get_channel_id_from_input(channel)
+    export_handler = ExportHandler(
+        scope = "channel",
+        format=format,
+        channel=channel
+    )
+    
+    export_handler.export()
 
-    if format == "txt":
-        output_dir = export_channel_to_txt(channel_id)
-
-    if format == "vtt":
-        output_dir = export_channel_to_vtt(channel_id)
-
-    if output_dir is not None:
-        console.print(f"Exported to [green][bold]{output_dir}[/bold][/green]")
-        sys.exit(0)
 
 
 @cli.command(
@@ -189,10 +189,9 @@ def export(channel, format):
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in.")
 @click.option("-v", "--video-id", default=None, help="The id of the video to search in.")
-@click.option("-l", "--limit", default=None, type=int, help="Number of results to return")
+@click.option("-l", "--limit", default=10, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 def search(text, channel, video_id, export, limit):
-    from yt_fts.search import SearchHandler 
 
     if len(text) > 40:
         show_message("search_too_long")
@@ -226,51 +225,43 @@ def search(text, channel, video_id, export, limit):
 )
 @click.argument("text", required=True)
 @click.option("-c", "--channel", default=None, help="The name or id of the channel to search in")
-@click.option("-v", "--video", default=None, help="The id of the video to search in.")
+@click.option("-v", "--video-id", default=None, help="The id of the video to search in.")
 @click.option("-l", "--limit", default=10, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 @click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
                    "environment variable.")
-def vsearch(text, channel, video, limit, export, openai_api_key):
-    from openai import OpenAI
-    from yt_fts.vector_search import search_chroma_db, print_vector_search_results
-    from yt_fts.export import export_vector_search
+def vsearch(text, channel, video_id, limit, export, openai_api_key):
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
 
     if openai_api_key is None:
-        console.print("""
-        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
-                
-                export OPENAI_API_KEY=<your_key> to set the key
-                      """)
+        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n"
+                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or pass "
+                      "one in with --openai-api-key")
         sys.exit(1)
-
-    openai_client = OpenAI(api_key=openai_api_key)
 
     if channel:
         scope = "channel"
-    elif video:
+    elif video_id:
         scope = "video"
     else:
         scope = "all"
 
-    res = search_chroma_db(text,
-                           scope,
-                           channel_id=channel,
-                           video_id=video,
-                           limit=limit,
-                           openai_client=openai_client)
+    openai_client = OpenAI(api_key=openai_api_key)
 
-    print_vector_search_results(res, query=text)
+    vsearch_handler = SearchHandler(
+        scope=scope,
+        channel=channel,
+        video_id=video_id,
+        export=export,
+        limit=limit,
+        openai_client=openai_client
+    )
 
-    if export:
-        export_vector_search(res, text, scope)
+    vsearch_handler.vector_search(query=text)
 
-    console.print(f"Query '{text}' ")
-    console.print(f"Scope: {scope}")
     sys.exit(0)
 
 
@@ -334,7 +325,7 @@ def embeddings(channel, openai_api_key, interval=30):
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
 def llm(prompt, channel, openai_api_key=None):
-    from yt_fts.llm import LLMHandler 
+    from yt_fts.llm import LLMHandler
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -351,6 +342,36 @@ def llm(prompt, channel, openai_api_key=None):
     llm_handler.init_llm(prompt)
 
     sys.exit(0)
+
+
+@cli.command(
+    name="summarize",
+    help="summarize a youtube video"
+)
+@click.argument("video", required=True)
+@click.option("--model", "-m", default="gpt-4o",
+              help="Model to use in summary")
+@click.option("--openai-api-key", default=None,
+              help="OpenAI API key. If not provided, the script will attempt to read it from"
+                   " the OPENAI_API_KEY environment variable.")
+def summarize(video, model, openai_api_key):
+    if openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+    if openai_api_key is None:
+        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n"
+                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or pass "
+                      "one in with --openai-api-key")
+        sys.exit(1)
+        
+    openai_client = OpenAI(api_key=openai_api_key)
+
+    summarize_handler = SummarizeHandler(
+        openai_client,
+        model=model,
+        input_video=video
+        )
+    summarize_handler.summarize_video()
 
 
 @cli.command(
