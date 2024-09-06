@@ -194,7 +194,7 @@ class SearchHandler:
                     time_stamp = quote["time_stamp"]
                     words = quote["quote"]
                     console.print(f"       [grey62][link={link}]{time_stamp}[/link][/grey62] -> "
-                                  "[italic][white]\"{words}\"[/white][/italic]")
+                                  f"[italic][white]\"{words}\"[/white][/italic]")
                 console.print("")
 
         num_matches = len(res)

@@ -13,7 +13,8 @@ from .db_utils import (
     get_metadata_from_db,
     get_channel_id_from_input,
     get_vid_ids_by_channel_id,
-    get_subs_by_video_id
+    get_subs_by_video_id,
+    get_channel_name_from_id
 )
 
 
@@ -25,19 +26,22 @@ class ExportHandler:
 
         if channel is not None:
             self.channel_id = get_channel_id_from_input(channel)
+            self.channel_name = get_channel_name_from_id(self.channel_id)
         else:
             self.channel_id = None
+            self.channel_name = None
 
         
-    
     def export(self):
         console = self.console
         output_dir = None
 
-        if self.format == "txt":
-            output_dir = self.export_channel_to_txt(self.channel_id)
-        if self.format == "vtt":
-            output_dir = self.export_channel_to_vtt(self.channel_id)
+        with console.status(f"[bold green]Exporting {self.channel_name}...") as status:
+
+            if self.format == "txt":
+                output_dir = self.export_channel_to_txt(self.channel_id)
+            if self.format == "vtt":
+                output_dir = self.export_channel_to_vtt(self.channel_id)
 
         if output_dir is not None:
             console.print(f"Exported to [green][bold]{output_dir}[/bold][/green]")

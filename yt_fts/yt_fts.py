@@ -63,6 +63,7 @@ def download(url, playlist, language, jobs, cookies_from_browser):
         sys.exit(0)
 
     download_handler.download_channel(url)
+    sys.exit(0)
 
 
 @cli.command(
