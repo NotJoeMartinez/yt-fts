@@ -2,9 +2,14 @@ import os
 import sys
 import click
 
+from openai import OpenAI
 from rich.console import Console
 
 from .download import DownloadHandler
+from .export import ExportHandler 
+from .search import SearchHandler
+from .summarize import SummarizeHandler
+
 from .list import list_channels
 from .utils import show_message
 from .config import (
@@ -164,7 +169,6 @@ def delete(channel):
 @click.option("-f", "--format", default="txt",
               help="The format to export transcripts to. Supported formats: txt, vtt")
 def export(channel, format):
-    from .export import ExportHandler 
 
     export_handler = ExportHandler(
         scope = "channel",
@@ -188,7 +192,6 @@ def export(channel, format):
 @click.option("-l", "--limit", default=10, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
 def search(text, channel, video_id, export, limit):
-    from yt_fts.search import SearchHandler
 
     if len(text) > 40:
         show_message("search_too_long")
@@ -229,8 +232,6 @@ def search(text, channel, video_id, export, limit):
               help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
                    "environment variable.")
 def vsearch(text, channel, video_id, limit, export, openai_api_key):
-    from openai import OpenAI
-    from .search import SearchHandler
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -341,6 +342,32 @@ def llm(prompt, channel, openai_api_key=None):
     llm_handler.init_llm(prompt)
 
     sys.exit(0)
+
+
+@cli.command(
+    name="summarize",
+    help="summarize a youtube video"
+)
+@click.argument("video", required=True)
+@click.option("--model", "-m", default="gpt-4o",
+              help="Model to use in summary")
+@click.option("--openai-api-key", default=None,
+              help="OpenAI API key. If not provided, the script will attempt to read it from"
+                   " the OPENAI_API_KEY environment variable.")
+def summarize(video, model, openai_api_key):
+    if openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+    if openai_api_key is None:
+        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n"
+                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or pass "
+                      "one in with --openai-api-key")
+        sys.exit(1)
+        
+    openai_client = OpenAI(api_key=openai_api_key)
+
+    summarize_handler = SummarizeHandler(openai_client, video)
+    summarize_handler.summarize_video()
 
 
 @cli.command(
