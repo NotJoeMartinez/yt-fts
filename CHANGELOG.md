@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.1.57] - 2024-09-06
+## [0.1.58] - 2024-09-12
+### Changed
+- Advanced search method refactor @JonathanJdeKoning
 
+## [0.1.57] - 2024-09-06
 ### Added
 - Added `summarize` command for video summaries
   - https://github.com/NotJoeMartinez/yt-fts/pull/175
