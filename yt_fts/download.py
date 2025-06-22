@@ -10,6 +10,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from xml.etree import ElementTree
 
 from .config import get_db_path
 from .db_utils import (
@@ -172,23 +173,13 @@ class DownloadHandler:
     def get_channel_name(self, channel_id):
 
         session = self.session
-        res = session.get(f"https://www.youtube.com/channel/{channel_id}/videos")
+        res = session.get(f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}")
 
         if res.status_code == 200:
-            html = res.text
-            soup = BeautifulSoup(html, 'html.parser')
-            script = soup.find('script', type='application/ld+json')
-
-            try:
-                with self.console.status("[bold green]Parsing JSON...") as status:
-                    data = json.loads(script.string)
-            except:
-                print("json parse failed retrying with escaped backslashes")
-                script = script.string.replace('\\', '\\\\')
-                data = json.loads(script)
-
-            channel_name = data['itemListElement'][0]['item']['name']
-            return channel_name
+            with self.console.status("[bold green]Parsing Feed...") as status:
+                tree = ElementTree.fromstring(res.content)
+                channel_name = tree.find('./{*}author/{*}name').text
+                return channel_name
         else:
             self.console.print("[red]Error:[/red] "
                                "couldn't get the channel name or channel doesn't exist")
