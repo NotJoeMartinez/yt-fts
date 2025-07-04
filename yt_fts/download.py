@@ -22,7 +22,7 @@ from .db_utils import (
     get_vid_ids_by_channel_id,
     get_channels
 )
-from .list import list_channels
+
 from .utils import parse_vtt, get_date, handle_reject_consent_cookie
 
 from rich.progress import track
@@ -39,7 +39,7 @@ class DownloadHandler:
         self.language = language
 
         self.session = None
-        self.channl_id = None
+        self.channel_id = None
         self.channel_name = None
         self.video_ids = None
         self.tmp_dir = None
@@ -52,16 +52,14 @@ class DownloadHandler:
         self.channel_name = self.get_channel_name(self.channel_id)
 
         if check_if_channel_exists(self.channel_id):
-            self.handle_channel_exists()
-            sys.exit(1)
+            self.console.print(f"[yellow]Channel '{self.channel_name}' already exists in database. Updating instead...[/yellow]")
+            self.update_channel(self.channel_id)
+            return
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
             channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
             self.video_ids = self.get_videos_list(channel_url)
-
-            # Limit to first 5 videos for testing
-            self.video_ids = self.video_ids
 
             self.console.print(
                 f"[green]Downloading [red]{len(self.video_ids)}[/red] "
@@ -100,7 +98,13 @@ class DownloadHandler:
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
-            self.channel_id = get_channel_id_from_input(target_channel)
+            
+            # Handle both channel_id and target_channel (rowid/name)
+            if isinstance(target_channel, str) and len(target_channel) == 24:  # YouTube channel IDs are 24 chars
+                self.channel_id = target_channel
+            else:
+                self.channel_id = get_channel_id_from_input(target_channel)
+                
             channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
             self.session = self.init_session(channel_url)
             self.channel_name = self.get_channel_name(self.channel_id)
@@ -253,63 +257,23 @@ class DownloadHandler:
 
     def get_vtt(self, tmp_dir, video_url, language):
         try:
-            # First, extract video info without downloading
-            info_opts = {
+            ydl_opts = {
+                'outtmpl': f'{tmp_dir}/%(id)s',
+                'writeinfojson': True,
+                'writeautomaticsub': True,
+                'subtitlesformat': 'vtt',
+                'skip_download': True,
+                'subtitleslangs': [language, '-live_chat'],
                 'quiet': True,
                 'no_warnings': True,
-                'extract_flat': False,
+                'progress_hooks': [self.quiet_progress_hook],
             }
 
             if self.cookies_from_browser is not None:
-                info_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
+                ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
-            with yt_dlp.YoutubeDL(info_opts) as ydl:
-                info = ydl.extract_info(video_url, download=False)
-                
-                if not info:
-                    self.console.print(f"Failed to extract info for: {video_url}")
-                    return
-
-                video_id = info.get('id')
-                if not video_id:
-                    self.console.print(f"No video ID found for: {video_url}")
-                    return
-
-                # save video info
-                info_path = os.path.join(tmp_dir, f'{video_id}.info.json')
-                with open(info_path, 'w', encoding='utf-8') as f:
-                    json.dump(info, f, ensure_ascii=False, indent=2)
-
-                # check if subtitles are available
-                subtitles = info.get('subtitles', {})
-                auto_subtitles = info.get('automatic_captions', {})
-                
-                # try to get manual subtitles first, then automatic
-                subtitle_url = None
-                if language in subtitles:
-                    for sub in subtitles[language]:
-                        if sub.get('ext') == 'vtt':
-                            subtitle_url = sub.get('url')
-                            break
-                elif language in auto_subtitles:
-                    for sub in auto_subtitles[language]:
-                        if sub.get('ext') == 'vtt':
-                            subtitle_url = sub.get('url')
-                            break
-
-                if subtitle_url:
-                    # download the subtitle file
-                    response = requests.get(subtitle_url)
-                    if response.status_code == 200:
-                        vtt_path = os.path.join(tmp_dir, f'{video_id}.{language}.vtt')
-                        with open(vtt_path, 'w', encoding='utf-8') as f:
-                            f.write(response.text)
-                        self.console.print(f" -> \"{video_id}.{language}.vtt\"")
-                    else:
-                        self.console.print(f"Failed to download subtitle for: {video_url}")
-                else:
-                    self.console.print(f"No subtitles available for: {video_url}")
-
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([video_url])
 
         except Exception as e:
             self.console.print(f"Failed to get: {video_url}\n{e}")
@@ -327,13 +291,7 @@ class DownloadHandler:
         for vtt in track(file_paths, description="Adding subtitles to database..."):
             base_name = os.path.basename(vtt)
 
-            # Handle new file naming convention: {video_id}.{language}.vtt
-            parts = base_name.split('.')
-            if len(parts) >= 3 and parts[-1] == 'vtt':
-                vid_id = '.'.join(parts[:-2])  # Remove language and .vtt extension
-            else:
-                vid_id = parts[0]  # Fallback to old format
-            
+            vid_id = base_name.split('.')[0]
             vid_url = f"https://youtu.be/{vid_id}"
 
             vid_json_path = os.path.join(os.path.dirname(vtt), f'{vid_id}.info.json')
@@ -396,9 +354,4 @@ class DownloadHandler:
         self.console.print("")
         sys.exit(1)
 
-    def handle_channel_exists(self):
-        list_channels(self.channel_id)
-        error = "[bold red]Error:[/bold red] Channel already exists in database."
-        error += " Use the \"update\" command to update the channel\n"
-        self.console.print(error)
-        sys.exit(1)
+
