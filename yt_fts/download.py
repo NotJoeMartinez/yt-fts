@@ -22,7 +22,7 @@ from .db_utils import (
     get_vid_ids_by_channel_id,
     get_channels
 )
-from .list import list_channels
+
 from .utils import parse_vtt, get_date, handle_reject_consent_cookie
 
 from rich.progress import track
@@ -30,7 +30,7 @@ from rich.console import Console
 
 
 class DownloadHandler:
-    def __init__(self, number_of_jobs=1, language='en', cookies_from_browser=None):
+    def __init__(self, number_of_jobs=8, language='en', cookies_from_browser=None):
 
         self.console = Console()
 
@@ -39,7 +39,7 @@ class DownloadHandler:
         self.language = language
 
         self.session = None
-        self.channl_id = None
+        self.channel_id = None
         self.channel_name = None
         self.video_ids = None
         self.tmp_dir = None
@@ -52,8 +52,9 @@ class DownloadHandler:
         self.channel_name = self.get_channel_name(self.channel_id)
 
         if check_if_channel_exists(self.channel_id):
-            self.handle_channel_exists()
-            sys.exit(1)
+            self.console.print(f"[yellow]Channel '{self.channel_name}' already exists in database. Updating instead...[/yellow]")
+            self.update_channel(self.channel_id)
+            return
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
@@ -97,7 +98,13 @@ class DownloadHandler:
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
-            self.channel_id = get_channel_id_from_input(target_channel)
+            
+            # Handle both channel_id and target_channel (rowid/name)
+            if isinstance(target_channel, str) and len(target_channel) == 24:  # YouTube channel IDs are 24 chars
+                self.channel_id = target_channel
+            else:
+                self.channel_id = get_channel_id_from_input(target_channel)
+                
             channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
             self.session = self.init_session(channel_url)
             self.channel_name = self.get_channel_name(self.channel_id)
@@ -347,9 +354,4 @@ class DownloadHandler:
         self.console.print("")
         sys.exit(1)
 
-    def handle_channel_exists(self):
-        list_channels(self.channel_id)
-        error = "[bold red]Error:[/bold red] Channel already exists in database."
-        error += " Use the \"update\" command to update the channel\n"
-        self.console.print(error)
-        sys.exit(1)
+

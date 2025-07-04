@@ -121,6 +121,51 @@ def test_playlist_download(runner, capsys):
     assert subtitle_count >= min_sub_count, f"Expected >= {min_sub_count} subtitles, but got {subtitle_count}"
 
 
+def test_channel_update_on_duplicate(runner, capsys):
+    reset_testing_env()
+    
+    # Use the testing utility to fetch an outdated database
+    from testing_utils import fetch_and_unzip_test_db
+    fetch_and_unzip_test_db()
+    
+    # Get initial video count for a specific channel
+    curr = get_test_db()
+    channel_id = 'UCYwVxWpjeKFWwu8TML-Te9A'  # JCS channel
+    
+    res = curr.execute(f"""
+            select count(*) from
+            Videos where channel_id = '{channel_id}'
+    """)
+    initial_video_count = res.fetchone()[0]
+    
+    print(f"Initial video count: {initial_video_count}")
+    
+    # Try to download the same channel - should update instead of failing
+    results = runner.invoke(cli, [
+        'download',
+        '-j',
+        '8',
+        'https://www.youtube.com/@JCS'
+    ])
+    
+    assert results.exit_code == 0
+    
+    # Check that we get the "already exists, updating instead" message
+    output = results.output
+    assert "already exists in database. Updating instead" in output
+    
+    # Get final video count
+    res = curr.execute(f"""
+            select count(*) from
+            Videos where channel_id = '{channel_id}'
+    """)
+    final_video_count = res.fetchone()[0]
+    
+    print(f"Final video count: {final_video_count}")
+    
+    # The final count should be greater than or equal to the initial count
+    # (greater if new videos were found, equal if no new videos)
+    assert final_video_count >= initial_video_count, f"Expected final count ({final_video_count}) >= initial count ({initial_video_count})"
 
 
 if __name__ == "__main__":

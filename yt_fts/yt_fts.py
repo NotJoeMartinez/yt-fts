@@ -46,7 +46,7 @@ def cli():
               help="Download all videos from a playlist")
 @click.option("-l", "--language", default="en",
               help="Language of the subtitles to download")
-@click.option("-j", "--jobs", type=int, default=1,
+@click.option("-j", "--jobs", type=int, default=8,
               help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser", default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
