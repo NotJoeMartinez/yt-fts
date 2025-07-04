@@ -198,7 +198,6 @@ class DownloadHandler:
                 'extract_flat': True,
                 'quiet': True,
                 'nocheckcertificate': True,
-                'user_agent': 'random',
                 'sleep_interval': 1,
                 'max_sleep_interval': 3,
                 'retries': 3,
@@ -238,7 +237,7 @@ class DownloadHandler:
                         if len(live_stream_urls) > 0:
                             list_of_videos_urls.extend(live_stream_urls)
             except Exception:
-                self.console.print("No streams found")
+                self.console.print("[yellow]Warning: No streams found[/yellow]")
 
         return list_of_videos_urls
 
@@ -254,7 +253,6 @@ class DownloadHandler:
                 playlist_data = []
                 for entry in info['entries']:
                     vid_obj = {
-                        'user_agent': 'random',
                         'channel_name': entry['channel'],
                         'channel_id': entry['channel_id'],
                         'video_id': entry['id'],
@@ -290,24 +288,20 @@ class DownloadHandler:
         for attempt in range(max_retries):
             try:
                 ydl_opts = {
-                    'user_agent': 'random',
                     'outtmpl': f'{tmp_dir}/%(id)s',
                     'writeinfojson': True,
                     'writeautomaticsub': True,
                     'subtitlesformat': 'vtt',
                     'skip_download': True,
-                    'subtitleslangs': [language, '-live_chat'],
+                    'subtitleslangs': ['en', '-live_chat'],  # Only English, prefer auto-generated
                     'quiet': True,
                     'no_warnings': True,
                     'progress_hooks': [self.quiet_progress_hook],
-                    # Additional options to help bypass restrictions
                     'nocheckcertificate': True,
                     'ignoreerrors': False,
                     'no_color': True,
-                    # Add rate limiting
                     'sleep_interval': 1,
                     'max_sleep_interval': 5,
-                    # Add retry logic
                     'retries': 3,
                     'fragment_retries': 3,
                     'skip_unavailable_fragments': True,
@@ -317,6 +311,15 @@ class DownloadHandler:
                     ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    # First, let's check what subtitles are available
+                    info = ydl.extract_info(video_url, download=False)
+                    if info:
+                        available_subs = info.get('subtitles', {}).keys()
+                        auto_subs = info.get('automatic_captions', {}).keys()
+                        if not available_subs and not auto_subs:
+                            self.console.print(f"[yellow]No subtitles available for {video_url}[/yellow]")
+                            return
+                   
                     ydl.download([video_url])
                 
                 return
@@ -324,7 +327,7 @@ class DownloadHandler:
             except Exception as e:
                 error_msg = str(e)
                 self.console.print(f"[yellow]Attempt {attempt + 1}/{max_retries} failed for: {video_url}[/yellow]")
-                self.console.print(f"[red]Error: {error_msg}[/red]")
+                self.console.print(f"[red]Warning: {error_msg}[/red]")
                 
                 # Check if it's a 403 error specifically
                 if "403" in error_msg or "Forbidden" in error_msg:
