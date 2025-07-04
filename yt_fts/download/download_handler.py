@@ -12,8 +12,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from xml.etree import ElementTree
 
-from .config import get_db_path
-from .db_utils import (
+from ..config import get_db_path
+from ..db_utils import (
     add_video,
     add_channel_info,
     check_if_channel_exists,
@@ -23,7 +23,7 @@ from .db_utils import (
     get_channels
 )
 
-from .utils import parse_vtt, get_date, handle_reject_consent_cookie
+from ..utils import parse_vtt, get_date, handle_reject_consent_cookie
 
 from rich.progress import track
 from rich.console import Console

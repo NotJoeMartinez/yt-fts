@@ -5,7 +5,7 @@ import click
 from openai import OpenAI
 from rich.console import Console
 
-from .download import DownloadHandler
+from .download.download_handler import DownloadHandler
 from .export import ExportHandler 
 from .search import SearchHandler
 from .summarize import SummarizeHandler
@@ -109,7 +109,7 @@ def list(transcript, channel, library):
 @click.option("-l", "--language",
               default="en", help="Language of the subtitles to download")
 @click.option("-j", "jobs",
-              type=int, default=1, help="Optional number of jobs to parallelize the run")
+              type=int, default=8, help="Optional number of jobs to parallelize the run")
 @click.option("--cookies-from-browser",
               default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
