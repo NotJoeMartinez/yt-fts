@@ -23,7 +23,33 @@ from .db_utils import (
     delete_channel
 )
 
-YT_FTS_VERSION = "0.1.57"
+def get_version():
+    """Get version from pyproject.toml"""
+    try:
+        # Try tomllib first (Python 3.11+)
+        import tomllib
+    except ImportError:
+        # Fallback to tomli for older Python versions
+        try:
+            import tomli as tomllib
+        except ImportError:
+            # If neither is available, return a fallback version
+            return "0.1.57"
+    
+    try:
+        # Get the path to pyproject.toml (relative to this file)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        pyproject_path = os.path.join(project_root, "pyproject.toml")
+        
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+            return data["project"]["version"]
+    except (KeyError, FileNotFoundError, OSError):
+        # Fallback version if anything goes wrong
+        return "0.1.57"
+
+YT_FTS_VERSION = get_version()
 console = Console()
 
 
