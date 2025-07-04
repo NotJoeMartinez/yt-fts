@@ -22,36 +22,9 @@ from .db_utils import (
     get_channel_name_from_id,
     delete_channel
 )
+from yt_fts import __version__ as YT_FTS_VERSION
 
-def get_version():
-    """Get version from pyproject.toml"""
-    try:
-        # Try tomllib first (Python 3.11+)
-        import tomllib
-    except ImportError:
-        # Fallback to tomli for older Python versions
-        try:
-            import tomli as tomllib
-        except ImportError:
-            # If neither is available, return a fallback version
-            return "0.1.57"
-    
-    try:
-        # Get the path to pyproject.toml (relative to this file)
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(current_dir)
-        pyproject_path = os.path.join(project_root, "pyproject.toml")
-        
-        with open(pyproject_path, "rb") as f:
-            data = tomllib.load(f)
-            return data["project"]["version"]
-    except (KeyError, FileNotFoundError, OSError):
-        # Fallback version if anything goes wrong
-        return "0.1.57"
-
-YT_FTS_VERSION = get_version()
 console = Console()
-
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')

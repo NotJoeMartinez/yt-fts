@@ -29,7 +29,6 @@ dependencies = [
     "beautifulsoup4==4.12.3",
     "yt-dlp==2024.7.16",
     "webvtt-py==0.5.1",
-    "tomli>=2.0.0; python_version < '3.11'"
 ]
 
 [project.scripts]
