@@ -1,10 +1,13 @@
-import yt_dlp
-import tempfile
-import sys
+
 import os
-import sqlite3
+import sys
 import json
+import random
+import sqlite3
+import tempfile
+
 import requests
+import yt_dlp
 
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
@@ -195,6 +198,9 @@ class DownloadHandler:
     def get_videos_list(self, channel_url: str) -> list[str]:
         with self.console.status("[bold green]Scraping video urls ...") as status:
             ydl_opts = {
+                'http_headers': {
+                    'User-Agent': random.choice(self._user_agents)
+                },
                 'extract_flat': True,
                 'quiet': True,
                 'nocheckcertificate': True,
@@ -237,13 +243,16 @@ class DownloadHandler:
                         if len(live_stream_urls) > 0:
                             list_of_videos_urls.extend(live_stream_urls)
             except Exception:
-                self.console.print("[yellow]Warning: No streams found[/yellow]")
+                self.console.print("[yellow]No streams found[/yellow]")
 
         return list_of_videos_urls
 
     def get_playlist_data(self, playlist_url: str) -> list[dict[str, str]]:
         with self.console.status("[bold green]Scraping video urls...") as status:
             ydl_opts = {
+                'http_headers': {   
+                    'User-Agent': random.choice(self._user_agents)
+                },
                 'quiet': True,
                 'extract_flat': True,
             }
@@ -288,6 +297,9 @@ class DownloadHandler:
         for attempt in range(max_retries):
             try:
                 ydl_opts = {
+                    'http_headers': {
+                        'User-Agent': random.choice(self._user_agents)
+                    },
                     'outtmpl': f'{tmp_dir}/%(id)s',
                     'writeinfojson': True,
                     'writeautomaticsub': True,
@@ -546,3 +558,19 @@ class DownloadHandler:
         sys.exit(1)
 
 
+    @property
+    def _user_agents(self):
+        return [
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
+        ]
