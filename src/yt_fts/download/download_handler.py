@@ -430,11 +430,11 @@ class DownloadHandler:
             }
             response = requests.get("https://www.youtube.com", headers=headers, timeout=10)
             if response.status_code == 200:
-                self.console.print("[green] Basic HTTP connection successful[/green]")
+                self.console.print("[green]✓ Basic HTTP connection successful[/green]")
             else:
-                self.console.print(f"[red] HTTP connection failed with status {response.status_code}[/red]")
+                self.console.print(f"[red]✗ HTTP connection failed with status {response.status_code}[/red]")
         except Exception as e:
-            self.console.print(f"[red] HTTP connection failed: {e}[/red]")
+            self.console.print(f"[red]✗ HTTP connection failed: {e}[/red]")
         
         # Test 2: yt-dlp info extraction
         self.console.print("\n[bold]2. Testing yt-dlp info extraction...[/bold]")
