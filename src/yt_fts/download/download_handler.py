@@ -1,10 +1,13 @@
-import yt_dlp
-import tempfile
-import sys
+
 import os
-import sqlite3
+import sys
 import json
+import random
+import sqlite3
+import tempfile
+
 import requests
+import yt_dlp
 
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
@@ -195,10 +198,12 @@ class DownloadHandler:
     def get_videos_list(self, channel_url: str) -> list[str]:
         with self.console.status("[bold green]Scraping video urls ...") as status:
             ydl_opts = {
+                'http_headers': {
+                    'User-Agent': random.choice(self._user_agents)
+                },
                 'extract_flat': True,
                 'quiet': True,
                 'nocheckcertificate': True,
-                'user_agent': 'random',
                 'sleep_interval': 1,
                 'max_sleep_interval': 3,
                 'retries': 3,
@@ -238,13 +243,16 @@ class DownloadHandler:
                         if len(live_stream_urls) > 0:
                             list_of_videos_urls.extend(live_stream_urls)
             except Exception:
-                self.console.print("No streams found")
+                self.console.print("[yellow]No streams found[/yellow]")
 
         return list_of_videos_urls
 
     def get_playlist_data(self, playlist_url: str) -> list[dict[str, str]]:
         with self.console.status("[bold green]Scraping video urls...") as status:
             ydl_opts = {
+                'http_headers': {   
+                    'User-Agent': random.choice(self._user_agents)
+                },
                 'quiet': True,
                 'extract_flat': True,
             }
@@ -254,7 +262,6 @@ class DownloadHandler:
                 playlist_data = []
                 for entry in info['entries']:
                     vid_obj = {
-                        'user_agent': 'random',
                         'channel_name': entry['channel'],
                         'channel_id': entry['channel_id'],
                         'video_id': entry['id'],
@@ -290,24 +297,23 @@ class DownloadHandler:
         for attempt in range(max_retries):
             try:
                 ydl_opts = {
-                    'user_agent': 'random',
+                    'http_headers': {
+                        'User-Agent': random.choice(self._user_agents)
+                    },
                     'outtmpl': f'{tmp_dir}/%(id)s',
                     'writeinfojson': True,
                     'writeautomaticsub': True,
                     'subtitlesformat': 'vtt',
                     'skip_download': True,
-                    'subtitleslangs': [language, '-live_chat'],
+                    'subtitleslangs': ['en', '-live_chat'],  # Only English, prefer auto-generated
                     'quiet': True,
                     'no_warnings': True,
                     'progress_hooks': [self.quiet_progress_hook],
-                    # Additional options to help bypass restrictions
                     'nocheckcertificate': True,
                     'ignoreerrors': False,
                     'no_color': True,
-                    # Add rate limiting
                     'sleep_interval': 1,
                     'max_sleep_interval': 5,
-                    # Add retry logic
                     'retries': 3,
                     'fragment_retries': 3,
                     'skip_unavailable_fragments': True,
@@ -317,6 +323,15 @@ class DownloadHandler:
                     ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    # First, let's check what subtitles are available
+                    info = ydl.extract_info(video_url, download=False)
+                    if info:
+                        available_subs = info.get('subtitles', {}).keys()
+                        auto_subs = info.get('automatic_captions', {}).keys()
+                        if not available_subs and not auto_subs:
+                            self.console.print(f"[yellow]No subtitles available for {video_url}[/yellow]")
+                            return
+                   
                     ydl.download([video_url])
                 
                 return
@@ -324,7 +339,7 @@ class DownloadHandler:
             except Exception as e:
                 error_msg = str(e)
                 self.console.print(f"[yellow]Attempt {attempt + 1}/{max_retries} failed for: {video_url}[/yellow]")
-                self.console.print(f"[red]Error: {error_msg}[/red]")
+                self.console.print(f"[red]Warning: {error_msg}[/red]")
                 
                 # Check if it's a 403 error specifically
                 if "403" in error_msg or "Forbidden" in error_msg:
@@ -543,3 +558,19 @@ class DownloadHandler:
         sys.exit(1)
 
 
+    @property
+    def _user_agents(self):
+        return [
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0",
+            "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
+        ]
