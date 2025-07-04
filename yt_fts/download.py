@@ -30,7 +30,7 @@ from rich.console import Console
 
 
 class DownloadHandler:
-    def __init__(self, number_of_jobs=8, language='en', cookies_from_browser=None):
+    def __init__(self, number_of_jobs: int = 8, language: str = 'en', cookies_from_browser: str | None = None) -> None:
 
         self.console = Console()
 
@@ -38,13 +38,13 @@ class DownloadHandler:
         self.number_of_jobs = number_of_jobs
         self.language = language
 
-        self.session = None
-        self.channel_id = None
-        self.channel_name = None
-        self.video_ids = None
-        self.tmp_dir = None
+        self.session: requests.Session | None = None
+        self.channel_id: str | None = None
+        self.channel_name: str | None = None
+        self.video_ids: list[str] | None = None
+        self.tmp_dir: str | None = None
 
-    def download_channel(self, url):
+    def download_channel(self, url: str) -> None:
 
         self.validate_channel_url(url)
         self.session = self.init_session(url)
@@ -72,7 +72,7 @@ class DownloadHandler:
 
         self.console.print(f"[green]Finished downloading subtitles for {self.channel_name}[/green]")
 
-    def download_playlist(self, playlist_url, language, number_of_jobs):
+    def download_playlist(self, playlist_url: str, language: str, number_of_jobs: int) -> None:
         self.language = language
         self.number_of_jobs = number_of_jobs
 
@@ -94,7 +94,7 @@ class DownloadHandler:
             self.download_vtts()
             self.vtt_to_db()
 
-    def update_channel(self, target_channel):
+    def update_channel(self, target_channel: str | int) -> None:
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             self.tmp_dir = tmp_dir
@@ -139,7 +139,7 @@ class DownloadHandler:
 
             self.console.print(f"Added {len(vtt_to_parse)} new videos from \"{self.channel_name}\" to the database")
 
-    def update_all_channels(self):
+    def update_all_channels(self) -> None:
 
         self.console.print("Updating all channels in the database")
         all_channels = get_channels()
@@ -150,12 +150,12 @@ class DownloadHandler:
 
         self.console.print("[green]Finished updating all channels[/green]")
 
-    def init_session(self, url):
+    def init_session(self, url: str) -> requests.Session:
         s = requests.session()
         handle_reject_consent_cookie(url, s)
         return s
 
-    def get_channel_id(self, url):
+    def get_channel_id(self, url: str) -> str | None:
 
         try:
             session = self.session
@@ -177,7 +177,7 @@ class DownloadHandler:
             self.console.print(f'Error: {e}')
             sys.exit(1)
 
-    def get_channel_name(self, channel_id):
+    def get_channel_name(self, channel_id: str) -> str:
 
         session = self.session
         res = session.get(f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}")
@@ -192,7 +192,7 @@ class DownloadHandler:
                                "couldn't get the channel name or channel doesn't exist")
             sys.exit(1)
 
-    def get_videos_list(self, channel_url):
+    def get_videos_list(self, channel_url: str) -> list[str]:
         with self.console.status("[bold green]Scraping video urls ...") as status:
             ydl_opts = {
                 'extract_flat': True,
@@ -215,7 +215,7 @@ class DownloadHandler:
 
         return list_of_videos_urls
 
-    def get_playlist_data(self, playlist_url):
+    def get_playlist_data(self, playlist_url: str) -> list[dict[str, str]]:
         with self.console.status("[bold green]Scraping video urls...") as status:
             ydl_opts = {
                 'quiet': True,
@@ -237,7 +237,7 @@ class DownloadHandler:
 
         return playlist_data
 
-    def download_vtts(self):
+    def download_vtts(self) -> None:
         executor = ThreadPoolExecutor(self.number_of_jobs)
         futures = []
 
@@ -249,13 +249,13 @@ class DownloadHandler:
         for i in range(len(self.video_ids)):
             futures[i].result()
 
-    def quiet_progress_hook(self, d):
+    def quiet_progress_hook(self, d: dict) -> None:
         console = self.console
         if d['status'] == 'finished':
             file_name = Path(d['filename']).name
             console.print(f" -> \"{file_name}\"")
 
-    def get_vtt(self, tmp_dir, video_url, language):
+    def get_vtt(self, tmp_dir: str, video_url: str, language: str) -> None:
         try:
             ydl_opts = {
                 'outtmpl': f'{tmp_dir}/%(id)s',
@@ -278,7 +278,7 @@ class DownloadHandler:
         except Exception as e:
             self.console.print(f"Failed to get: {video_url}\n{e}")
 
-    def vtt_to_db(self):
+    def vtt_to_db(self) -> None:
 
         tmp_dir = self.tmp_dir
 
@@ -320,7 +320,7 @@ class DownloadHandler:
 
         con.close()
 
-    def validate_channel_url(self, channel_url):
+    def validate_channel_url(self, channel_url: str) -> str:
         channel_url = channel_url.strip('/')
         parsed = urlparse(channel_url)
         domain = parsed.netloc
