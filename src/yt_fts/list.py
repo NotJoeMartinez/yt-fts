@@ -5,7 +5,6 @@ from rich.table import Table
 
 from .db_utils import get_title_from_db
 from .utils import time_to_secs, get_time_delta
-
 from .config import get_db_path
 
 

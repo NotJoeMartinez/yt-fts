@@ -1,14 +1,12 @@
 import uuid
-from typing import Optional, Any
 from openai import OpenAI
 from datetime import datetime
-
 from rich.progress import track
 from rich.console import Console
-from .config import get_chroma_client
-from .utils import time_to_secs
+from ..config import get_chroma_client
+from ..utils import time_to_secs
 
-from .db_utils import (
+from ..db_utils import (
     get_subs_by_video_id,
     get_metadata_from_db,
     get_vid_ids_by_channel_id,

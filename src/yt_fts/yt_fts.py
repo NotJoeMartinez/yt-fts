@@ -6,9 +6,9 @@ from openai import OpenAI
 from rich.console import Console
 
 from .download.download_handler import DownloadHandler
+from .llm.summarize import SummarizeHandler
 from .export import ExportHandler 
 from .search import SearchHandler
-from .llm.summarize import SummarizeHandler
 
 from .list import list_channels
 from .utils import show_message
@@ -22,7 +22,7 @@ from .db_utils import (
     get_channel_name_from_id,
     delete_channel
 )
-from yt_fts import __version__ as YT_FTS_VERSION
+from . import __version__ as YT_FTS_VERSION
 
 console = Console()
 
@@ -85,7 +85,7 @@ def download(url: str, playlist: bool, language: str, jobs: int, cookies_from_br
 @click.option("-j", "--jobs", type=int, default=8,
               help="Number of parallel download jobs to test with")
 def diagnose(test_url: str, cookies_from_browser: str | None, jobs: int) -> None:
-    from yt_fts.download.download_handler import DownloadHandler
+    from .download.download_handler import DownloadHandler
     
     download_handler = DownloadHandler(
         number_of_jobs=jobs,
@@ -106,7 +106,7 @@ def diagnose(test_url: str, cookies_from_browser: str | None, jobs: int) -> None
 @click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
 @click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
 def list(transcript: str | None, channel: str | None, library: bool) -> None:
-    from yt_fts.list import show_video_list, show_video_transcript
+    from .list import show_video_list, show_video_transcript
 
     if transcript:
         show_video_transcript(transcript)
@@ -305,8 +305,8 @@ def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, ex
 @click.option("-i", "--interval", default=30, type=int,
               help="Interval in seconds to split the transcripts into chunks. Default 30s.")
 def embeddings(channel: str | None, openai_api_key: str | None, interval: int = 30) -> None:
-    from yt_fts.get_embeddings import EmbeddingsHandler
-    from yt_fts.utils import check_ss_enabled, enable_ss
+    from .llm.get_embeddings import EmbeddingsHandler
+    from .utils import check_ss_enabled, enable_ss
 
     channel_id = get_channel_id_from_input(channel)
 

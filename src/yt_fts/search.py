@@ -1,12 +1,13 @@
 import sys
+import textwrap
 
 from rich.console import Console
-import textwrap
 from openai import OpenAI
+
+from .llm.get_embeddings import EmbeddingsHandler
+from .export import ExportHandler
 from .config import get_chroma_client
 from .utils import time_to_secs, bold_query_matches
-from .get_embeddings import EmbeddingsHandler
-from .export import ExportHandler
 from .db_utils import (
     search_all,
     get_channel_id_from_input,

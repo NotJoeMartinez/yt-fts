@@ -1,20 +1,22 @@
+import sys
+import textwrap
+import traceback
+
+from openai import OpenAI
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.text import Text
-import textwrap
-import sys
-import traceback
-from openai import OpenAI
+
+from .get_embeddings import EmbeddingsHandler
+from ..utils import time_to_secs
+from ..config import get_chroma_client
 from ..db_utils import (
     get_channel_id_from_input,
     get_channel_name_from_video_id,
     get_title_from_db
 )
-from ..get_embeddings import EmbeddingsHandler
-from ..utils import time_to_secs
-from ..config import get_chroma_client
 
 
 class LLMHandler:
