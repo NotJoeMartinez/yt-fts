@@ -227,6 +227,7 @@ class DownloadHandler:
                 playlist_data = []
                 for entry in info['entries']:
                     vid_obj = {
+                        'user_agent': 'random',
                         'channel_name': entry['channel'],
                         'channel_id': entry['channel_id'],
                         'video_id': entry['id'],

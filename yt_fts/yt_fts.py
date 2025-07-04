@@ -47,7 +47,7 @@ def cli():
 @click.option("-l", "--language", default="en",
               help="Language of the subtitles to download")
 @click.option("-j", "--jobs", type=int, default=8,
-              help="Optional number of jobs to parallelize the run")
+              help="Number of parallel download jobs (default: 8, recommended: 4-16 for most users)")
 @click.option("--cookies-from-browser", default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
 def download(url, playlist, language, jobs, cookies_from_browser):
@@ -109,7 +109,7 @@ def list(transcript, channel, library):
 @click.option("-l", "--language",
               default="en", help="Language of the subtitles to download")
 @click.option("-j", "jobs",
-              type=int, default=8, help="Optional number of jobs to parallelize the run")
+              type=int, default=8, help="Number of parallel download jobs (default: 8, recommended: 4-16 for most users)")
 @click.option("--cookies-from-browser",
               default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
