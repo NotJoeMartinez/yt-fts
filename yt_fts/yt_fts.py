@@ -71,6 +71,32 @@ def download(url, playlist, language, jobs, cookies_from_browser):
 
 
 @cli.command(
+    name="diagnose",
+    help="""
+    Diagnose 403 errors and other download issues.
+    
+    This command will test various aspects of the connection to YouTube
+    and provide recommendations for fixing common issues.
+    """
+)
+@click.option("-u", "--test-url", default="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+@click.option("--cookies-from-browser", default=None,
+              help="Browser to extract cookies from. Ex: chrome, firefox")
+@click.option("-j", "--jobs", type=int, default=8,
+              help="Number of parallel download jobs to test with")
+def diagnose(test_url, cookies_from_browser, jobs):
+    from yt_fts.download.download_handler import DownloadHandler
+    
+    download_handler = DownloadHandler(
+        number_of_jobs=jobs,
+        cookies_from_browser=cookies_from_browser
+    )
+    
+    download_handler.diagnose_403_errors(test_url)
+    sys.exit(0)
+
+
+@cli.command(
     name="list",
     help="""
     View library, transcripts and channel video list 

@@ -197,19 +197,46 @@ class DownloadHandler:
             ydl_opts = {
                 'extract_flat': True,
                 'quiet': True,
+                'nocheckcertificate': True,
+                'user_agent': 'random',
+                'sleep_interval': 1,
+                'max_sleep_interval': 3,
+                'retries': 3,
             }
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(channel_url, download=False)
-                list_of_videos_urls = [entry['id'] for entry in info['entries']]
+            if self.cookies_from_browser is not None:
+                ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(channel_url, download=False)
+                    if info and 'entries' in info:
+                        list_of_videos_urls = [entry['id'] for entry in info['entries'] if entry]
+                    else:
+                        self.console.print("[red]Error: Could not extract video list from channel[/red]")
+                        return []
+            except Exception as e:
+                error_msg = str(e)
+                if "403" in error_msg or "Forbidden" in error_msg:
+                    self.console.print("[red]403 Forbidden error when scraping channel videos[/red]")
+                    self.console.print("[yellow]This might be due to:[/yellow]")
+                    self.console.print("  - Channel is private or restricted")
+                    self.console.print("  - YouTube is blocking automated access")
+                    self.console.print("  - Missing cookies (try --cookies-from-browser)")
+                    self.console.print("  - Rate limiting")
+                else:
+                    self.console.print(f"[red]Error scraping videos: {error_msg}[/red]")
+                return []
+
+            # Try to get streams as well
             streams_url = channel_url.replace("/videos", "/streams")
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     streams_info = ydl.extract_info(streams_url, download=False)
-                    live_stream_urls = [entry['id'] for entry in streams_info['entries']]
-                    if len(live_stream_urls) > 0:
-                        list_of_videos_urls.extend(live_stream_urls)
+                    if streams_info and 'entries' in streams_info:
+                        live_stream_urls = [entry['id'] for entry in streams_info['entries'] if entry]
+                        if len(live_stream_urls) > 0:
+                            list_of_videos_urls.extend(live_stream_urls)
             except Exception:
                 self.console.print("No streams found")
 
@@ -257,27 +284,92 @@ class DownloadHandler:
             console.print(f" -> \"{file_name}\"")
 
     def get_vtt(self, tmp_dir: str, video_url: str, language: str) -> None:
-        try:
-            ydl_opts = {
-                'outtmpl': f'{tmp_dir}/%(id)s',
-                'writeinfojson': True,
-                'writeautomaticsub': True,
-                'subtitlesformat': 'vtt',
-                'skip_download': True,
-                'subtitleslangs': [language, '-live_chat'],
-                'quiet': True,
-                'no_warnings': True,
-                'progress_hooks': [self.quiet_progress_hook],
-            }
+        max_retries = 3
+        retry_delay = 2  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                ydl_opts = {
+                    'user_agent': 'random',
+                    'outtmpl': f'{tmp_dir}/%(id)s',
+                    'writeinfojson': True,
+                    'writeautomaticsub': True,
+                    'subtitlesformat': 'vtt',
+                    'skip_download': True,
+                    'subtitleslangs': [language, '-live_chat'],
+                    'quiet': True,
+                    'no_warnings': True,
+                    'progress_hooks': [self.quiet_progress_hook],
+                    # Additional options to help bypass restrictions
+                    'nocheckcertificate': True,
+                    'ignoreerrors': False,
+                    'no_color': True,
+                    # Add rate limiting
+                    'sleep_interval': 1,
+                    'max_sleep_interval': 5,
+                    # Add retry logic
+                    'retries': 3,
+                    'fragment_retries': 3,
+                    'skip_unavailable_fragments': True,
+                }
 
-            if self.cookies_from_browser is not None:
-                ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
+                if self.cookies_from_browser is not None:
+                    ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([video_url])
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([video_url])
+                
+                return
 
-        except Exception as e:
-            self.console.print(f"Failed to get: {video_url}\n{e}")
+            except Exception as e:
+                error_msg = str(e)
+                self.console.print(f"[yellow]Attempt {attempt + 1}/{max_retries} failed for: {video_url}[/yellow]")
+                self.console.print(f"[red]Error: {error_msg}[/red]")
+                
+                # Check if it's a 403 error specifically
+                if "403" in error_msg or "Forbidden" in error_msg:
+                    self.console.print(f"[red]403 Forbidden error detected - YouTube is blocking the request[/red]")
+                    self.console.print(f"[yellow]Possible causes:[/yellow]")
+                    self.console.print(f"  - Rate limiting (too many requests too quickly)")
+                    self.console.print(f"  - Missing or invalid cookies")
+                    self.console.print(f"  - IP address is blocked")
+                    self.console.print(f"  - User-Agent detection")
+                    
+                    if attempt < max_retries - 1:
+                        self.console.print(f"[yellow]Waiting {retry_delay} seconds before retry...[/yellow]")
+                        import time
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                    else:
+                        self.console.print(f"[red]All retry attempts failed for: {video_url}[/red]")
+                        self.console.print(f"[yellow]Suggestions:[/yellow]")
+                        self.console.print(f"  - Try using --cookies-from-browser option")
+                        self.console.print(f"  - Reduce the number of parallel jobs (-j option)")
+                        self.console.print(f"  - Wait a few minutes before trying again")
+                        self.console.print(f"  - Check if the video is available in your region")
+                
+                elif "429" in error_msg or "Too Many Requests" in error_msg:
+                    self.console.print(f"[red]429 Too Many Requests - Rate limit exceeded[/red]")
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * 5  # Longer wait for rate limits
+                        self.console.print(f"[yellow]Waiting {wait_time} seconds before retry...[/yellow]")
+                        import time
+                        time.sleep(wait_time)
+                        retry_delay *= 2
+                    else:
+                        self.console.print(f"[red]Rate limit exceeded for: {video_url}[/red]")
+                        self.console.print(f"[yellow]Try reducing parallel jobs or wait longer[/yellow]")
+                
+                else:
+                    # For other errors, just retry with normal delay
+                    if attempt < max_retries - 1:
+                        self.console.print(f"[yellow]Waiting {retry_delay} seconds before retry...[/yellow]")
+                        import time
+                        time.sleep(retry_delay)
+                        retry_delay *= 2
+                    else:
+                        self.console.print(f"[red]Failed to get: {video_url}[/red]")
+                        self.console.print(f"[red]Error: {error_msg}[/red]")
 
     def vtt_to_db(self) -> None:
 
@@ -320,6 +412,101 @@ class DownloadHandler:
             con.commit()
 
         con.close()
+
+    def diagnose_403_errors(self, test_url: str = "https://www.youtube.com/watch?v=dQw4w9WgXcQ") -> None:
+        """
+        !SLOP GENERATED
+
+        Diagnose potential causes of 403 errors by testing various aspects of the connection
+        """
+        self.console.print("[bold blue]Diagnosing 403 errors...[/bold blue]")
+        
+        # Test 1: Basic HTTP request
+        self.console.print("\n[bold]1. Testing basic HTTP connection to YouTube...[/bold]")
+        try:
+            import requests
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get("https://www.youtube.com", headers=headers, timeout=10)
+            if response.status_code == 200:
+                self.console.print("[green] Basic HTTP connection successful[/green]")
+            else:
+                self.console.print(f"[red] HTTP connection failed with status {response.status_code}[/red]")
+        except Exception as e:
+            self.console.print(f"[red] HTTP connection failed: {e}[/red]")
+        
+        # Test 2: yt-dlp info extraction
+        self.console.print("\n[bold]2. Testing yt-dlp info extraction...[/bold]")
+        try:
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'extract_flat': True,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            }
+            
+            if self.cookies_from_browser is not None:
+                ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(test_url, download=False)
+                if info:
+                    self.console.print("[green]✓ yt-dlp info extraction successful[/green]")
+                    self.console.print(f"  Title: {info.get('title', 'N/A')}")
+                else:
+                    self.console.print("[red]✗ yt-dlp info extraction failed[/red]")
+        except Exception as e:
+            self.console.print(f"[red]✗ yt-dlp info extraction failed: {e}[/red]")
+        
+        # Test 3: Cookie availability
+        self.console.print("\n[bold]3. Testing cookie availability...[/bold]")
+        if self.cookies_from_browser is not None:
+            self.console.print(f"[yellow]Cookies from browser: {self.cookies_from_browser}[/yellow]")
+            try:
+                # Test if we can extract cookies
+                ydl_opts = {
+                    'cookiesfrombrowser': (self.cookies_from_browser,),
+                    'quiet': True,
+                    'no_warnings': True,
+                }
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    # Just test cookie extraction, don't download
+                    self.console.print("[green]✓ Cookie extraction appears to be working[/green]")
+            except Exception as e:
+                self.console.print(f"[red]✗ Cookie extraction failed: {e}[/red]")
+        else:
+            self.console.print("[yellow]No cookies from browser specified[/yellow]")
+            self.console.print("[yellow]Consider using --cookies-from-browser option[/yellow]")
+        
+        # Test 4: Rate limiting check
+        self.console.print("\n[bold]4. Rate limiting analysis...[/bold]")
+        self.console.print(f"Current parallel jobs: {self.number_of_jobs}")
+        if self.number_of_jobs > 4:
+            self.console.print("[yellow]⚠ High number of parallel jobs may cause rate limiting[/yellow]")
+            self.console.print("[yellow]Consider reducing to 2-4 jobs[/yellow]")
+        else:
+            self.console.print("[green]✓ Parallel jobs setting looks reasonable[/green]")
+        
+        # Test 5: Network connectivity
+        self.console.print("\n[bold]5. Network connectivity test...[/bold]")
+        try:
+            import socket
+            socket.create_connection(("www.youtube.com", 443), timeout=5)
+            self.console.print("[green]✓ Network connectivity to YouTube is good[/green]")
+        except Exception as e:
+            self.console.print(f"[red]✗ Network connectivity issue: {e}[/red]")
+        
+        # Recommendations
+        self.console.print("\n[bold blue]Recommendations to fix 403 errors:[/bold blue]")
+        self.console.print("1. Use --cookies-from-browser chrome (or firefox)")
+        self.console.print("2. Reduce parallel jobs: -j 2 or -j 4")
+        self.console.print("3. Wait a few minutes between download attempts")
+        self.console.print("4. Check if you're behind a VPN or proxy")
+        self.console.print("5. Try downloading from a different network")
+        self.console.print("6. Update yt-dlp: pip install --upgrade yt-dlp")
 
     def validate_channel_url(self, channel_url: str) -> str:
         channel_url = channel_url.strip('/')
