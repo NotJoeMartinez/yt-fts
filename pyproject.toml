@@ -21,8 +21,8 @@ classifiers = [
 
 dependencies = [
     "click==8.1.7",
-    "openai==1.35.3",
-    "chromadb==0.5.2",
+    "openai==1.93.0",
+    "chromadb==1.0.15",
     "requests>=2.32.2,<3",
     "rich==13.7.1",
     "sqlite-utils==3.36",
