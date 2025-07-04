@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.62] - 2025-07-04
+### Added 
+- User agent randomization for yt-dlp
+
+### Fixed
+- Retry download method
+
+### Changed
+- Package structure
+- Upgraded dependencies 
+
 ## [0.1.60] - 2025-01-03
 ### Added
 - New test to verify channel update functionality on duplicate downloads
