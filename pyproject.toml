@@ -7,14 +7,14 @@ name = "yt-fts"
 version = "0.1.60"
 description = "Search all of a YouTube channel from the command line"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [
     { name = "NotJoeMartinez", email = "notjoemartinez@protonmail.com" }
 ]
 keywords = ["youtube", "subtitles", "search"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "License :: OSI Approved :: The Unlicense (Unlicense)", 
     "Operating System :: OS Independent",
 ]

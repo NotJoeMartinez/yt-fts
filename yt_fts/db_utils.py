@@ -10,7 +10,7 @@ from .utils import show_message, get_date
 from .config import get_db_path, get_chroma_client
 
 
-def make_db(db_path):
+def make_db(db_path: str) -> None:
     db = Database(db_path)
 
     db["Channels"].create({
@@ -70,7 +70,7 @@ def make_db(db_path):
     )
 
 
-def add_channel_info(channel_id, channel_name, channel_url):
+def add_channel_info(channel_id: str, channel_name: str, channel_url: str) -> None:
     db = Database(get_db_path())
 
     db["Channels"].insert({
@@ -80,7 +80,7 @@ def add_channel_info(channel_id, channel_name, channel_url):
     })
 
 
-def add_video(channel_id, video_id, video_title, video_url, video_date):
+def add_video(channel_id: str, video_id: str, video_title: str, video_url: str, video_date: str) -> None:
     conn = sqlite3.connect(get_db_path())
     cur = conn.cursor()
     existing_video = cur.execute("SELECT * FROM Videos WHERE video_id = ?",
@@ -98,7 +98,7 @@ def add_video(channel_id, video_id, video_title, video_url, video_date):
     conn.close()
 
 
-def add_subtitle(video_id, start_time, text):
+def add_subtitle(video_id: str, start_time: str, text: str) -> None:
     db = Database(get_db_path())
 
     db["Subtitles"].insert({
@@ -108,27 +108,27 @@ def add_subtitle(video_id, start_time, text):
     })
 
 
-def get_channels():
+def get_channels() -> list[tuple[int, str, str, str]]:
     db = Database(get_db_path())
 
     return db.execute("SELECT ROWID, channel_id, channel_name, channel_url FROM Channels").fetchall()
 
 
-def escape_fts5_query(query):
+def escape_fts5_query(query: str) -> str:
     special_chars = ['"', '*', '(', ')', '-', '+']
     for char in special_chars:
         query = query.replace(char, f'"{char}"')
     return query
 
 
-def escape_fts5_term(term):
+def escape_fts5_term(term: str) -> str:
     special_chars = ['"', '*', '(', ')', '+', '-']
     for char in special_chars:
         term = term.replace(char, f'"{char}"')
     return f'"{term}"'
 
 
-def parse_query(query):
+def parse_query(query: str) -> str:
     terms = re.findall(r'"[^"]*"|\S+', query)
     parsed_query = []
     for term in terms:
@@ -139,7 +139,7 @@ def parse_query(query):
     return ' '.join(parsed_query)
 
 
-def search_channel(channel_id, text, limit=None):
+def search_channel(channel_id: str, text: str, limit: int | None = None) -> list[dict[str, int | str]]:
     conn = sqlite3.connect(get_db_path())
     curr = conn.cursor()
     
@@ -188,7 +188,7 @@ def search_channel(channel_id, text, limit=None):
     return formatted_res
 
 
-def search_video(video_id, text, limit=None):
+def search_video(video_id: str, text: str, limit: int | None = None) -> list[dict[str, int | str]]:
     try:
         conn = sqlite3.connect(get_db_path())
         curr = conn.cursor()
@@ -242,7 +242,7 @@ def search_video(video_id, text, limit=None):
         conn.close()
 
 
-def search_all(text, limit=None):
+def search_all(text: str, limit: int | None = None) -> list[dict[str, int | str]]:
     try:
         conn = sqlite3.connect(get_db_path())
         curr = conn.cursor()
@@ -298,13 +298,13 @@ def search_all(text, limit=None):
         conn.close()
 
 
-def get_title_from_db(video_id):
+def get_title_from_db(video_id: str) -> str:
     db = Database(get_db_path())
 
     return db.execute(f"SELECT video_title FROM Videos WHERE video_id = ?", [video_id]).fetchone()[0]
 
 
-def get_metadata_from_db(video_id):
+def get_metadata_from_db(video_id: str) -> dict[str, any]:
     db = Database(get_db_path())
 
     metadata = db.execute_returning_dicts(f"SELECT * FROM Videos WHERE video_id = ?", [video_id])[0]
@@ -312,13 +312,13 @@ def get_metadata_from_db(video_id):
     return metadata
 
 
-def get_channel_name_from_id(channel_id):
+def get_channel_name_from_id(channel_id: str) -> str:
     db = Database(get_db_path())
 
     return db.execute(f"SELECT channel_name FROM Channels WHERE channel_id = ?", [channel_id]).fetchone()[0]
 
 
-def get_channel_name_from_video_id(video_id):
+def get_channel_name_from_video_id(video_id: str) -> str:
     db = Database(get_db_path())
 
     return db.execute(
@@ -327,7 +327,7 @@ def get_channel_name_from_video_id(video_id):
 
 
 # delete all videos, subtitles, and embeddings associated with channel
-def delete_channel(channel_id):
+def delete_channel(channel_id: str) -> None:
     from .utils import check_ss_enabled
 
     if check_ss_enabled(channel_id):
@@ -350,7 +350,7 @@ def delete_channel(channel_id):
     conn.close()
 
 
-def delete_channel_from_chroma(channel_id):
+def delete_channel_from_chroma(channel_id: str) -> None:
     chroma_client = get_chroma_client()
     collection = chroma_client.get_collection(name="subEmbeddings")
 
@@ -360,7 +360,7 @@ def delete_channel_from_chroma(channel_id):
     )
 
 
-def get_channel_id_from_rowid(rowid):
+def get_channel_id_from_rowid(rowid: str | int) -> str | None:
     db = Database(get_db_path())
 
     res = db.execute(f"SELECT channel_id FROM Channels WHERE ROWID = ?", [rowid]).fetchone()
@@ -371,7 +371,7 @@ def get_channel_id_from_rowid(rowid):
         return res[0]
 
 
-def get_channel_id_from_name(channel_name):
+def get_channel_id_from_name(channel_name: str) -> str | None:
     db = Database(get_db_path())
 
     res = db.execute(f"SELECT channel_id FROM Channels WHERE channel_name = ?", [channel_name]).fetchall()
@@ -397,14 +397,14 @@ def get_channel_id_from_name(channel_name):
 
 
 # for listing specific channel 
-def get_channel_list_by_id(channel_id):
+def get_channel_list_by_id(channel_id: str) -> list[tuple[int, str, str]]:
     db = Database(get_db_path())
 
     return db.execute(f"SELECT ROWID, channel_name, channel_url FROM Channels WHERE channel_id = ?",
                       [channel_id]).fetchall()
 
 
-def check_if_channel_exists(channel_id):
+def check_if_channel_exists(channel_id: str) -> bool:
     """
     Check if channel exists in the database
     """
@@ -418,19 +418,19 @@ def check_if_channel_exists(channel_id):
         return False
 
 
-def get_num_vids(channel_id):
+def get_num_vids(channel_id: str) -> int:
     db = Database(get_db_path())
 
     return db.execute(f"SELECT COUNT(*) FROM Videos WHERE channel_id = ?", [channel_id]).fetchone()[0]
 
 
-def get_vid_ids_by_channel_id(channel_id):
+def get_vid_ids_by_channel_id(channel_id: str) -> list[tuple[str]]:
     db = Database(get_db_path())
 
     return db.execute(f"SELECT video_id FROM Videos WHERE channel_id = ?", [channel_id]).fetchall()
 
 
-def get_all_subs_by_channel_id(channel_id):
+def get_all_subs_by_channel_id(channel_id: str) -> list[tuple[int, str, str, str, str, str]]:
     db = Database(get_db_path())
 
     parsed_subs = []
@@ -450,7 +450,7 @@ def get_all_subs_by_channel_id(channel_id):
 
 
 # get all subs where semantic search is enabled
-def get_all_subs_by_channel_id_ss(channel_id):
+def get_all_subs_by_channel_id_ss(channel_id: str) -> list[tuple[int, str, str, str]]:
     db = Database(get_db_path())
 
     parsed_subs = []
@@ -467,25 +467,25 @@ def get_all_subs_by_channel_id_ss(channel_id):
     return parsed_subs
 
 
-def get_transcript_by_video_id(video_id):
+def get_transcript_by_video_id(video_id: str) -> list[tuple[str]]:
     db = Database(get_db_path())
 
     return db.execute(f"SELECT text FROM Subtitles WHERE video_id = ?", [video_id]).fetchall()
 
 
-def get_subs_by_video_id(video_id):
+def get_subs_by_video_id(video_id: str) -> list[tuple[str, str, str]]:
     db = Database(get_db_path())
 
     return db.execute(f"SELECT start_time, stop_time, text FROM Subtitles WHERE video_id = ?",
                       [video_id]).fetchall()
 
 
-def get_channel_id_from_input(channel_input):  # yt_fts, export, search, vector_search ... broken
+def get_channel_id_from_input(channel_input: str | int) -> str:  # yt_fts, export, search, vector_search ... broken
     """
     Checks if the input is a rowid or a channel name and returns channel id
     """
 
-    name_res = get_channel_id_from_name(channel_input)
+    name_res = get_channel_id_from_name(str(channel_input))
     id_res = get_channel_id_from_rowid(channel_input)
 
     if id_res is not None:
