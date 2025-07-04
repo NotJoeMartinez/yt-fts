@@ -1,8 +1,19 @@
-
 # Change Log
 All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
+
+## [0.1.59] - 2025-01-03
+### Added
+- Channel name extraction from RSS feed
+  - https://github.com/NotJoeMartinez/yt-fts/pull/185
+
+### Changed
+- Updated GitHub Actions from v3 to v4 for upload-artifact and download-artifact
+- Simplified version management by using static version in __init__.py
+
+### Fixed
+- Improved channel name extraction reliability by using RSS feed data
 
 ## [0.1.58] - 2024-09-12
 ### Changed
