@@ -30,7 +30,7 @@ from rich.console import Console
 
 
 class DownloadHandler:
-    def __init__(self, number_of_jobs=1, language='en', cookies_from_browser=None):
+    def __init__(self, number_of_jobs=8, language='en', cookies_from_browser=None):
 
         self.console = Console()
 
@@ -59,6 +59,9 @@ class DownloadHandler:
             self.tmp_dir = tmp_dir
             channel_url = f"https://www.youtube.com/channel/{self.channel_id}/videos"
             self.video_ids = self.get_videos_list(channel_url)
+
+            # Limit to first 5 videos for testing
+            self.video_ids = self.video_ids
 
             self.console.print(
                 f"[green]Downloading [red]{len(self.video_ids)}[/red] "
@@ -250,23 +253,63 @@ class DownloadHandler:
 
     def get_vtt(self, tmp_dir, video_url, language):
         try:
-            ydl_opts = {
-                'outtmpl': f'{tmp_dir}/%(id)s',
-                'writeinfojson': True,
-                'writeautomaticsub': True,
-                'subtitlesformat': 'vtt',
-                'skip_download': True,
-                'subtitleslangs': [language, '-live_chat'],
+            # First, extract video info without downloading
+            info_opts = {
                 'quiet': True,
                 'no_warnings': True,
-                'progress_hooks': [self.quiet_progress_hook],
+                'extract_flat': False,
             }
 
             if self.cookies_from_browser is not None:
-                ydl_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
+                info_opts['cookiesfrombrowser'] = (self.cookies_from_browser,)
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([video_url])
+            with yt_dlp.YoutubeDL(info_opts) as ydl:
+                info = ydl.extract_info(video_url, download=False)
+                
+                if not info:
+                    self.console.print(f"Failed to extract info for: {video_url}")
+                    return
+
+                video_id = info.get('id')
+                if not video_id:
+                    self.console.print(f"No video ID found for: {video_url}")
+                    return
+
+                # save video info
+                info_path = os.path.join(tmp_dir, f'{video_id}.info.json')
+                with open(info_path, 'w', encoding='utf-8') as f:
+                    json.dump(info, f, ensure_ascii=False, indent=2)
+
+                # check if subtitles are available
+                subtitles = info.get('subtitles', {})
+                auto_subtitles = info.get('automatic_captions', {})
+                
+                # try to get manual subtitles first, then automatic
+                subtitle_url = None
+                if language in subtitles:
+                    for sub in subtitles[language]:
+                        if sub.get('ext') == 'vtt':
+                            subtitle_url = sub.get('url')
+                            break
+                elif language in auto_subtitles:
+                    for sub in auto_subtitles[language]:
+                        if sub.get('ext') == 'vtt':
+                            subtitle_url = sub.get('url')
+                            break
+
+                if subtitle_url:
+                    # download the subtitle file
+                    response = requests.get(subtitle_url)
+                    if response.status_code == 200:
+                        vtt_path = os.path.join(tmp_dir, f'{video_id}.{language}.vtt')
+                        with open(vtt_path, 'w', encoding='utf-8') as f:
+                            f.write(response.text)
+                        self.console.print(f" -> \"{video_id}.{language}.vtt\"")
+                    else:
+                        self.console.print(f"Failed to download subtitle for: {video_url}")
+                else:
+                    self.console.print(f"No subtitles available for: {video_url}")
+
 
         except Exception as e:
             self.console.print(f"Failed to get: {video_url}\n{e}")
@@ -284,7 +327,13 @@ class DownloadHandler:
         for vtt in track(file_paths, description="Adding subtitles to database..."):
             base_name = os.path.basename(vtt)
 
-            vid_id = base_name.split('.')[0]
+            # Handle new file naming convention: {video_id}.{language}.vtt
+            parts = base_name.split('.')
+            if len(parts) >= 3 and parts[-1] == 'vtt':
+                vid_id = '.'.join(parts[:-2])  # Remove language and .vtt extension
+            else:
+                vid_id = parts[0]  # Fallback to old format
+            
             vid_url = f"https://youtu.be/{vid_id}"
 
             vid_json_path = os.path.join(os.path.dirname(vtt), f'{vid_id}.info.json')
