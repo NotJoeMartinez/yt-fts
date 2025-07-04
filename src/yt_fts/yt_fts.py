@@ -8,7 +8,7 @@ from rich.console import Console
 from .download.download_handler import DownloadHandler
 from .export import ExportHandler 
 from .search import SearchHandler
-from .summarize import SummarizeHandler
+from .llm.summarize import SummarizeHandler
 
 from .list import list_channels
 from .utils import show_message
@@ -350,7 +350,7 @@ def embeddings(channel: str | None, openai_api_key: str | None, interval: int = 
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
 def llm(prompt: str, channel: str, openai_api_key: str | None = None) -> None:
-    from yt_fts.llm import LLMHandler
+    from .llm.chatbot import LLMHandler
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")

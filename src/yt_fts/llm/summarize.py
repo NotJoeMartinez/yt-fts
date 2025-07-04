@@ -11,9 +11,9 @@ from rich.markdown import Markdown
 from urllib.parse import urlparse, parse_qs
 from openai import OpenAI
 
-from .config import get_db_path
-from .utils import parse_vtt
-from .db_utils import get_title_from_db, get_channel_name_from_video_id
+from ..config import get_db_path
+from ..utils import parse_vtt
+from ..db_utils import get_title_from_db, get_channel_name_from_video_id
 
 class SummarizeHandler:
     def __init__(self, openai_client: OpenAI, model: str, input_video: str) -> None:

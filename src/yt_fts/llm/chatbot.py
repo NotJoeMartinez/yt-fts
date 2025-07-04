@@ -7,14 +7,14 @@ import textwrap
 import sys
 import traceback
 from openai import OpenAI
-from .db_utils import (
+from ..db_utils import (
     get_channel_id_from_input,
     get_channel_name_from_video_id,
     get_title_from_db
 )
-from .get_embeddings import EmbeddingsHandler
-from .utils import time_to_secs
-from .config import get_chroma_client
+from ..get_embeddings import EmbeddingsHandler
+from ..utils import time_to_secs
+from ..config import get_chroma_client
 
 
 class LLMHandler:
