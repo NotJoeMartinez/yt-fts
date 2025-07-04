@@ -18,7 +18,7 @@ from .db_utils import (
 
 class EmbeddingsHandler:
 
-    def __init__(self, interval: Optional[int] = 10) -> None:
+    def __init__(self, interval: int = 10) -> None:
 
         self.interval = interval
         self.console = Console()
@@ -85,10 +85,10 @@ class EmbeddingsHandler:
             )
 
     def add_meta_data_to_text(self,
-                              channel_name,
-                              video_title,
-                              video_date,
-                              segment):
+                              channel_name: str,
+                              video_title: str,
+                              video_date: datetime.date,
+                              segment: dict[str, str]) -> str:
         metadata = {
             "video_title": video_title,
             "channel_name": channel_name,
@@ -102,7 +102,7 @@ class EmbeddingsHandler:
 
         return text_with_metadata
 
-    def split_subtitles(self, video_id):
+    def split_subtitles(self, video_id: str) -> list[dict[str, str]] | None:
 
         raw_subtitles = get_subs_by_video_id(video_id)
 
@@ -151,7 +151,7 @@ class EmbeddingsHandler:
 
         return combined_intervals
 
-    def get_embedding(self, text, model="text-embedding-ada-002", client=None):
+    def get_embedding(self, text: str, model: str = "text-embedding-ada-002", client: OpenAI | None = None) -> list[float]:
 
         if client is None:
             client = OpenAI()
@@ -161,7 +161,7 @@ class EmbeddingsHandler:
 
         return text_embedding
 
-    def time_to_seconds(self, time_str):
+    def time_to_seconds(self, time_str: str) -> float:
         """ Convert time string to total seconds """
         time_obj = datetime.strptime(time_str, '%H:%M:%S.%f').time()
         return (time_obj.hour * 3600 +

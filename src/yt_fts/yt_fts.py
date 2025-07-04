@@ -28,7 +28,7 @@ console = Console()
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(YT_FTS_VERSION, message='yt_fts version: %(version)s')
-def cli():
+def cli() -> None:
     pass
 
 
@@ -50,7 +50,7 @@ def cli():
               help="Number of parallel download jobs (default: 8, recommended: 4-16 for most users)")
 @click.option("--cookies-from-browser", default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
-def download(url, playlist, language, jobs, cookies_from_browser):
+def download(url: str, playlist: bool, language: str, jobs: int, cookies_from_browser: str | None) -> None:
     download_handler = DownloadHandler(
         number_of_jobs=jobs,
         language=language,
@@ -84,7 +84,7 @@ def download(url, playlist, language, jobs, cookies_from_browser):
               help="Browser to extract cookies from. Ex: chrome, firefox")
 @click.option("-j", "--jobs", type=int, default=8,
               help="Number of parallel download jobs to test with")
-def diagnose(test_url, cookies_from_browser, jobs):
+def diagnose(test_url: str, cookies_from_browser: str | None, jobs: int) -> None:
     from yt_fts.download.download_handler import DownloadHandler
     
     download_handler = DownloadHandler(
@@ -105,7 +105,7 @@ def diagnose(test_url, cookies_from_browser, jobs):
 @click.option("-t", "--transcript", default=None, help="Show transcript for a video")
 @click.option("-c", "--channel", default=None, help="Show list of videos for a channel")
 @click.option("-l", "--library", is_flag=True, help="Show list of channels in library")
-def list(transcript, channel, library):
+def list(transcript: str | None, channel: str | None, library: bool) -> None:
     from yt_fts.list import show_video_list, show_video_transcript
 
     if transcript:
@@ -139,7 +139,7 @@ def list(transcript, channel, library):
 @click.option("--cookies-from-browser",
               default=None,
               help="Browser to extract cookies from. Ex: chrome, firefox")
-def update(channel, language, jobs, cookies_from_browser):
+def update(channel: str | None, language: str, jobs: int, cookies_from_browser: str | None) -> None:
     update_handler = DownloadHandler(
         language=language,
         number_of_jobs=jobs,
@@ -165,7 +165,7 @@ def update(channel, language, jobs, cookies_from_browser):
     """
 )
 @click.option("-c", "--channel", default=None, required=True, help="The name or id of the channel to delete")
-def delete(channel):
+def delete(channel: str) -> None:
     channel_id = get_channel_id_from_input(channel)
     channel_name = get_channel_name_from_id(channel_id)
     channel_url = f"https://www.youtube.com/channel/{channel_id}/videos"
@@ -193,7 +193,7 @@ def delete(channel):
               help="The name or id of the channel to export transcripts for")
 @click.option("-f", "--format", default="txt",
               help="The format to export transcripts to. Supported formats: txt, vtt")
-def export(channel, format):
+def export(channel: str, format: str) -> None:
 
     export_handler = ExportHandler(
         scope = "channel",
@@ -216,7 +216,7 @@ def export(channel, format):
 @click.option("-v", "--video-id", default=None, help="The id of the video to search in.")
 @click.option("-l", "--limit", default=10, type=int, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-def search(text, channel, video_id, export, limit):
+def search(text: str, channel: str | None, video_id: str | None, export: bool, limit: int) -> None:
 
     if len(text) > 40:
         show_message("search_too_long")
@@ -256,7 +256,7 @@ def search(text, channel, video_id, export, limit):
 @click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
                    "environment variable.")
-def vsearch(text, channel, video_id, limit, export, openai_api_key):
+def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, export: bool, openai_api_key: str | None) -> None:
 
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -304,7 +304,7 @@ def vsearch(text, channel, video_id, limit, export, openai_api_key):
                    " the OPENAI_API_KEY environment variable.")
 @click.option("-i", "--interval", default=30, type=int,
               help="Interval in seconds to split the transcripts into chunks. Default 30s.")
-def embeddings(channel, openai_api_key, interval=30):
+def embeddings(channel: str | None, openai_api_key: str | None, interval: int = 30) -> None:
     from yt_fts.get_embeddings import EmbeddingsHandler
     from yt_fts.utils import check_ss_enabled, enable_ss
 
@@ -349,7 +349,7 @@ def embeddings(channel, openai_api_key, interval=30):
 @click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
-def llm(prompt, channel, openai_api_key=None):
+def llm(prompt: str, channel: str, openai_api_key: str | None = None) -> None:
     from yt_fts.llm import LLMHandler
 
     if openai_api_key is None:
@@ -379,7 +379,7 @@ def llm(prompt, channel, openai_api_key=None):
 @click.option("--openai-api-key", default=None,
               help="OpenAI API key. If not provided, the script will attempt to read it from"
                    " the OPENAI_API_KEY environment variable.")
-def summarize(video, model, openai_api_key):
+def summarize(video: str, model: str, openai_api_key: str | None) -> None:
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -404,7 +404,7 @@ def summarize(video, model, openai_api_key):
     Show config settings
     """
 )
-def config():
+def config() -> None:
     db_path = get_db_path()
     chroma_path = get_or_make_chroma_path()
     config_path = get_config_path()

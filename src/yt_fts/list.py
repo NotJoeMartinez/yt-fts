@@ -9,7 +9,7 @@ from .utils import time_to_secs, get_time_delta
 from .config import get_db_path
 
 
-def show_video_transcript(video_id):
+def show_video_transcript(video_id: str) -> None:
     con = sqlite3.connect(get_db_path())
     cur = con.cursor()
     cur.execute("SELECT * FROM subtitles WHERE video_id=?", (video_id,))
@@ -37,7 +37,7 @@ def show_video_transcript(video_id):
     con.close()
 
 
-def show_video_list(channel_id):
+def show_video_list(channel_id: str) -> None:
     con = sqlite3.connect(get_db_path())
     cur = con.cursor()
     cur.execute("SELECT * FROM videos WHERE channel_id=?", (channel_id,))
@@ -65,7 +65,7 @@ def show_video_list(channel_id):
     console.print(f"\n[bold]Total videos: {len(rows)}[/bold]")
 
 
-def list_channels(channel_id=None):
+def list_channels(channel_id: str | None = None) -> None:
     from yt_fts.db_utils import get_channels, get_num_vids, get_channel_list_by_id
 
     table = Table(header_style="bold")
@@ -111,7 +111,7 @@ def list_channels(channel_id=None):
 
 
 #  not dry but for some reason importing from get_embeddings.py causes slow down
-def check_ss_enabled(channel_id=None):
+def check_ss_enabled(channel_id: str | None = None) -> bool:
     from yt_fts.config import get_db_path
 
     db_path = get_db_path()

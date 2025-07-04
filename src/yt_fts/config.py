@@ -1,4 +1,3 @@
-
 import sys 
 import os
 
@@ -6,7 +5,7 @@ import chromadb
 from chromadb.config import Settings
 
 
-def get_config_path():
+def get_config_path() -> str | None:
 
     platform = sys.platform
 
@@ -27,7 +26,7 @@ def get_config_path():
     return None
 
 
-def make_config_dir():
+def make_config_dir() -> str | None:
     platform = sys.platform
 
     try:
@@ -49,7 +48,7 @@ def make_config_dir():
         return None
 
 
-def get_db_path():
+def get_db_path() -> str:
     from .db_utils import make_db
     # make sure config path exists
     # if config path is none, make config path
@@ -92,7 +91,7 @@ def get_db_path():
     return "subtitles.db" 
 
 
-def get_or_make_chroma_path():
+def get_or_make_chroma_path() -> str:
 
     config_path = get_config_path()
 
@@ -112,7 +111,7 @@ def get_or_make_chroma_path():
         return chroma_path
 
 
-def get_chroma_client():
+def get_chroma_client() -> chromadb.PersistentClient:
     chroma_path = get_or_make_chroma_path()
     return chromadb.PersistentClient(path=chroma_path, 
                                      settings=Settings(anonymized_telemetry=False))
