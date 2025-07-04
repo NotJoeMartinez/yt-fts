@@ -3,7 +3,15 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [0.1.60] - 2025-01-03
+## [0.1.62] - 2025-07-04
+
+### Fixed
+- Retry download method
+
+### Added 
+- User agent randomization for yt-dlp
+
+## [0.1.60] - 2025-07-03
 ### Added
 - New test to verify channel update functionality on duplicate downloads
   - https://github.com/NotJoeMartinez/yt-fts/pull/186
@@ -17,7 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Download format errors
   - https://github.com/NotJoeMartinez/yt-fts/pull/186
 
-## [0.1.59] - 2025-01-03
+## [0.1.59] - 2025-07-03
 ### Added
 - Channel name extraction from RSS feed
   - https://github.com/NotJoeMartinez/yt-fts/pull/185
