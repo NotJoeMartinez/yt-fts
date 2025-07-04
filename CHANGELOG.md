@@ -3,6 +3,20 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.60] - 2025-01-03
+### Added
+- New test to verify channel update functionality on duplicate downloads
+  - https://github.com/NotJoeMartinez/yt-fts/pull/186
+
+### Changed
+- Bumped yt-dlp version from 2024.7.16 to 2025.6.30
+- Increased default parallel job count from 1 to 8 for better performance
+- Updated DownloadHandler to handle existing channels by updating them rather than exiting with error
+
+### Fixed
+- Download format errors
+  - https://github.com/NotJoeMartinez/yt-fts/pull/186
+
 ## [0.1.59] - 2025-01-03
 ### Added
 - Channel name extraction from RSS feed
