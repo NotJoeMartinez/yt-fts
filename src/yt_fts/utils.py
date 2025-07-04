@@ -7,7 +7,7 @@ import sqlite3
 import webvtt
 
 
-def show_message(code):
+def show_message(code: str) -> None:
     error_dict = {
         "search_too_long": "Error: Search text must be less than 40 characters",
         "no_matches_found": "No matches found.\n- Try shortening the search text or use wildcards to match partial "
@@ -21,7 +21,7 @@ def show_message(code):
     print(error_dict[code])
 
 
-def time_to_secs(time_str):
+def time_to_secs(time_str: str) -> int:
     """
     converts timestamp to seconds youtube urls. Subtracts 3 seconds to give a buffer. 
     """
@@ -34,7 +34,7 @@ def time_to_secs(time_str):
     return total_secs - 3
 
 
-def parse_vtt(vtt_path):
+def parse_vtt(vtt_path: str) -> list[dict[str, str]]:
 
     result = word_level_vtt_parser(vtt_path)
 
@@ -47,7 +47,7 @@ def parse_vtt(vtt_path):
     return result
 
 
-def normal_vtt_parser(vtt_path):
+def normal_vtt_parser(vtt_path: str) -> list[dict[str, str]]:
 
     result = []
 
@@ -64,7 +64,7 @@ def normal_vtt_parser(vtt_path):
     return result
 
 
-def word_level_vtt_parser(vtt_path):
+def word_level_vtt_parser(vtt_path: str) -> list[dict[str, str]]:
     """
     extracts start time and text from vtt file and return a list of dicts
     """
@@ -105,7 +105,7 @@ def word_level_vtt_parser(vtt_path):
     return result
 
 
-def get_api_key():
+def get_api_key() -> str | None:
     import os
     api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -114,7 +114,7 @@ def get_api_key():
     return api_key
 
 
-def get_time_delta(timestamp1, timestamp2):
+def get_time_delta(timestamp1: str, timestamp2: str) -> str:
     from datetime import datetime
     format_string = "%H:%M:%S.%f"
     dt1 = datetime.strptime(timestamp1, format_string)
@@ -126,7 +126,7 @@ def get_time_delta(timestamp1, timestamp2):
     return diff
 
 
-def get_date(date_string):
+def get_date(date_string: str) -> datetime.date:
     # Python 3.11 would support datimetime.date.fromisoformat('YYYYMMDD') directly
     if '-' in date_string:
         return datetime.date.fromisoformat(date_string)
@@ -134,7 +134,7 @@ def get_date(date_string):
 
 
 # check if semantic search has been enabled for channel
-def check_ss_enabled(channel_id=None) -> bool:
+def check_ss_enabled(channel_id: str | None = None) -> bool:
     from yt_fts.config import get_db_path
 
     con = sqlite3.connect(get_db_path())
@@ -159,7 +159,7 @@ def check_ss_enabled(channel_id=None) -> bool:
     # enable semantic search for channel
 
 
-def enable_ss(channel_id):
+def enable_ss(channel_id: str) -> None:
     from yt_fts.config import get_db_path
 
     con = sqlite3.connect(get_db_path())
@@ -173,7 +173,7 @@ def enable_ss(channel_id):
     con.close()
 
 
-def bold_query_matches(text, query):
+def bold_query_matches(text: str, query: str) -> str:
     """
     Bold the query in the text, keeping the case the same
     """
@@ -189,7 +189,7 @@ def bold_query_matches(text, query):
     return ' '.join(result_words)
 
 
-def handle_reject_consent_cookie(channel_url, s):
+def handle_reject_consent_cookie(channel_url: str, s) -> None:
     """
     Auto rejects the consent cookie if request is redirected to the consent page
     """

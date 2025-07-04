@@ -1,11 +1,13 @@
 import sys
+import textwrap
 
 from rich.console import Console
-import textwrap
+from openai import OpenAI
+
+from .llm.get_embeddings import EmbeddingsHandler
+from .export import ExportHandler
 from .config import get_chroma_client
 from .utils import time_to_secs, bold_query_matches
-from .get_embeddings import EmbeddingsHandler
-from .export import ExportHandler
 from .db_utils import (
     search_all,
     get_channel_id_from_input,
@@ -19,13 +21,13 @@ from .db_utils import (
 
 class SearchHandler:
     def __init__(self,
-                 scope='all',
-                 channel=None,
-                 video_id=None,
-                 export=False,
-                 limit=None,
-                 openai_client=None
-                 ):
+                 scope: str = 'all',
+                 channel: str | None = None,
+                 video_id: str | None = None,
+                 export: bool = False,
+                 limit: int | None = None,
+                 openai_client: OpenAI | None = None
+                 ) -> None:
 
         self.console = Console()
         self.scope = scope
@@ -33,13 +35,13 @@ class SearchHandler:
         self.video_id = video_id
         self.export = export
         self.limit = limit
-        self.channel_id = None
+        self.channel_id: str | None = None
         self.query = ''
         self.response = []
         self.openai_client = openai_client
         self.max_width = 80
 
-    def full_text_search(self, query):
+    def full_text_search(self, query: str) -> None:
 
         console = self.console
         self.query = query
@@ -70,7 +72,7 @@ class SearchHandler:
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")
 
-    def vector_search(self, query):
+    def vector_search(self, query: str) -> None:
         console = self.console
         self.query = query
         scope_options = {}
@@ -129,7 +131,7 @@ class SearchHandler:
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")
 
-    def print_fts_res(self):
+    def print_fts_res(self) -> None:
         console = Console()
 
         query = self.query
@@ -212,7 +214,7 @@ class SearchHandler:
 
         console.print(summary_str)
 
-    def print_vector_search_results(self):
+    def print_vector_search_results(self) -> None:
         console = Console()
 
         channel_names = []

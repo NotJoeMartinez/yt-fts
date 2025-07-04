@@ -1,31 +1,33 @@
+import sys
+import textwrap
+import traceback
+
+from openai import OpenAI
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.text import Text
-import textwrap
-import sys
-import traceback
-from openai import OpenAI
-from .db_utils import (
+
+from .get_embeddings import EmbeddingsHandler
+from ..utils import time_to_secs
+from ..config import get_chroma_client
+from ..db_utils import (
     get_channel_id_from_input,
     get_channel_name_from_video_id,
     get_title_from_db
 )
-from .get_embeddings import EmbeddingsHandler
-from .utils import time_to_secs
-from .config import get_chroma_client
 
 
 class LLMHandler:
-    def __init__(self, openai_api_key: str, channel: str):
+    def __init__(self, openai_api_key: str, channel: str) -> None:
         self.openai_client = OpenAI(api_key=openai_api_key)
         self.channel_id = get_channel_id_from_input(channel)
         self.chroma_client = get_chroma_client()
         self.console = Console()
         self.max_width = 80
 
-    def init_llm(self, prompt: str):
+    def init_llm(self, prompt: str) -> None:
         messages = self.start_llm(prompt)
         self.display_message(messages[-1]["content"], "assistant")
 
@@ -38,7 +40,7 @@ class LLMHandler:
             messages = self.continue_llm(messages)
             self.display_message(messages[-1]["content"], "assistant")
 
-    def display_message(self, content: str, role: str):
+    def display_message(self, content: str, role: str) -> None:
         if role == "assistant":
             wrapped_content = self.wrap_text(content)
             md = Markdown(wrapped_content)
@@ -121,7 +123,7 @@ class LLMHandler:
         except Exception as e:
             self.display_error(e)
 
-    def display_error(self, error: Exception):
+    def display_error(self, error: Exception) -> None:
         self.console.print(Panel(str(error), title="Error", border_style="red"))
         traceback.print_exc()
         sys.exit(1)

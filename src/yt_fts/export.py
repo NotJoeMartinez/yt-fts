@@ -19,7 +19,7 @@ from .db_utils import (
 
 
 class ExportHandler:
-    def __init__(self, scope="channel", format="txt", channel=None):
+    def __init__(self, scope: str ="channel", format: str ="txt", channel: str | None = None) -> None:
         self.console = Console()
         self.format = format
         self.scope = scope
@@ -32,7 +32,7 @@ class ExportHandler:
             self.channel_name = None
 
         
-    def export(self):
+    def export(self) -> None:
         console = self.console
         output_dir = None
 
@@ -48,7 +48,7 @@ class ExportHandler:
 
 
 
-    def export_fts(self, text, scope, channel_id=None, video_id=None):
+    def export_fts(self, text: str, scope: str, channel_id: str | None = None, video_id: str | None = None) -> None:
         """
         Calls search functions and exports the results to a csv file
         """
@@ -97,7 +97,7 @@ class ExportHandler:
         console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")
 
 
-    def export_vector_search(self, res, search, scope):
+    def export_vector_search(self, res: list, search: str, scope: str) -> None:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # run semantic search based on scope
@@ -128,7 +128,7 @@ class ExportHandler:
         console.print(f"Exported to [green][bold]{file_name}[/bold][/green]")
 
 
-    def export_channel_to_txt(self, channel_id):
+    def export_channel_to_txt(self, channel_id: str) -> str | None:
         console = self.console
 
         output_dir = f"{channel_id}_txt"
@@ -153,7 +153,7 @@ class ExportHandler:
         return output_dir
 
 
-    def export_channel_to_vtt(self, channel_id):
+    def export_channel_to_vtt(self, channel_id: str) -> str | None:
         console = self.console
 
         output_dir = f"{channel_id}_vtt"

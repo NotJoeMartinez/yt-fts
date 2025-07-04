@@ -9,13 +9,14 @@ import yt_dlp
 from rich.console import Console
 from rich.markdown import Markdown
 from urllib.parse import urlparse, parse_qs
+from openai import OpenAI
 
-from .config import get_db_path
-from .utils import parse_vtt
-from .db_utils import get_title_from_db, get_channel_name_from_video_id
+from ..config import get_db_path
+from ..utils import parse_vtt
+from ..db_utils import get_title_from_db, get_channel_name_from_video_id
 
 class SummarizeHandler:
-    def __init__(self, openai_client, model, input_video):
+    def __init__(self, openai_client: OpenAI, model: str, input_video: str) -> None:
 
         self.console = Console()
         self.model = model
@@ -38,7 +39,7 @@ class SummarizeHandler:
             self.channel_name = get_channel_name_from_video_id(self.video_id)
             self.transcript_text = self.get_transcript_from_database(self.video_id)
  
-    def summarize_video(self):
+    def summarize_video(self) -> None:
         console = self.console
         video_id = self.video_id
 
@@ -67,7 +68,7 @@ class SummarizeHandler:
             console.print(md)
     
 
-    def get_completion(self, messages: list) -> str:
+    def get_completion(self, messages: list[dict[str, str]]) -> str:
         console = self.console
         try:
             response = self.openai_client.chat.completions.create(
@@ -89,7 +90,7 @@ class SummarizeHandler:
             console.print(f"[red]Error:[/red] {e}")
             sys.exit(1)
         
-    def download_transcript(self):
+    def download_transcript(self) -> str:
         console = self.console
         video_id = self.video_id
         video_url = f"https://www.youtube.com/watch?v={video_id}"
@@ -154,7 +155,7 @@ class SummarizeHandler:
             sys.exit(1)
 
 
-    def get_transcript_from_database(self, video_id) -> str:
+    def get_transcript_from_database(self, video_id: str) -> str:
 
         console = self.console
         try:
@@ -186,7 +187,7 @@ class SummarizeHandler:
         finally:
             conn.close()
 
-    def video_in_database(self, video_id) -> bool:
+    def video_in_database(self, video_id: str) -> bool:
         console = self.console
         try:
             conn = sqlite3.connect(get_db_path())
@@ -213,7 +214,7 @@ class SummarizeHandler:
             conn.close()
         
 
-    def get_video_id_from_url(self, video_url):
+    def get_video_id_from_url(self, video_url: str) -> str:
         console = self.console
         video_url = video_url.strip('/')
         parsed = urlparse(video_url)
@@ -246,7 +247,7 @@ class SummarizeHandler:
         sys.exit(1)
 
    
-    def quiet_progress_hook(self, d):
+    def quiet_progress_hook(self, d: dict) -> None:
         console = self.console
         if d['status'] == 'finished':
             console.print(f" -> \"{d['filename']}\"")

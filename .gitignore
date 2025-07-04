@@ -175,3 +175,8 @@ UCYO_jab_esuFRV4b17AJtAw
 tests/test_data/
 .idea
 *.sh
+
+# custom
+
+scratch/
+.env
