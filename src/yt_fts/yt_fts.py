@@ -319,7 +319,6 @@ def embeddings(channel: str | None, api_key: str | None, interval: int = 30) -> 
     # get api key
     try:
         model = get_model_config(api_key)
-        api_key = model['api_key']
     except ValueError:
         console.print("""
         [bold][red]Error:[/red][/bold] OPENAI_API_KEY and GEMINI_API_KEY environment variables not set, Run: 
@@ -331,7 +330,7 @@ def embeddings(channel: str | None, api_key: str | None, interval: int = 30) -> 
         sys.exit(1)
 
     embeddings_handler = EmbeddingsHandler(interval=interval)
-    embeddings_handler.add_embeddings_to_chroma(channel_id)
+    embeddings_handler.add_embeddings_to_chroma(channel_id, model)
 
     # mark the channel as enabled for semantic search
     enable_ss(channel_id)

@@ -4,7 +4,7 @@ from datetime import datetime
 from rich.progress import track
 from rich.console import Console
 from ..config import get_chroma_client
-from ..utils import get_model_config, time_to_secs
+from ..utils import Model, get_model_config, time_to_secs
 
 from ..db_utils import (
     get_subs_by_video_id,
@@ -21,8 +21,7 @@ class EmbeddingsHandler:
         self.interval = interval
         self.console = Console()
 
-    def add_embeddings_to_chroma(self, channel_id: str) -> None:
-
+    def add_embeddings_to_chroma(self, channel_id: str, model: Model) -> None:
         channel_name = get_channel_name_from_id(channel_id)
         channel_video_ids = [video_id[0] for video_id
                              in get_vid_ids_by_channel_id(channel_id)]
@@ -56,8 +55,6 @@ class EmbeddingsHandler:
 
         chroma_client = get_chroma_client()
         collection = chroma_client.get_or_create_collection(name="subEmbeddings")
-
-        model = get_model_config()
         
         embeddings = self.get_embedding(
             text_list=[segment['text_with_meta_data'] for segment in formatted_segments],
