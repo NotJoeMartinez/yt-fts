@@ -286,7 +286,7 @@ def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, ex
         openai_client=openai_client
     )
 
-    vsearch_handler.vector_search(query=text)
+    vsearch_handler.vector_search(query=text, model=model)
 
     sys.exit(0)
 

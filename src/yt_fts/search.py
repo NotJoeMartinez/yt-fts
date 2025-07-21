@@ -7,7 +7,7 @@ from openai import OpenAI
 from .llm.get_embeddings import EmbeddingsHandler
 from .export import ExportHandler
 from .config import get_chroma_client
-from .utils import get_model_config, time_to_secs, bold_query_matches
+from .utils import Model, time_to_secs, bold_query_matches
 from .db_utils import (
     search_all,
     get_channel_id_from_input,
@@ -72,7 +72,7 @@ class SearchHandler:
         console.print(f"Query '{self.query}' ")
         console.print(f"Scope: {self.scope}")
 
-    def vector_search(self, query: str) -> None:
+    def vector_search(self, query: str, model: Model) -> None:
         console = self.console
         self.query = query
         scope_options = {}
@@ -87,7 +87,6 @@ class SearchHandler:
         collection = chroma_client.get_collection(name="subEmbeddings")
 
         embeddings_handler = EmbeddingsHandler()
-        model = get_model_config()
         openai_client = OpenAI(api_key=model['api_key'], base_url=model['base_url'])
         search_embedding = embeddings_handler.get_embedding([query], model['embedding_model'], openai_client)[0]
         chroma_res = collection.query(
