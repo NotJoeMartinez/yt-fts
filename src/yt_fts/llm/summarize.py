@@ -12,11 +12,11 @@ from urllib.parse import urlparse, parse_qs
 from openai import NotGiven, OpenAI
 
 from ..config import get_db_path
-from ..utils import get_model_config, parse_vtt
+from ..utils import Model, parse_vtt
 from ..db_utils import get_title_from_db, get_channel_name_from_video_id
 
 class SummarizeHandler:
-    def __init__(self, openai_client: OpenAI, model: str, input_video: str) -> None:
+    def __init__(self, openai_client: OpenAI, model: Model, input_video: str) -> None:
 
         self.console = Console()
         self.model = model
@@ -70,17 +70,16 @@ class SummarizeHandler:
 
     def get_completion(self, messages: list[dict[str, str]]) -> str:
         console = self.console
-        model_config = get_model_config()
         try:
             response = self.openai_client.chat.completions.create(
-                model=self.model,
+                model=self.model['chat_model'],
                 messages=messages,
                 temperature=0.5,
                 max_tokens=2000,
                 top_p=1,
-                frequency_penalty=0 if model_config['name'] == "OPENAI" else NotGiven(),
+                frequency_penalty=0 if self.model['name'] == "OPENAI" else NotGiven(),
                 presence_penalty=0,
-                stop=None if model_config['name'] == "OPENAI" else NotGiven(),
+                stop=None if self.model['name'] == "OPENAI" else NotGiven(),
             )
 
             response_text = response.choices[0].message.content

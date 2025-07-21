@@ -387,8 +387,8 @@ def summarize(video: str, model: str | None, api_key: str | None) -> None:
     try:
         model_config = get_model_config(api_key)
         api_key = model_config['api_key']
-        if model is None:
-            model = model_config['chat_model']
+        if model:
+            model_config['chat_model'] = model
     except ValueError:
         console.print("[red]Error:[/red] OPENAI_API_KEY and GEMINI_API_KEY environment variables not set\n"
                       "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or "
@@ -400,7 +400,7 @@ def summarize(video: str, model: str | None, api_key: str | None) -> None:
 
     summarize_handler = SummarizeHandler(
         openai_client,
-        model=model,
+        model=model_config,
         input_video=video
         )
     summarize_handler.summarize_video()
