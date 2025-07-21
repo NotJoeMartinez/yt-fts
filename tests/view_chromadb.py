@@ -3,7 +3,7 @@ import sys
 from openai import OpenAI
 from yt_fts.get_embeddings import get_embedding
 from yt_fts.config import get_or_make_chroma_path
-from yt_fts.utils import time_to_secs
+from yt_fts.utils import get_model_config, time_to_secs
 from yt_fts.db_utils import get_channel_name_from_video_id, get_title_from_db
 from pprint import pprint
 
@@ -56,7 +56,10 @@ def search_collections(chroma_path, text):
     chroma_client = chromadb.PersistentClient(path=chroma_path)
     collection = chroma_client.get_collection(name="subEmbeddings")
 
-    search_embedding = get_embedding(text, "text-embedding-ada-002", OpenAI())
+    model = get_model_config()
+    openai_client = OpenAI(api_key=model['api_key'], base_url=model['base_url'])
+    search_embedding = get_embedding(text, model['embedding_model'], openai_client)
+
 
     chroma_res = collection.query(
         query_embeddings=[search_embedding],

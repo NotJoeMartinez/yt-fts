@@ -4,7 +4,7 @@ from datetime import datetime
 from rich.progress import track
 from rich.console import Console
 from ..config import get_chroma_client
-from ..utils import time_to_secs
+from ..utils import get_model_config, time_to_secs
 
 from ..db_utils import (
     get_subs_by_video_id,
@@ -57,14 +57,17 @@ class EmbeddingsHandler:
         chroma_client = get_chroma_client()
         collection = chroma_client.get_or_create_collection(name="subEmbeddings")
 
-        for segment_object in track(formatted_segments, description="Getting embeddings"):
+        model = get_model_config()
+        
+        embeddings = self.get_embedding(
+            text_list=[segment['text_with_meta_data'] for segment in formatted_segments],
+            model=model['embedding_model'],
+            client=OpenAI(api_key=model['api_key'], base_url=model['base_url'])
+        )
+
+        for segment_object, embedding in track(zip(formatted_segments, embeddings), description="Getting embeddings"):
             if segment_object['text'] == '':
                 continue
-
-            embedding = self.get_embedding(
-                segment_object['text_with_meta_data'],
-                "text-embedding-ada-002"
-            )
 
             meta_data = {
                 "channel_id": segment_object['channel_id'],
@@ -149,15 +152,25 @@ class EmbeddingsHandler:
 
         return combined_intervals
 
-    def get_embedding(self, text: str, model: str = "text-embedding-ada-002", client: OpenAI | None = None) -> list[float]:
+    def get_embedding(self, text_list: list[str], model: str, client: OpenAI | None = None) -> list[list[float]]:
 
         if client is None:
-            client = OpenAI()
+            model_config = get_model_config()
+            client = OpenAI(
+                api_key=model_config['api_key'],
+                base_url=model_config['base_url']
+            )
 
-        text = text.replace("\n", " ")
-        text_embedding = client.embeddings.create(input=[text], model=model).data[0].embedding
+        text_list = [text.replace("\n", " ") for text in text_list]
 
-        return text_embedding
+        batch_size = 100
+        embeddings: list[list[float]] = []
+        for i in range(0, len(text_list), batch_size):
+            batch = text_list[i:i + batch_size]
+            response = client.embeddings.create(input=batch, model=model).data
+            embeddings.extend([data.embedding for data in response])
+
+        return embeddings
 
     def time_to_seconds(self, time_str: str) -> float:
         """ Convert time string to total seconds """

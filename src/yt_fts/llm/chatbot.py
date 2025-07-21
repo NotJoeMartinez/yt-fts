@@ -2,7 +2,7 @@ import sys
 import textwrap
 import traceback
 
-from openai import OpenAI
+from openai import NotGiven, OpenAI
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -10,7 +10,7 @@ from rich.prompt import Prompt
 from rich.text import Text
 
 from .get_embeddings import EmbeddingsHandler
-from ..utils import time_to_secs
+from ..utils import get_model_config, time_to_secs
 from ..config import get_chroma_client
 from ..db_utils import (
     get_channel_id_from_input,
@@ -20,8 +20,9 @@ from ..db_utils import (
 
 
 class LLMHandler:
-    def __init__(self, openai_api_key: str, channel: str) -> None:
-        self.openai_client = OpenAI(api_key=openai_api_key)
+    def __init__(self, api_key: str, channel: str) -> None:
+        self.model_config = get_model_config(api_key)
+        self.openai_client = OpenAI(api_key=api_key, base_url=self.model_config['base_url'])
         self.channel_id = get_channel_id_from_input(channel)
         self.chroma_client = get_chroma_client()
         self.console = Console()
@@ -132,7 +133,7 @@ class LLMHandler:
         collection = self.chroma_client.get_collection(name="subEmbeddings")
 
         embeddings_handler = EmbeddingsHandler()
-        search_embedding = embeddings_handler.get_embedding(text, "text-embedding-ada-002", self.openai_client)
+        search_embedding = embeddings_handler.get_embedding([text], self.model_config['embedding_model'], self.openai_client)[0]
         scope_options = {"channel_id": self.channel_id}
 
         chroma_res = collection.query(
@@ -193,14 +194,14 @@ class LLMHandler:
     def get_completion(self, messages: list) -> str:
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
+                model=self.model_config['chat_model'],
                 messages=messages,
                 temperature=0.5,
                 max_tokens=2000,
                 top_p=1,
-                frequency_penalty=0,
+                frequency_penalty=0 if self.model_config['name'] == "OPENAI" else NotGiven(),
                 presence_penalty=0,
-                stop=None,
+                stop=None if self.model_config['name'] == "OPENAI" else NotGiven(),
             )
             return response.choices[0].message.content
 

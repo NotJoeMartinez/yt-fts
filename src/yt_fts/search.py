@@ -7,7 +7,7 @@ from openai import OpenAI
 from .llm.get_embeddings import EmbeddingsHandler
 from .export import ExportHandler
 from .config import get_chroma_client
-from .utils import time_to_secs, bold_query_matches
+from .utils import get_model_config, time_to_secs, bold_query_matches
 from .db_utils import (
     search_all,
     get_channel_id_from_input,
@@ -87,7 +87,9 @@ class SearchHandler:
         collection = chroma_client.get_collection(name="subEmbeddings")
 
         embeddings_handler = EmbeddingsHandler()
-        search_embedding = embeddings_handler.get_embedding(query, "text-embedding-ada-002", self.openai_client)
+        model = get_model_config()
+        openai_client = OpenAI(api_key=model['api_key'], base_url=model['base_url'])
+        search_embedding = embeddings_handler.get_embedding([query], model['embedding_model'], openai_client)[0]
         chroma_res = collection.query(
             query_embeddings=[search_embedding],
             n_results=self.limit,
