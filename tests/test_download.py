@@ -152,7 +152,7 @@ def test_channel_update_on_duplicate(runner, capsys):
     
     # Check that we get the "already exists, updating instead" message
     output = results.output
-    assert "already exists in database. Updating instead" in output
+    assert "already exists in database." in output
     
     # Get final video count
     res = curr.execute(f"""

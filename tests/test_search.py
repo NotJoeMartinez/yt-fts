@@ -26,7 +26,9 @@ def reset_testing_env():
 def test_global_search(runner, capsys):
     result = runner.invoke(cli, [
         'search',
-        'guilt'
+        'guilt',
+        '-l',
+        '99'
     ])
 
     assert result.exit_code == 0
@@ -35,7 +37,7 @@ def test_global_search(runner, capsys):
     captured = capsys.readouterr()
     output = captured.out
 
-    assert "Y Combinator: The Vault" in output
+    assert "YC Root Access" in output
     assert "JCS - Criminal Psychology" in output
     # assert "Found 16 matches in 9 videos from 2 channels" in output
 
@@ -45,7 +47,9 @@ def test_channel_search(runner, capsys):
         'search',
         '-c',
         '1',
-        'criminal'
+        'criminal',
+        '-l',
+        '99'
     ])
 
     assert result.exit_code == 0

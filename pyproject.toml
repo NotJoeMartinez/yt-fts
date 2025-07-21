@@ -36,3 +36,8 @@ yt-fts = "yt_fts.yt_fts:cli"
 
 [project.urls]
 Homepage = "https://github.com/NotJoeMartinez/yt-fts"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
