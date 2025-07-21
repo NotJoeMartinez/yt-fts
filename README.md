@@ -4,7 +4,7 @@ channels subtitles and load them into a sqlite database that is searchable from 
 query a channel for specific key word or phrase and will generate time stamped YouTube urls to
 the video containing the keyword. 
 
-It also supports semantic search via the [OpenAI embeddings API](https://beta.openai.com/docs/api-reference/) using [chromadb](https://github.com/chroma-core/chroma).
+It also supports semantic search via the [OpenAI embeddings API](https://beta.openai.com/docs/api-reference/), [Gemini embedding API](https://ai.google.dev/gemini-api/docs/embeddings) and using [chromadb](https://github.com/chroma-core/chroma).
 
 - [Blog Post](https://notjoemartinez.com/blog/youtube_full_text_search/)
 - [LLM/RAG Chat Bot](#llm-chat-bot)
@@ -180,15 +180,17 @@ yt-fts search "rea* kni* Mali*" --channel "The Tim Dillon Show"
 
 # Semantic Search and RAG
 You can enable semantic search for a channel by using the `embeddings` command.
-This requires an OpenAI API key set in the environment variable `OPENAI_API_KEY`, or 
-you can pass the key with the `--openai-api-key` flag. 
+This requires an OpenAI or Gemini API key set in the environment variable `OPENAI_API_KEY` or `GEMINI_API_KEY`, or 
+you can pass the key with the `--api-key` flag. 
 
 ### `embeddings`
-Fetches OpenAI embeddings for specified channel
+Fetches embeddings for specified channel
 
 ```bash
-# make sure openAI key is set
+# make sure API key is set
 # export OPENAI_API_KEY="[yourOpenAIKey]"
+# or
+# export GEMINI_API_KEY="[yourGeminiKey]"
 
 yt-fts embeddings --channel "3Blue1Brown"
 
@@ -200,7 +202,7 @@ yt-fts embeddings --interval 60 --channel "3Blue1Brown"
 
 **Options:**
 - `-c, --channel`: The name or id of the channel to generate embeddings for
-- `--openai-api-key`: OpenAI API key (if not provided, reads from OPENAI_API_KEY environment variable)
+- `--api-key`: API key (if not provided, reads from OPENAI_API_KEY or GEMINI_API_KEY environment variable)
 - `-i, --interval`: Interval in seconds to split the transcripts into chunks (default: 30)
 
 After the embeddings are saved you will see a `(ss)` next to the channel name when you 
@@ -231,10 +233,10 @@ yt-fts vsearch "[search query]" --export --channel "[channel name or id]"
 - `-v, --video-id`: The id of the video to search in
 - `-l, --limit`: Number of results to return (default: 10)
 - `-e, --export`: Export search results to a CSV file
-- `--openai-api-key`: OpenAI API key (if not provided, reads from OPENAI_API_KEY environment variable)
+- `--api-key`: API key (if not provided, reads from OPENAI_API_KEY or GEMINI_API_KEY environment variable)
 
 ### `llm` (Chat Bot)
-Starts interactive chat session with `gpt-4o` OpenAI model using 
+Starts interactive chat session with a model using 
 the semantic search results of your initial prompt as the context
 to answer questions. If it can't answer your question, it has a 
 mechanism to update the context by running targeted query based 
@@ -246,7 +248,7 @@ yt-fts llm --channel "3Blue1Brown" "How does back propagation work?"
 
 **Options:**
 - `-c, --channel`: The name or id of the channel to use (required)
-- `--openai-api-key`: OpenAI API key (if not provided, reads from OPENAI_API_KEY environment variable)
+- `--api-key`: API key (if not provided, reads from OPENAI_API_KEY or GEMINI_API_KEY environment variable)
 
 ### `summarize`
 Summarizes a YouTube video transcript, providing time stamped URLS. 
@@ -263,8 +265,8 @@ yt-fts summarize --model "gpt-3.5-turbo" "9-Jl0dxWQs8"
 ```
 
 **Options:**
-- `--model, -m`: Model to use in summary (default: gpt-4o)
-- `--openai-api-key`: OpenAI API key (if not provided, reads from OPENAI_API_KEY environment variable)
+- `--model, -m`: Model to use in summary
+- `--api-key`: API key (if not provided, reads from OPENAI_API_KEY or GEMINI_API_KEY environment variable)
 
 output:
 ```
