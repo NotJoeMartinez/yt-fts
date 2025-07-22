@@ -75,9 +75,9 @@ class SearchHandler:
     def vector_search(self, query: str, model: Model) -> None:
         console = self.console
         self.query = query
-        scope_options = {}
+        scope_options = None
         if self.scope == "all":
-            scope_options = {}
+            scope_options = None
         if self.scope == "channel":
             scope_options = {"channel_id": get_channel_id_from_input(self.channel)}
         if self.scope == "video":

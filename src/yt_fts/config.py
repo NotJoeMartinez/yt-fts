@@ -3,7 +3,7 @@ import os
 
 import chromadb
 from chromadb.config import Settings
-
+from chromadb.api import ClientAPI
 
 def get_config_path() -> str | None:
 
@@ -111,7 +111,7 @@ def get_or_make_chroma_path() -> str:
         return chroma_path
 
 
-def get_chroma_client() -> chromadb.PersistentClient:
+def get_chroma_client() -> ClientAPI:
     chroma_path = get_or_make_chroma_path()
     return chromadb.PersistentClient(path=chroma_path, 
                                      settings=Settings(anonymized_telemetry=False))

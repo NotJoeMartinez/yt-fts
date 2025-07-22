@@ -64,8 +64,7 @@ def search_collections(chroma_path, text):
     chroma_res = collection.query(
         query_embeddings=[search_embedding],
         n_results=5,
-        where={},
-        )
+    )
 
     pprint(chroma_res)
     documents = chroma_res["documents"][0]
