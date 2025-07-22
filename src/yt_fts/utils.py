@@ -118,7 +118,7 @@ def get_model_config(api_key: str | None = None) -> Model:
 
     models: list[Model] = [
         {"name": "OPENAI", "embedding_model": "text-embedding-ada-002", "chat_model": "gpt-4o", "api_key": "", "base_url": "https://api.openai.com/v1"},
-        {"name": "GEMINI", "embedding_model": "text-embedding-004", "chat_model": "gemini-2.0-flash", "api_key": "", "base_url": "https://generativelanguage.googleapis.com/v1beta"},
+        {"name": "GEMINI", "embedding_model": "text-embedding-004", "chat_model": "gemini-2.5-flash", "api_key": "", "base_url": "https://generativelanguage.googleapis.com/v1beta"},
     ]
 
     if api_key is not None:
