@@ -58,7 +58,7 @@ def search_collections(chroma_path, text):
 
     model = get_model_config()
     openai_client = OpenAI(api_key=model['api_key'], base_url=model['base_url'])
-    search_embedding = get_embedding(text, model['embedding_model'], openai_client)
+    search_embedding = next(get_embedding([text], model['embedding_model'], openai_client))
 
 
     chroma_res = collection.query(

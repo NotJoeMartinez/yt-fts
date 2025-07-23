@@ -88,7 +88,9 @@ class SearchHandler:
 
         embeddings_handler = EmbeddingsHandler()
         openai_client = OpenAI(api_key=model['api_key'], base_url=model['base_url'])
-        search_embedding = embeddings_handler.get_embedding([query], model['embedding_model'], openai_client)[0]
+        search_embedding = next(embeddings_handler.get_embedding(
+            [query], model['embedding_model'], openai_client)
+        )
         chroma_res = collection.query(
             query_embeddings=[search_embedding],
             n_results=self.limit,

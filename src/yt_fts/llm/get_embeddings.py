@@ -1,3 +1,4 @@
+from typing import Generator
 import uuid
 from openai import OpenAI
 from datetime import datetime
@@ -36,6 +37,9 @@ class EmbeddingsHandler:
                 continue
 
             for segment in split_subs:
+                if segment['text'] == '':
+                    continue
+
                 text_with_meta_data = self.add_meta_data_to_text(
                     channel_name,
                     video_meta_data['video_title'],
@@ -56,31 +60,32 @@ class EmbeddingsHandler:
         chroma_client = get_chroma_client()
         collection = chroma_client.get_or_create_collection(name="subEmbeddings")
         
-        embeddings = self.get_embedding(
+        embedding_gen = self.get_embedding(
             text_list=[segment['text_with_meta_data'] for segment in formatted_segments],
             model=model['embedding_model'],
             client=OpenAI(api_key=model['api_key'], base_url=model['base_url'])
         )
 
-        for segment_object, embedding in track(zip(formatted_segments, embeddings), description="Getting embeddings"):
-            if segment_object['text'] == '':
-                continue
-
-            meta_data = {
+        embeddings = list(track(embedding_gen, description="Getting embeddings"))
+        meta_data = []
+        uuids = []
+        for segment_object in formatted_segments:
+            meta_data.append({
                 "channel_id": segment_object['channel_id'],
                 "channel_name": segment_object['channel_name'],
                 "video_id": segment_object['video_id'],
                 "start_time": segment_object['start_time'],
                 "video_title": segment_object['video_title'],
                 "video_date": segment_object['video_date'],
-            }
+            })
+            uuids.append(str(uuid.uuid4()))
 
-            collection.add(
-                documents=[segment_object['text']],
-                embeddings=[embedding],
-                metadatas=[meta_data],
-                ids=[f"{uuid.uuid4()}"],
-            )
+        collection.add(
+            documents=[segment_object['text'] for segment_object in formatted_segments],
+            embeddings=embeddings,
+            metadatas=meta_data,
+            ids=uuids
+        )
 
     def add_meta_data_to_text(self,
                               channel_name: str,
@@ -149,8 +154,7 @@ class EmbeddingsHandler:
 
         return combined_intervals
 
-    def get_embedding(self, text_list: list[str], model: str, client: OpenAI | None = None) -> list[list[float]]:
-
+    def get_embedding(self, text_list: list[str], model: str, client: OpenAI | None = None, batch_size: int = 100) -> Generator[list[float], None, None]:
         if client is None:
             model_config = get_model_config()
             client = OpenAI(
@@ -160,14 +164,11 @@ class EmbeddingsHandler:
 
         text_list = [text.replace("\n", " ") for text in text_list]
 
-        batch_size = 100
-        embeddings: list[list[float]] = []
         for i in range(0, len(text_list), batch_size):
             batch = text_list[i:i + batch_size]
             response = client.embeddings.create(input=batch, model=model).data
-            embeddings.extend([data.embedding for data in response])
-
-        return embeddings
+            embeddings = [data.embedding for data in response]
+            yield from embeddings
 
     def time_to_seconds(self, time_str: str) -> float:
         """ Convert time string to total seconds """

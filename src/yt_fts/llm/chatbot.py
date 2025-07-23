@@ -133,7 +133,9 @@ class LLMHandler:
         collection = self.chroma_client.get_collection(name="subEmbeddings")
 
         embeddings_handler = EmbeddingsHandler()
-        search_embedding = embeddings_handler.get_embedding([text], self.model_config['embedding_model'], self.openai_client)[0]
+        search_embedding = next(embeddings_handler.get_embedding(
+            [text], self.model_config['embedding_model'], self.openai_client)
+        )
         scope_options = {"channel_id": self.channel_id}
 
         chroma_res = collection.query(
