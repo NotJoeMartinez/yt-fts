@@ -22,7 +22,7 @@ class EmbeddingsHandler:
         self.interval = interval
         self.console = Console()
 
-    def add_embeddings_to_chroma(self, channel_id: str, model: Model, chroma_batch_size: int = 1000) -> None:
+    def add_embeddings_to_chroma(self, channel_id: str, model: Model) -> None:
         channel_name = get_channel_name_from_id(channel_id)
         channel_video_ids = [video_id[0] for video_id
                              in get_vid_ids_by_channel_id(channel_id)]
@@ -83,6 +83,7 @@ class EmbeddingsHandler:
             uuids.append(str(uuid.uuid4()))
         
         # Add embeddings in batches to avoid ChromaDB batch size limit
+        chroma_batch_size = chroma_client.get_max_batch_size() // 5
         for i in range(0, len(embeddings), chroma_batch_size):
             j = i + chroma_batch_size
 
