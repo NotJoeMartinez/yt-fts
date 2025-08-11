@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
  
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [0.1.64] - 2025-08-10
+### Added
+- Add support for free Gemini embedding and chat models
+
+
 ## [0.1.62] - 2025-07-04
 ### Added 
 - User agent randomization for yt-dlp
