@@ -11,7 +11,7 @@ from .export import ExportHandler
 from .search import SearchHandler
 
 from .list import list_channels
-from .utils import show_message
+from .utils import get_model_config, show_message
 from .config import (
     get_config_path,
     get_db_path,
@@ -245,7 +245,7 @@ def search(text: str, channel: str | None, video_id: str | None, export: bool, l
     name="vsearch",
     help="""
             Vector search. Requires embeddings to be generated for the channel
-            and environment variable OPENAI_API_KEY to be set.
+            and environment variable OPENAI_API_KEY or GEMINI_API_KEY to be set.
         """
 )
 @click.argument("text", required=True)
@@ -253,18 +253,19 @@ def search(text: str, channel: str | None, video_id: str | None, export: bool, l
 @click.option("-v", "--video-id", default=None, help="The id of the video to search in.")
 @click.option("-l", "--limit", default=10, help="Number of results to return")
 @click.option("-e", "--export", is_flag=True, help="Export search results to a CSV file.")
-@click.option("--openai-api-key", default=None,
-              help="OpenAI API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY "
-                   "environment variable.")
-def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, export: bool, openai_api_key: str | None) -> None:
-
-    if openai_api_key is None:
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-    if openai_api_key is None:
-        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n"
-                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or pass "
-                      "one in with --openai-api-key")
+@click.option("--api-key", default=None,
+              help="OpenAI or Gemini API key. If not provided, the script will attempt to read it from the OPENAI_API_KEY or GEMINI_API_KEY"
+                   "environment variables.")
+def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, export: bool, api_key: str | None) -> None:
+  
+    try:
+        model = get_model_config(api_key)
+        api_key = model['api_key']
+    except ValueError:
+        console.print("[red]Error:[/red] OPENAI_API_KEY and GEMINI_API_KEY environment variables not set\n"
+                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or "
+                      "export \"GEMINI_API_KEY=<your_key>\" or pass "
+                      "one in with --api-key")
         sys.exit(1)
 
     if channel:
@@ -274,7 +275,7 @@ def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, ex
     else:
         scope = "all"
 
-    openai_client = OpenAI(api_key=openai_api_key)
+    openai_client = OpenAI(api_key=api_key, base_url=model['base_url'])
 
     vsearch_handler = SearchHandler(
         scope=scope,
@@ -285,7 +286,7 @@ def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, ex
         openai_client=openai_client
     )
 
-    vsearch_handler.vector_search(query=text)
+    vsearch_handler.vector_search(query=text, model=model)
 
     sys.exit(0)
 
@@ -294,17 +295,17 @@ def vsearch(text: str, channel: str | None, video_id: str | None, limit: int, ex
     name="embeddings",
     help="""
     Generate embeddings for a channel using OpenAI's embeddings API.
-    Requires an OpenAI API key to be set as an environment variable OPENAI_API_KEY.
+    Requires an OpenAI or Gemini API key to be set as an environment variable OPENAI_API_KEY or GEMINI_API_KEY.
     """
 )
 @click.option("-c", "--channel", default=None,
               help="The name or id of the channel to generate embeddings for")
-@click.option("--openai-api-key", default=None,
-              help="OpenAI API key. If not provided, the script will attempt to read it from"
-                   " the OPENAI_API_KEY environment variable.")
+@click.option("--api-key", default=None,
+              help="OpenAI or Gemini API key. If not provided, the script will attempt to read it from"
+                   " the OPENAI_API_KEY or GEMINI_API_KEY environment variables.")
 @click.option("-i", "--interval", default=30, type=int,
               help="Interval in seconds to split the transcripts into chunks. Default 30s.")
-def embeddings(channel: str | None, openai_api_key: str | None, interval: int = 30) -> None:
+def embeddings(channel: str | None, api_key: str | None, interval: int = 30) -> None:
     from .llm.get_embeddings import EmbeddingsHandler
     from .utils import check_ss_enabled, enable_ss
 
@@ -315,20 +316,21 @@ def embeddings(channel: str | None, openai_api_key: str | None, interval: int = 
         console.print("\n\t[bold][red]Error:[/red][/bold] Embeddings already created for this channel.\n")
         sys.exit(1)
 
-    # get api key for openai
-    if openai_api_key is None:
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-    if openai_api_key is None:
+    # get api key
+    try:
+        model = get_model_config(api_key)
+    except ValueError:
         console.print("""
-        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
-                
+        [bold][red]Error:[/red][/bold] OPENAI_API_KEY and GEMINI_API_KEY environment variables not set, Run: 
+
                 export OPENAI_API_KEY=<your_key> to set the key
+                or 
+                export GEMINI_API_KEY=<your_key> to set the key
                       """)
         sys.exit(1)
 
     embeddings_handler = EmbeddingsHandler(interval=interval)
-    embeddings_handler.add_embeddings_to_chroma(channel_id)
+    embeddings_handler.add_embeddings_to_chroma(channel_id, model)
 
     # mark the channel as enabled for semantic search
     enable_ss(channel_id)
@@ -346,54 +348,58 @@ def embeddings(channel: str | None, openai_api_key: str | None, interval: int = 
 @click.argument("prompt", required=True)
 @click.option("-c", "--channel", default=None, required=True,
               help="The name or id of the channel to generate embeddings for")
-@click.option("--openai-api-key", default=None,
-              help="OpenAI API key. If not provided, the script will attempt to read it from"
-                   " the OPENAI_API_KEY environment variable.")
-def llm(prompt: str, channel: str, openai_api_key: str | None = None) -> None:
+@click.option("--api-key", default=None,
+              help="OpenAI or Gemini API key. If not provided, the script will attempt to read it from"
+                   " the OPENAI_API_KEY or GEMINI_API_KEY environment variable.")
+def llm(prompt: str, channel: str, api_key: str | None = None) -> None:
     from .llm.chatbot import LLMHandler
 
-    if openai_api_key is None:
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-    if openai_api_key is None:
+    try:
+        model = get_model_config(api_key)
+        api_key = model['api_key']
+    except ValueError:
         console.print("""
-        [bold][red]Error:[/red][/bold] OPENAI_API_KEY environment variable not set, Run: 
+        [bold][red]Error:[/red][/bold] OPENAI_API_KEY and GEMINI_API_KEY environment variables not set, Run: 
                 
                 export OPENAI_API_KEY=<your_key> to set the key
+                or 
+                export GEMINI_API_KEY=<your_key> to set the key
                       """)
         sys.exit(1)
 
-    llm_handler = LLMHandler(openai_api_key, channel)
+    llm_handler = LLMHandler(api_key, channel)
     llm_handler.init_llm(prompt)
 
     sys.exit(0)
-
 
 @cli.command(
     name="summarize",
     help="summarize a youtube video"
 )
 @click.argument("video", required=True)
-@click.option("--model", "-m", default="gpt-4o",
-              help="Model to use in summary")
-@click.option("--openai-api-key", default=None,
-              help="OpenAI API key. If not provided, the script will attempt to read it from"
-                   " the OPENAI_API_KEY environment variable.")
-def summarize(video: str, model: str, openai_api_key: str | None) -> None:
-    if openai_api_key is None:
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-    if openai_api_key is None:
-        console.print("[red]Error:[/red] OPENAI_API_KEY environment variable not set\n"
-                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or pass "
-                      "one in with --openai-api-key")
+@click.option("--model", "-m", default=None,
+              help="Model to use in summary ex. gpt-4o")
+@click.option("--api-key", default=None,
+              help="OpenAI or Gemini API key. If not provided, the script will attempt to read it from"
+                   " the OPENAI_API_KEY or GEMINI_API_KEY environment variable.")
+def summarize(video: str, model: str | None, api_key: str | None) -> None:
+    try:
+        model_config = get_model_config(api_key)
+        api_key = model_config['api_key']
+        if model:
+            model_config['chat_model'] = model
+    except ValueError:
+        console.print("[red]Error:[/red] OPENAI_API_KEY and GEMINI_API_KEY environment variables not set\n"
+                      "To set the key run: export \"OPENAI_API_KEY=<your_key>\" or "
+                      "export \"GEMINI_API_KEY=<your_key>\" or pass "
+                      "one in with --api-key")
         sys.exit(1)
         
-    openai_client = OpenAI(api_key=openai_api_key)
+    openai_client = OpenAI(api_key=api_key, base_url=model_config['base_url'])
 
     summarize_handler = SummarizeHandler(
         openai_client,
-        model=model,
+        model=model_config,
         input_video=video
         )
     summarize_handler.summarize_video()

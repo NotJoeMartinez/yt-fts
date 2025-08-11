@@ -4,6 +4,7 @@ This is where I'm putting all the functions that don't belong anywhere else
 import datetime
 import re
 import sqlite3
+from typing import TypedDict
 import webvtt
 
 
@@ -105,14 +106,38 @@ def word_level_vtt_parser(vtt_path: str) -> list[dict[str, str]]:
     return result
 
 
-def get_api_key() -> str | None:
+class Model(TypedDict):
+    name: str
+    api_key: str
+    base_url: str
+    embedding_model: str
+    chat_model: str
+
+def get_model_config(api_key: str | None = None) -> Model:
     import os
-    api_key = os.environ.get("OPENAI_API_KEY")
 
-    if api_key is None:
-        return None
-    return api_key
+    models: list[Model] = [
+        {"name": "OPENAI", "embedding_model": "text-embedding-ada-002", "chat_model": "gpt-4o", "api_key": "", "base_url": "https://api.openai.com/v1"},
+        {"name": "GEMINI", "embedding_model": "text-embedding-004", "chat_model": "gemini-2.5-flash", "api_key": "", "base_url": "https://generativelanguage.googleapis.com/v1beta"},
+    ]
 
+    if api_key is not None:
+        # Gemini API keys start with "AIza"
+        # OpenAI API keys start with "sk-"
+        if api_key.startswith("sk-"):
+            models[0]['api_key'] = api_key
+            return models[0]
+        elif api_key.startswith("AIza"):
+            models[1]['api_key'] = api_key
+            return models[1]
+    else:
+      for model in models:
+          api_key = os.environ.get(f"{model['name']}_API_KEY")
+          if api_key is not None:
+              model['api_key'] = api_key
+              return model
+    
+    raise ValueError("No model configuration found. Please set the environment variable for the model API key.")
 
 def get_time_delta(timestamp1: str, timestamp2: str) -> str:
     from datetime import datetime
