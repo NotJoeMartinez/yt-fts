@@ -32,7 +32,9 @@ def time_to_secs(time_str: str) -> int:
     secs = int(time_rex.group(3))
     total_secs = hours + mins + secs
 
-    return total_secs - 3
+    # Clamp at zero: the buffer must never push a timestamp near the start of
+    # a video into a negative ``?t=`` link, which YouTube rejects.
+    return max(0, total_secs - 3)
 
 
 def parse_vtt(vtt_path: str) -> list[dict[str, str]]:
